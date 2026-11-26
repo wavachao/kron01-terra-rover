@@ -1,21 +1,21 @@
 {
   "edition": "KRON-01V4 (4WD Clamshell Rounded Vision Edition)",
   "overall_mm": {
-    "width_X": 118.0,
+    "width_X": 122.0,
     "length_Y": 109.2,
-    "height_Z": 130.9,
+    "height_Z": 142.4,
     "ground_Z_min": 0.09
   },
   "plates": {
     "plate_A_charcoal": {
       "count": 13,
-      "vol_cm3": 176.6,
-      "est_mass_g": 135.8
+      "vol_cm3": 202.5,
+      "est_mass_g": 155.7
     },
     "plate_B_white": {
       "count": 5,
-      "vol_cm3": 73.6,
-      "est_mass_g": 56.6
+      "vol_cm3": 75.6,
+      "est_mass_g": 58.1
     },
     "plate_C_orange": {
       "count": 4,
@@ -23,7 +23,7 @@
       "est_mass_g": 0.9
     }
   },
-  "total_filament_g": 193.3,
+  "total_filament_g": 214.7,
   "all_cots_clear": true,
   "clearances": [
     {
@@ -38,7 +38,7 @@
     },
     {
       "pair": "cots_rpi_zero2w <-> cots_n20_FR",
-      "min_gap_mm": 15.38,
+      "min_gap_mm": 15.71,
       "status": "PASS"
     },
     {
@@ -48,12 +48,12 @@
     },
     {
       "pair": "cots_rpi_zero2w <-> cots_n20_RR",
-      "min_gap_mm": 14.08,
+      "min_gap_mm": 14.43,
       "status": "PASS"
     },
     {
       "pair": "cots_rpi_zero2w <-> cots_mg90s_servo",
-      "min_gap_mm": 16.05,
+      "min_gap_mm": 27.55,
       "status": "PASS"
     },
     {
@@ -68,12 +68,12 @@
     },
     {
       "pair": "cots_rpi_zero2w <-> cots_ip5328p_power",
-      "min_gap_mm": 2.0,
+      "min_gap_mm": 4.0,
       "status": "PASS"
     },
     {
       "pair": "cots_rpi_zero2w <-> cots_power_switch",
-      "min_gap_mm": 2.2,
+      "min_gap_mm": 4.2,
       "status": "PASS"
     },
     {
@@ -108,22 +108,22 @@
     },
     {
       "pair": "cots_drv8833 <-> cots_n20_FL",
-      "min_gap_mm": 4.25,
+      "min_gap_mm": 6.25,
       "status": "PASS"
     },
     {
       "pair": "cots_drv8833 <-> cots_n20_FR",
-      "min_gap_mm": 4.25,
+      "min_gap_mm": 6.25,
       "status": "PASS"
     },
     {
       "pair": "cots_max98357a <-> cots_n20_RL",
-      "min_gap_mm": 4.0,
+      "min_gap_mm": 6.0,
       "status": "PASS"
     },
     {
       "pair": "cots_max98357a <-> cots_n20_RR",
-      "min_gap_mm": 4.0,
+      "min_gap_mm": 6.0,
       "status": "PASS"
     },
     {
@@ -162,45 +162,45 @@
       "name": "A01_chassis_tub",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        81.0,
+        85.0,
         108.3,
-        35.7
+        47.2
       ],
-      "vol_cm3": 61.71,
-      "est_mass_g": 47.4
+      "vol_cm3": 83.05,
+      "est_mass_g": 63.9
     },
     {
       "name": "A02_top_hood",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        80.0,
-        96.0,
+        84.0,
+        99.4,
         45.5
       ],
-      "vol_cm3": 47.21,
-      "est_mass_g": 36.3
+      "vol_cm3": 51.7,
+      "est_mass_g": 39.8
     },
     {
       "name": "A03_motor_clamp_F",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        70.0,
+        74.0,
         20.0,
         2.8
       ],
-      "vol_cm3": 1.85,
-      "est_mass_g": 1.4
+      "vol_cm3": 1.9,
+      "est_mass_g": 1.5
     },
     {
       "name": "A03_motor_clamp_R",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        70.0,
+        74.0,
         20.0,
         2.8
       ],
-      "vol_cm3": 1.85,
-      "est_mass_g": 1.4
+      "vol_cm3": 1.9,
+      "est_mass_g": 1.5
     },
     {
       "name": "A04_wheel_hub_FL",
@@ -252,9 +252,9 @@
       "size_mm": [
         14.5,
         25.0,
-        5.8
+        4.4
       ],
-      "vol_cm3": 0.71,
+      "vol_cm3": 0.69,
       "est_mass_g": 0.5
     },
     {
@@ -263,9 +263,9 @@
       "size_mm": [
         14.5,
         25.0,
-        5.8
+        4.4
       ],
-      "vol_cm3": 0.71,
+      "vol_cm3": 0.69,
       "est_mass_g": 0.5
     },
     {
@@ -273,22 +273,22 @@
       "plate": "plate_B_white",
       "size_mm": [
         4.3,
-        41.9,
-        19.5
+        42.0,
+        24.0
       ],
-      "vol_cm3": 1.97,
-      "est_mass_g": 1.5
+      "vol_cm3": 2.97,
+      "est_mass_g": 2.3
     },
     {
       "name": "B03_side_fairing_R",
       "plate": "plate_B_white",
       "size_mm": [
         4.3,
-        41.9,
-        19.5
+        42.0,
+        24.0
       ],
-      "vol_cm3": 1.97,
-      "est_mass_g": 1.5
+      "vol_cm3": 2.97,
+      "est_mass_g": 2.3
     },
     {
       "name": "C03_wheel_rim_FL",

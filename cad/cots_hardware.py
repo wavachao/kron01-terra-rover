@@ -475,8 +475,9 @@ def build_wiring_harness() -> Compound:
 # ---------------------------------------------------------------------------
 def build_fastener_kit() -> Compound:
     items = []
-    # Clamshell Top Hood 4x M3x8 flush recessed bolts (2 rear deck + 2 mid-flank under white shoulder wings!)
-    for i, (x, y) in enumerate(((-33.5, -39.0), (33.5, -39.0), (-33.5, 16.0), (33.5, 16.0))):
+    # Clamshell Top Hood 4x M3x8 flush recessed bolts (2 rear deck + 2 mid-flank)
+    bx_hood = C.CHASSIS_W / 2.0 - 6.5
+    for i, (x, y) in enumerate(((-bx_hood, -39.0), (bx_hood, -39.0), (-bx_hood, 16.0), (bx_hood, 16.0))):
         items.append(build_din912_screw(3.0, 8.0, f"M3x8_TopHood_{i+1}").move(Location((x, y, C.CHASSIS_Z_TOP - 2.0))))
         items.append(build_brass_insert(4.5, 4.0, 2.5, f"Insert_TopHood_{i+1}").move(Location((x, y, C.CHASSIS_SPLIT_Z))))
     # Head Shell Lock 2x M3x14 bolts + Brass Inserts (A09 Ear Hub -> B04 Shell -> A06 Core!)

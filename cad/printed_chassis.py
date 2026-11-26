@@ -73,39 +73,39 @@ def build_chassis_tub() -> Part:
     with BuildPart() as tub:
         add(outer_bp.part)
 
-        # Sloped front nose trim
-        with Locations(Location((0, 56.0, 48.5), (-32, 0, 0))):
+        # Sloped front nose trim (stays outside Y=+49.5mm -> solid closed >=2.5mm front wall up to split line!)
+        with Locations(Location((0, 67.0, C.CHASSIS_SPLIT_Z + 2.0), (-32, 0, 0))):
             Box(w + 10.0, 32.0, 22.0, mode=Mode.SUBTRACT)
 
         # Protective dropped skid pads under 4× N20 motors (Z=12.8..15.5 -> leaves 1.95mm solid skid floor!)
         for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
             for sgn in (-1.0, 1.0):
-                with Locations((sgn * 26.5, y_ax, 12.8)):
+                with Locations((sgn * (w / 2.0 - 13.5), y_ax, 12.8)):
                     Box(28.0, C.N20_W + 6.0, 3.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
-        # 4× Reinforced Suspension Axle Collar Shrouds (|X| = 38.6..41.2 -> 0.8mm running clearance to A04 hub!)
+        # 4× Reinforced Suspension Axle Collar Shrouds (|X| = w/2-1.4..w/2+1.2 -> 0.8mm clearance to A04 hub!)
         for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
             for sgn in (-1.0, 1.0):
-                with Locations((sgn * 39.9, y_ax, C.Z_AXLE)):
+                with Locations((sgn * (w / 2.0 - 0.1), y_ax, C.Z_AXLE)):
                     Cylinder(radius=5.0, height=2.6, rotation=(0, 90, 0))
 
         # Angled Front Off-Road Skid Plate + Clean Exterior Recessed Grille & Headlight Bezels (zero internal voids!)
         with Locations(Location((0, 53.2, 22.0), (28, 0, 0))):
             Box(28.0, 3.6, 15.0)
-        with Locations((0, 54.0, 31.5)):
-            Box(24.0, 5.0, 6.5, mode=Mode.SUBTRACT)
+        with Locations((0, 54.0, 34.5)):
+            Box(26.0, 5.0, 7.5, mode=Mode.SUBTRACT)
         for sx in (-1, 1):
-            with Locations((sx * 21.0, 54.0, 32.5)):
-                Box(10.0, 5.0, 5.5, mode=Mode.SUBTRACT)
+            with Locations((sx * 22.5, 54.0, 35.5)):
+                Box(10.5, 5.0, 6.0, mode=Mode.SUBTRACT)
 
-        # 2. Hollow interior cavity (open cleanly at top Z = 48.5, closed ALL 4 vertical walls!)
+        # 2. Hollow interior cavity (inner width 79.0mm -> fits ANY 74.5~77.5mm Taobao 18650 holder!)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_FLOOR)):
             with Locations((0, yc - 2.0)):
                 RectangleRounded(w - 2 * wall, l - 10.0, radius=7.5)
         extrude(amount=h + 4.0, mode=Mode.SUBTRACT)
 
         # Front Nose Interlock Catch Ledge (fused solidly into front inner wall Y=47..48.5; receives A02 L-hook!)
-        with Locations((0, 45.5, 38.3)):
+        with Locations((0, 45.5, C.CHASSIS_SPLIT_Z - 10.2)):
             Box(28.0, 6.0, 3.0)
 
         # 3. 4× N20 Gearmotor Cradles + M2.5 Bolt Bosses for A03 Motor Clamp Straps!
@@ -114,22 +114,22 @@ def build_chassis_tub() -> Part:
                 saddle_x = sgn * (w / 2.0 - 13.5)
                 with Locations((saddle_x, y_ax, C.CHASSIS_Z_FLOOR)):
                     Box(22.0, C.N20_W + 7.2, 9.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
-                # Full N20 body + endcap pocket (|X|=12.75..41.25, Z=14.75..27.25 -> 0.25mm clearance all around!)
-                with Locations((sgn * 27.0, y_ax, C.Z_AXLE)):
+                # Full N20 body + endcap pocket (0.25mm clearance all around!)
+                with Locations((sgn * (w / 2.0 - 13.0), y_ax, C.Z_AXLE)):
                     Box(28.5, C.N20_W + 0.5, C.N20_H + 0.5, mode=Mode.SUBTRACT)
                 with Locations((sgn * (w / 2.0 + 0.5), y_ax, C.Z_AXLE)):
                     Cylinder(radius=3.6, height=12.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
                 # Dual M2.5 pilot holes flanking each motor for bolt-down clamp strap A03!
                 for dy_b in (-7.2, 7.2):
-                    with Locations((sgn * 28.0, y_ax + dy_b, C.CHASSIS_Z_FLOOR + 2.5)):
+                    with Locations((sgn * (w / 2.0 - 12.0), y_ax + dy_b, C.CHASSIS_Z_FLOOR + 2.5)):
                         Cylinder(radius=C.M25_PILOT_DIA / 2.0, height=8.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # 4. Dead-Center 18650 Battery Retaining Rails (Y = ±11.8 -> 50/50 CG!)
+        # 4. Dead-Center 18650 Battery Retaining Rails (Y = ±11.8 -> 50/50 CG, fits up to 78mm holder!)
         for sgn_y in (-1.0, 1.0):
             with Locations((0, C.BAT_Y + sgn_y * (C.BAT_HOLDER_W / 2.0 + 1.2), C.CHASSIS_Z_FLOOR)):
-                Box(64.0, 2.0, 11.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+                Box(68.0, 2.0, 11.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
-        # 5. Official Raspberry Pi Zero 2W 4× M2.5 Standoffs (23.0 × 58.0 mm)
+        # 5. Official Raspberry Pi Zero 2WH 4× M2.5 Standoffs (23.0 × 58.0 mm)
         for sx in (-1, 1):
             for sy in (-1, 1):
                 px = C.RPI_X_CTR + sx * (C.RPI_HOLE_X / 2.0)
@@ -156,17 +156,18 @@ def build_chassis_tub() -> Part:
         with Locations((C.SW_X, C.SW_Y - 1.5, C.SW_Z - 4.7)):
             Box(11.0, 7.0, 2.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
-        # 6. 4× Clamshell Top-Hood M3 Heat-Set Brass Insert Bosses
-        for bx, by in ((-33.5, -39.0), (33.5, -39.0), (-33.5, 16.0), (33.5, 16.0)):
+        # 6. 4× Clamshell Top-Hood M3 Heat-Set Brass Insert Bosses (Z=54.2..60.0 -> cleanly above all boards!)
+        boss_x = w / 2.0 - 6.5  # 35.5 mm
+        for bx, by in ((-boss_x, -39.0), (boss_x, -39.0), (-boss_x, 16.0), (boss_x, 16.0)):
             with Locations((bx, by, C.CHASSIS_SPLIT_Z - 5.8)):
                 Cylinder(radius=4.2, height=5.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
             with Locations((bx, by, C.CHASSIS_SPLIT_Z - 5.2)):
                 Cylinder(radius=C.HEATSET_M3_DIA / 2.0, height=5.8, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # 7. Side-Fairing Mounting Holes (aligned with B02/B03 internal M2.5 bores at Y=±10, Z=37.5!)
+        # 7. Side-Fairing Mounting Holes (aligned with B02/B03 internal M2.5 bores at Y=±10, Z=43.0!)
         for sgn in (-1.0, 1.0):
             for by in (-10.0, 10.0):
-                with Locations((sgn * (w / 2.0 - 1.0), by, 37.5)):
+                with Locations((sgn * (w / 2.0 - 1.0), by, 43.0)):
                     Cylinder(radius=C.M3_CLEAR_DIA / 2.0, height=8.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
 
         # 8. Rear-Wall Zero-Disassembly Maintenance Ports (Micro-SD + 5V/3A Type-C + Switch + OTG + Vents)
@@ -192,26 +193,28 @@ def build_chassis_tub() -> Part:
 def build_motor_clamp(axle: str = "F") -> Part:
     """Rigid M2.5 bolt-down clamp strap locking both N20 gearboxes on an axle into A01_Chassis_Tub."""
     y_ax = C.Y_AXLE_F if axle == "F" else C.Y_AXLE_R
+    pad_x = C.CHASSIS_W / 2.0 - 12.0  # 30.0 mm
     with BuildPart() as clamp:
         for sgn in (-1.0, 1.0):
-            with Locations((sgn * 28.0, y_ax, C.Z_AXLE + C.N20_H / 2.0 + 1.4)):
+            with Locations((sgn * pad_x, y_ax, C.Z_AXLE + C.N20_H / 2.0 + 1.4)):
                 Box(14.0, 20.0, 2.6)
             for dy_b in (-7.2, 7.2):
-                with Locations((sgn * 28.0, y_ax + dy_b, C.Z_AXLE + C.N20_H / 2.0 + 1.4)):
+                with Locations((sgn * pad_x, y_ax + dy_b, C.Z_AXLE + C.N20_H / 2.0 + 1.4)):
                     Cylinder(radius=1.45, height=5.0, mode=Mode.SUBTRACT)
         # Thin tie-bar bridging left & right clamp pads (clears DRV8833/MAX98357A cleanly above Z=27!)
         with Locations((0, y_ax, C.Z_AXLE + C.N20_H / 2.0 + 1.8)):
-            Box(46.0, 5.0, 2.2)
+            Box(2.0 * pad_x - 10.0, 5.0, 2.2)
     return _tag(clamp.part, f"A03_Motor_Clamp_{axle}", "charcoal")
 
 
 # ---------------------------------------------------------------------------
-# A02: Reinforced Clamshell Top Hood (Step-Lip + L-Hook + Drop-In MG90S Neck!)
+# A02: Reinforced Clamshell Top Hood (21.4mm DuPont Headroom + Drop-In MG90S Neck!)
 # ---------------------------------------------------------------------------
 def build_top_hood() -> Part:
     w = C.CHASSIS_W
     l = C.CHASSIS_L
     yc = C.CHASSIS_Y_CTR
+    boss_x = w / 2.0 - 6.5  # 35.5 mm
 
     with BuildPart() as hood_bp:
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z)):
@@ -225,31 +228,31 @@ def build_top_hood() -> Part:
     with BuildPart() as hood:
         add(hood_bp.part)
 
-        # Match sloped front nose cleanly
-        with Locations(Location((0, 56.0, 48.5), (-32, 0, 0))):
+        # Match sloped front nose cleanly (100% sealed seam with A01 front wall!)
+        with Locations(Location((0, 67.0, C.CHASSIS_SPLIT_Z + 2.0), (-32, 0, 0))):
             Box(w + 10.0, 32.0, 22.0, mode=Mode.SUBTRACT)
 
         # 2.5mm Underside Perimeter Alignment Step-Lip (snaps into tub with zero lateral rattle!)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z - 2.5)):
             with Locations((0, -10.0)):
-                RectangleRounded(73.8, 70.0, radius=7.0)
+                RectangleRounded(w - 6.2, 70.0, radius=7.0)
         extrude(amount=2.8)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z - 3.0)):
             with Locations((0, -10.0)):
-                RectangleRounded(68.8, 65.0, radius=5.5)
+                RectangleRounded(w - 11.2, 65.0, radius=5.5)
         extrude(amount=4.0, mode=Mode.SUBTRACT)
         # Clear the 4 corner brass insert bosses cleanly
-        for bx, by in ((-33.5, -39.0), (33.5, -39.0), (-33.5, 16.0), (33.5, 16.0)):
+        for bx, by in ((-boss_x, -39.0), (boss_x, -39.0), (-boss_x, 16.0), (boss_x, 16.0)):
             with Locations((bx, by, C.CHASSIS_SPLIT_Z - 3.5)):
                 Cylinder(radius=5.2, height=4.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
         # Integral Front Interlock Catch Hook (L-shaped stem + tongue fused solidly into hood underside!)
-        with Locations((0, 34.25, 42.0)):
+        with Locations((0, 34.25, C.CHASSIS_SPLIT_Z - 6.5)):
             Box(22.0, 3.5, 16.0)
-        with Locations((0, 39.25, 35.2)):
+        with Locations((0, 39.25, C.CHASSIS_SPLIT_Z - 13.3)):
             Box(22.0, 13.5, 2.4)
 
-        # Raised Sporty Rear-Deck Fastback Cowl (low-profile Z=57.2 -> full +22° pitch-up clearance!) + Shark-Fin
+        # Raised Sporty Rear-Deck Fastback Cowl (low-profile -> full +22° pitch-up clearance!) + Shark-Fin
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 1.5)):
             with Locations((0, -37.0)):
                 RectangleRounded(42.0, 15.0, radius=4.5)
@@ -266,23 +269,23 @@ def build_top_hood() -> Part:
                 RectangleRounded(3.2, 5.5, radius=1.2)
         loft(ruled=True)
 
-        # Underside headroom recess (clears 40-pin GPIO & heatsink) + Top rear convection vents
+        # Spacious Underside Headroom Recess (Y=-41..+27mm, ceiling at Z=64.0mm -> 21.4mm above RPi Zero 2WH PCB!)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z - 0.5)):
-            with Locations((0, -10.0)):
-                RectangleRounded(60.0, 74.0, radius=6.0)
-        extrude(amount=4.2, mode=Mode.SUBTRACT)
+            with Locations((0, -7.0)):
+                RectangleRounded(w - 16.0, 68.0, radius=6.0)
+        extrude(amount=4.5, mode=Mode.SUBTRACT)
         for vx in (-9.0, -3.0, 3.0, 9.0):
             with Locations((vx, -38.0, C.CHASSIS_Z_TOP - 2.0)):
                 Box(2.4, 7.0, 10.0, mode=Mode.SUBTRACT)
 
         # Dual-Tier Sculpted Neck Turret:
-        # 1) Slim Lower Pedestal Stalk (36×22mm, Z=53..67 -> huge clearance for helmet rim at -20°..+22°!)
-        neck_top_z = C.HEAD_PIVOT_Z + 6.5  # 79.5mm
+        # 1) Slim Lower Pedestal Stalk (36×22mm -> huge clearance for helmet rim at -20°..+22°!)
+        neck_top_z = C.HEAD_PIVOT_Z + 6.5
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 2.0)):
             with Locations((0, -5.0)):
                 RectangleRounded(36.0, 22.0, radius=5.0)
         extrude(amount=14.0)
-        # 2) Upper MG90S Servo Yoke (48×36.2mm, Y=-26.2..+10.0, Z=66.0..79.5 -> neatly inside helmet cavity!)
+        # 2) Upper MG90S Servo Yoke (48×36.2mm, Y=-26.2..+10.0 -> neatly inside helmet cavity!)
         with BuildSketch(Plane.XY.offset(C.HEAD_PIVOT_Z - 7.0)):
             with Locations((0, C.NECK_Y_CTR)):
                 RectangleRounded(C.NECK_W, C.NECK_D, radius=5.0)
@@ -304,14 +307,14 @@ def build_top_hood() -> Part:
         with Locations((21.0, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z)):
             Cylinder(radius=C.HEATSET_M3_DIA / 2.0, height=10.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
 
-        # Locating Peg Sockets for B01_Hood_Wing_L/R (exact snap-alignment at X=±22, Y=17.5 & 29.5!)
+        # Locating Peg Sockets for B01_Hood_Wing_L/R (blind 2.1mm pockets at X=±22, Y=17.5 & 29.5!)
         for sgn in (-1.0, 1.0):
             for py in (17.5, 29.5):
-                with Locations((sgn * 22.0, py, C.CHASSIS_Z_TOP - 4.0)):
-                    Cylinder(radius=1.75, height=5.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+                with Locations((sgn * 22.0, py, C.CHASSIS_Z_TOP - 2.1)):
+                    Cylinder(radius=1.75, height=3.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
         # 4× Countersunk Clamshell M3 Bolt Holes (100% accessible outside B01 white wings!)
-        for bx, by in ((-33.5, -39.0), (33.5, -39.0), (-33.5, 16.0), (33.5, 16.0)):
+        for bx, by in ((-boss_x, -39.0), (boss_x, -39.0), (-boss_x, 16.0), (boss_x, 16.0)):
             with Locations((bx, by, C.CHASSIS_SPLIT_Z - 1.0)):
                 Cylinder(radius=C.M3_CLEAR_DIA / 2.0, height=12.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
             with Locations((bx, by, C.CHASSIS_Z_TOP - 2.4)):
@@ -324,7 +327,7 @@ def build_top_hood() -> Part:
 # B01_L / B01_R: Pearl-White Hood Wings Seated Cleanly on A02 Top Deck!
 # ---------------------------------------------------------------------------
 def build_hood_wing(side: str = "L") -> Part:
-    """Sleek pearl-white hood wing seated 0.20mm above A02 top deck (Z=55.2..57.6) w/ Ø2.9mm locating pegs."""
+    """Sleek pearl-white hood wing seated 0.20mm above A02 top deck w/ Ø2.9mm locating pegs."""
     sgn = -1.0 if side == "L" else 1.0
     with BuildPart() as wing:
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 0.2)):
@@ -334,10 +337,10 @@ def build_hood_wing(side: str = "L") -> Part:
             with Locations((sgn * 21.5, 23.5)):
                 RectangleRounded(11.0, 20.5, radius=3.5)
         loft(ruled=True)
-        # Dual Precision Ø2.9mm Alignment Pegs dropping into A02 Ø3.5mm sockets (0.3mm radial + 0.8mm depth clearance!)
+        # Dual Precision Ø2.9mm Alignment Pegs dropping into A02 Ø3.5mm blind sockets (0.3mm radial + 0.3mm depth clearance!)
         for py in (17.5, 29.5):
-            with Locations((sgn * 22.0, py, C.CHASSIS_Z_TOP - 3.2)):
-                Cylinder(radius=1.45, height=4.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            with Locations((sgn * 22.0, py, C.CHASSIS_Z_TOP - 1.8)):
+                Cylinder(radius=1.45, height=2.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
     return _tag(wing.part, f"B01_Hood_Wing_{side}", "white")
 
 
@@ -345,24 +348,24 @@ def build_hood_wing(side: str = "L") -> Part:
 # B02 / B03: Sturdy Pearl-White Side Armor Panels (Zero Collision w/ A01!)
 # ---------------------------------------------------------------------------
 def build_side_fairing(side: str = "L") -> Part:
-    """Sturdy 4.25mm-thick white side armor seated 0.25mm outside A01's flat |X|=40.0 wall, between wheel arches."""
+    """Sturdy 4.25mm-thick white side armor seated 0.25mm outside A01's flat |X|=42.0 wall, between wheel arches."""
     sgn = -1.0 if side == "L" else 1.0
-    x_in = sgn * (C.CHASSIS_W / 2.0 + 0.25)  # |X| = 40.25mm -> 0.25mm clean gap outside A01 wall!
+    x_in = sgn * (C.CHASSIS_W / 2.0 + 0.25)  # |X| = 42.25mm -> 0.25mm clean gap outside A01 wall!
     with BuildPart() as panel:
         with BuildSketch(Plane.YZ.offset(x_in)):
-            with Locations((0.0, 37.5)):
-                RectangleRounded(42.0, 19.5, radius=5.5)
+            with Locations((0.0, 43.0)):
+                RectangleRounded(42.0, 24.0, radius=5.5)
         with BuildSketch(Plane.YZ.offset(x_in + sgn * 4.25)):
-            with Locations((0.0, 38.0)):
-                RectangleRounded(35.0, 14.5, radius=4.0)
+            with Locations((0.0, 43.5)):
+                RectangleRounded(35.0, 18.5, radius=4.0)
         loft(ruled=True)
-        # Crisp wheel-arch clearance cutouts (leaves >=4.5mm sturdy corners, zero fragile thin hooks!)
+        # Crisp wheel-arch clearance cutouts (leaves sturdy corners, zero fragile thin hooks!)
         for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
             with Locations((x_in + sgn * 2.0, y_ax, C.Z_AXLE)):
                 Cylinder(radius=C.WHEEL_R + 2.4, height=14.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
         # Dual Internal M2.5 Pilot Bores (bolted cleanly from inside A01_chassis_tub -> zero external screws!)
         for by in (-10.0, 10.0):
-            with Locations((x_in + sgn * 1.5, by, 37.5)):
+            with Locations((x_in + sgn * 1.5, by, 43.0)):
                 Cylinder(radius=C.M25_PILOT_DIA / 2.0, height=3.6, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
     return _tag(panel.part, f"B02_Side_Fairing_{side}", "white")
 

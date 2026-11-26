@@ -32,12 +32,12 @@ WHEEL_HUB_OD = 30.0         # Deep concave 6-spoke star alloy-style hub
 Z_AXLE = WHEEL_R            # 21.0 mm
 Y_AXLE_F = 30.0             # Front axle (+30mm)
 Y_AXLE_R = -30.0            # Rear axle (-30mm) -> 60mm stable rover wheelbase!
-X_WHEEL = 50.5              # Inner tire ±42mm (2mm clean gap to ±40mm tub), standard 10mm N20 shaft engages 8.5mm deep!
+X_WHEEL = 52.5              # Inner tire ±44mm (2mm clean gap to ±42mm tub), standard 10mm N20 shaft engages 8.0mm deep!
 
 # ---------------------------------------------------------------------------
 # Sculpted Aerodynamic Clamshell Rover Chassis (100% Closed Exterior)
 # ---------------------------------------------------------------------------
-CHASSIS_W = 80.0            # X: -40.0 to +40.0 (inner width 75.0 -> fits 74.5mm 18650 holder)
+CHASSIS_W = 84.0            # X: -42.0 to +42.0 (inner width 79.0 -> fits ANY 74.5~77.5mm Taobao 18650 holder!)
 CHASSIS_L = 104.0           # Y: -50.0 to +54.0 (sloped aerodynamic front nose + fastback rear!)
 CHASSIS_Y_CTR = 2.0
 CHASSIS_Y_MIN = -50.0
@@ -45,8 +45,8 @@ CHASSIS_Y_MAX = 54.0
 CHASSIS_Z_BOT = 15.0        # 15.0mm off-road belly clearance
 CHASSIS_FLOOR_T = 2.5
 CHASSIS_Z_FLOOR = CHASSIS_Z_BOT + CHASSIS_FLOOR_T  # 17.5 mm
-CHASSIS_SPLIT_Z = 48.5      # Clamshell parting seam (with 2.5mm alignment step-lip + front catch tab!)
-CHASSIS_Z_TOP = 55.0        # Rear/mid crown height (front nose slopes smoothly down to Z=38mm!)
+CHASSIS_SPLIT_Z = 60.0      # Raised +11.5mm -> 21.4mm headroom above RPi PCB for pre-soldered pins + 14mm vertical DuPont plugs!
+CHASSIS_Z_TOP = 66.5        # Rear/mid crown height (2.5mm solid roof above 64.0mm DuPont headroom ceiling!)
 
 # ---------------------------------------------------------------------------
 # COTS Hardware Real-World Positions & Dimensions (Datasheet-Verified)
@@ -58,11 +58,11 @@ N20_W = 10.0
 N20_H = 12.0
 N20_SHAFT_D = 3.0
 N20_SHAFT_FLAT = 2.5
-N20_SHAFT_L = 10.0          # Official standard off-the-shelf 10mm D-shaft (engages 8.5mm inside hub collar!)
-N20_OUTER_X = CHASSIS_W / 2.0  # 40.0 mm
+N20_SHAFT_L = 10.0          # Official standard off-the-shelf 10mm D-shaft (engages 8.0mm inside hub collar!)
+N20_OUTER_X = CHASSIS_W / 2.0  # 42.0 mm
 
 # 2. Single 18650 High-Drain (3000mAh 10A) Battery Holder + Cell — DEAD CENTER (50/50 CG!)
-BAT_HOLDER_L = 74.5
+BAT_HOLDER_L = 76.5         # Fits standard off-the-shelf 76.5mm Taobao ABS 18650 holder w/ pre-attached wire leads!
 BAT_HOLDER_W = 21.0
 BAT_HOLDER_H = 19.5
 BAT_Y = 0.0                 # Y: -10.5 to +10.5 -> 14.5mm clear from front & rear N20 (±25mm)!
@@ -82,7 +82,7 @@ AMP_X = 0.0
 AMP_Y = -30.0               # Y: -39..-21 -> 10.5mm clear from battery (-10.5)!
 AMP_Z = CHASSIS_Z_FLOOR + 2.0
 
-# 5. Raspberry Pi Zero 2W (Official 30.0 x 65.0 x 1.6mm, holes 23.0 x 58.0mm)
+# 5. Raspberry Pi Zero 2WH (Official 30.0 x 65.0 x 1.6mm, pre-soldered straight header + 14mm DuPont plugs!)
 RPI_W = 30.0
 RPI_L = 65.0
 RPI_PCB_T = 1.6
@@ -90,17 +90,17 @@ RPI_HOLE_X = 23.0
 RPI_HOLE_Y = 58.0
 RPI_X_CTR = -3.0            # X: -18.0..+12.0
 RPI_Y_CTR = -14.0           # Y: -46.5..+18.5 (Micro-SD flush at rear wall -50 -> tool-free swap!)
-RPI_Z_PCB = 41.0            # 3.5mm clear above 18650 battery top (37.5mm)!
+RPI_Z_PCB = 41.0            # 3.1mm clear above 18650 top; 21.4mm headroom above PCB for straight header + 14mm DuPont!
 
 # 6. IP5328P / SW6106 5V 3A Type-C Power Board (18.0 x 30.0mm)
 PWR_W = 18.0
 PWR_L = 30.0
-PWR_X = 23.0                # X: +14.0..+32.0 -> 2.0mm clear of Pi Zero 2W & clear of rear corner/boss
+PWR_X = 25.0                # X: +16.0..+34.0 -> 4.0mm clear of Pi Zero 2W & clear of rear M3 boss!
 PWR_Y = -31.0               # Rear USB-C port flush inside rear wall Y = -47.0
-PWR_Z = 39.5                # Top at 45.3mm -> 0.7mm clear below A02 step-lip (46.0mm)
+PWR_Z = 39.5                # Cleanly below clamshell split (60.0mm) -> drops straight in vertically!
 
 # 7. SS12D00G3 Slide Power Switch
-SW_X = -24.5                # X: -28.8..-20.2 -> clear of rear-left M3 boss (-29.3) & Pi Zero 2W (-18.0)
+SW_X = -26.5                # X: -30.8..-22.2 -> clear of rear-left M3 boss (-31.3) & Pi Zero 2W (-18.0)
 SW_Y = -44.8                # Body cleanly inside rear wall (-47.0), knob protrudes through rear cutout
 SW_Z = 43.0
 
@@ -111,7 +111,7 @@ NECK_W = 48.0
 NECK_Y_CTR = -8.1
 NECK_D = 36.2               # Upper yoke Y: -26.2..+10.0; lower stalk slimmed to 36x22mm for full tilt!
 HEAD_PIVOT_Y = -2.0
-HEAD_PIVOT_Z = 73.0         # Verified full -20°..+22° pitch clears sloped hood, cowl & white wings!
+HEAD_PIVOT_Z = 84.5         # Shifted +11.5mm w/ hood -> verified -20°..+22° pitch clears hood, cowl & wings!
 
 MG90S_L = 22.6
 MG90S_W = 12.1
@@ -124,11 +124,11 @@ MG90S_SHAFT_OFFSET = 5.4
 # ---------------------------------------------------------------------------
 HEAD_W = 88.0               # Wide athletic 1.40:1 proportion
 HEAD_D = 68.0
-HEAD_H = 63.0               # Z = 68.0 .. 131.0 mm (Total robot height = 131.0 mm)
+HEAD_H = 63.0               # Z = 79.5 .. 142.5 mm (Total robot height = 142.5 mm)
 HEAD_Y_CTR = -2.0           # Centered right over HEAD_PIVOT_Y for balanced full-range tilt!
-HEAD_Z_CTR = 99.5
-HEAD_Z_BOT = HEAD_Z_CTR - HEAD_H / 2.0   # 68.0
-HEAD_Z_TOP = HEAD_Z_CTR + HEAD_H / 2.0   # 131.0
+HEAD_Z_CTR = 111.0
+HEAD_Z_BOT = HEAD_Z_CTR - HEAD_H / 2.0   # 79.5
+HEAD_Z_TOP = HEAD_Z_CTR + HEAD_H / 2.0   # 142.5
 HEAD_Y_FRONT = HEAD_Y_CTR + HEAD_D / 2.0 # 32.0
 HEAD_Y_BACK = HEAD_Y_CTR - HEAD_D / 2.0  # -36.0
 
@@ -141,7 +141,7 @@ LCD_GLASS_H = 34.6
 LCD_GLASS_T = 2.1
 LCD_AA_W = 40.8
 LCD_AA_H = 30.6
-LCD_Z_CTR = 87.2            # PCB Z: 68.96..105.44, Active Z: 71.9..102.5
+LCD_Z_CTR = 98.7            # PCB Z: 80.46..116.94, Active Z: 83.4..114.0 (34mm open rear room for DuPont plugs!)
 LCD_Y_PCB = 17.8            # SPI pins Y_min=11.3 (> MG90S 11.0); eyes Y_max=22.55 (< CAM 22.70)!
 
 # 9. Visor-Integrated OV5647 / IMX219 5MP 160° Wide-Angle CSI Camera
@@ -153,13 +153,13 @@ CAM_HOLE_Z = 12.5
 CAM_LENS_DIA = 14.0
 CAM_LENS_L = 8.5
 CAM_Y_PCB = 24.5            # Rear connector at 22.7 -> clear of LCD eyes (22.55mm)!
-CAM_Z_CTR = 111.5           # PCB Z: 99.5..123.5 (inside full-depth visor brow!), Lens right in upper visor bar!
+CAM_Z_CTR = 123.0           # PCB Z: 111.0..135.0 (inside full-depth visor brow!), Lens right in upper visor bar!
 
 # 10. 28mm 8-Ohm 2W Speaker (Rear crown)
 SPK_DIA = 28.0
 SPK_H = 5.0
 SPK_Y = -10.0               # Y: -24.0..+4.0 -> centered cleanly inside B04 crown!
-SPK_Z_TOP = HEAD_Z_TOP - 6.0  # 125.0mm (2.5mm clear below B04 inner roof 127.5mm & 3.85mm below A07 grille!)
+SPK_Z_TOP = HEAD_Z_TOP - 6.0  # 136.5mm (2.5mm clear below B04 inner roof 139.0mm & 3.85mm below A07 grille!)
 
 # 11. INMP441 I2S MEMS Microphone (Mounted cleanly in chin, clear of neck & LCD!)
 MIC_W = 14.0
@@ -167,7 +167,7 @@ MIC_H = 14.0
 MIC_T = 1.6
 MIC_X = 0.0
 MIC_Y = 17.5                # Y: +10.5..+24.5 -> clear in front of neck (+10.0) & inside B04 chin!
-MIC_Z = 66.8                # Z: 66.0..68.6 -> 0.36mm clear below LCD PCB (68.96mm)!
+MIC_Z = 78.3                # Z: 77.5..80.1 -> 0.36mm clear below LCD PCB (80.46mm)!
 
 # ---------------------------------------------------------------------------
 # Refined Terra-Rover Consumer Product CMF Palette (RGBA 0..1)

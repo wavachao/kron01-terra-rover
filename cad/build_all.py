@@ -239,10 +239,10 @@ def render_engineering_views(all_submeshes: list, out_path: Path, dims_str: str)
         )
         ax.add_collection3d(poly)
 
-        lim = 104 if explode > 0 else 76
+        lim = 104 if explode > 0 else 78
         ax.set_xlim(-lim, lim)
         ax.set_ylim(-lim, lim)
-        ax.set_zlim(-10 if explode > 0 else 0, 195 if explode > 0 else 140)
+        ax.set_zlim(-10 if explode > 0 else 0, 210 if explode > 0 else 155)
         ax.set_box_aspect([1, 1, 0.95])
         ax.view_init(elev=elev, azim=azim)
         ax.tick_params(colors="#6e7681", labelsize=8)
