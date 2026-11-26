@@ -145,10 +145,10 @@ def build_head_core() -> Part:
             with Locations((sgn * 31.2, C.HEAD_Y_CTR - 1.0, C.HEAD_Z_CTR - 1.0)):
                 Cylinder(radius=4.5, height=5.0, rotation=(0, 90, 0))
                 Cylinder(radius=C.HEATSET_M3_DIA / 2.0, height=7.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-            # Dual Front M2.5 Visor-Mask Mounting Ears (Y=19.8..22.0 -> 0.4mm in front of LCD PCB, behind A08 tabs at Y=22.4!)
-            with Locations((sgn * 31.2, 20.9, C.HEAD_Z_CTR - 2.0)):
-                Box(4.8, 2.2, 11.0)
-            with Locations((sgn * 31.2, 20.5, C.HEAD_Z_CTR - 2.0)):
+            # Dual Front M2.5 Visor-Mask Mounting Ears (|X|=28.4..32.6, Y=19.8..22.0 -> zero-snag vertical slip-in into B04!)
+            with Locations((sgn * 30.5, 20.9, C.HEAD_Z_CTR - 2.0)):
+                Box(4.2, 2.2, 11.0)
+            with Locations((sgn * 30.5, 20.5, C.HEAD_Z_CTR - 2.0)):
                 Cylinder(radius=C.M25_PILOT_DIA / 2.0, height=5.5, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
 
     return _tag(core.part, "A06_Head_Core", "charcoal")
@@ -162,7 +162,7 @@ def _build_helmet_outer_dome() -> Part:
     with BuildPart() as dome_bp:
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT)):
             with Locations((0, yc)):
-                RectangleRounded(76.0, 60.0, radius=16.0)
+                RectangleRounded(76.6, 60.4, radius=12.5)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 12.0)):
             with Locations((0, yc)):
                 RectangleRounded(86.0, 68.0, radius=20.0)
@@ -191,14 +191,14 @@ def build_head_shell() -> Part:
     yc = C.HEAD_Y_CTR
     outer_dome = _build_helmet_outer_dome()
 
-    # Conformal inner cavity loft (inset >=3.5–4.5mm everywhere -> solid roof & >=4mm side ear-pad walls!)
+    # Conformal inner cavity loft (inset >=2.7–4.5mm everywhere -> solid roof, solid ear pads & zero-snag vertical slip-in!)
     with BuildPart() as inner_bp:
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT - 0.5)):
             with Locations((0, yc)):
-                RectangleRounded(69.0, 53.0, radius=13.0)
+                RectangleRounded(70.6, 54.4, radius=9.5)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 12.0)):
             with Locations((0, yc)):
-                RectangleRounded(75.0, 60.0, radius=16.5)
+                RectangleRounded(75.0, 60.0, radius=15.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 50.0)):
             with Locations((0, yc)):
                 RectangleRounded(75.0, 60.0, radius=17.5)
@@ -290,11 +290,11 @@ def build_visor_mask() -> Part:
         add(visor_inner_bp.part, mode=Mode.SUBTRACT)
         add(clip_bp.part, mode=Mode.INTERSECT)
 
-        # Dual Rear Mounting Tabs (Y=22.4..30.6 -> fused solidly into visor back, bolts onto A06 ears at Y=22.0!)
+        # Dual Rear Mounting Tabs (X=±30.5, Y=22.4..30.6 -> coaxial with A06 front mounting ears at Y=22.0!)
         for sgn in (-1.0, 1.0):
-            with Locations((sgn * 31.2, 26.5, C.HEAD_Z_CTR - 2.0)):
-                Box(4.6, 8.2, 10.5)
-            with Locations((sgn * 31.2, 24.0, C.HEAD_Z_CTR - 2.0)):
+            with Locations((sgn * 30.5, 26.5, C.HEAD_Z_CTR - 2.0)):
+                Box(4.2, 8.2, 10.5)
+            with Locations((sgn * 30.5, 24.0, C.HEAD_Z_CTR - 2.0)):
                 Cylinder(radius=C.M25_PILOT_DIA / 2.0 + 0.55, height=8.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
 
         # OV5647 Camera Lens Through-Bore (Ø14.6mm) + Clean Rear-Only M12 Square Base & PCB Pocket (zero front breakthrough!)

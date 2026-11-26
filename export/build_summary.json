@@ -9,13 +9,13 @@
   "plates": {
     "plate_A_charcoal": {
       "count": 13,
-      "vol_cm3": 176.7,
-      "est_mass_g": 135.9
+      "vol_cm3": 176.6,
+      "est_mass_g": 135.8
     },
     "plate_B_white": {
       "count": 5,
-      "vol_cm3": 74.7,
-      "est_mass_g": 57.4
+      "vol_cm3": 73.6,
+      "est_mass_g": 56.6
     },
     "plate_C_orange": {
       "count": 4,
@@ -23,7 +23,7 @@
       "est_mass_g": 0.9
     }
   },
-  "total_filament_g": 194.2,
+  "total_filament_g": 193.3,
   "all_cots_clear": true,
   "clearances": [
     {
@@ -342,7 +342,7 @@
         50.7,
         56.7
       ],
-      "vol_cm3": 27.7,
+      "vol_cm3": 27.67,
       "est_mass_g": 21.3
     },
     {
@@ -364,8 +364,8 @@
         13.1,
         52.6
       ],
-      "vol_cm3": 7.06,
-      "est_mass_g": 5.4
+      "vol_cm3": 6.95,
+      "est_mass_g": 5.3
     },
     {
       "name": "A09_ear_hub_L",
@@ -393,12 +393,12 @@
       "name": "B04_head_shell",
       "plate": "plate_B_white",
       "size_mm": [
-        95.8,
-        71.3,
+        95.7,
+        71.1,
         63.0
       ],
-      "vol_cm3": 69.34,
-      "est_mass_g": 53.3
+      "vol_cm3": 68.27,
+      "est_mass_g": 52.5
     }
   ]
 }
