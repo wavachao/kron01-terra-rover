@@ -95,23 +95,23 @@ RPI_Z_PCB = 41.0            # 3.5mm clear above 18650 battery top (37.5mm)!
 # 6. IP5328P / SW6106 5V 3A Type-C Power Board (18.0 x 30.0mm)
 PWR_W = 18.0
 PWR_L = 30.0
-PWR_X = 26.5                # X: +17.5..+35.5 -> 5.5mm clear of Pi Zero 2W
-PWR_Y = -32.0               # Rear USB-C port flush at Y = -47.0
-PWR_Z = 41.5
+PWR_X = 23.0                # X: +14.0..+32.0 -> 2.0mm clear of Pi Zero 2W & clear of rear corner/boss
+PWR_Y = -31.0               # Rear USB-C port flush inside rear wall Y = -47.0
+PWR_Z = 39.5                # Top at 45.3mm -> 0.7mm clear below A02 step-lip (46.0mm)
 
 # 7. SS12D00G3 Slide Power Switch
-SW_X = -27.5
-SW_Y = -47.0
+SW_X = -24.5                # X: -28.8..-20.2 -> clear of rear-left M3 boss (-29.3) & Pi Zero 2W (-18.0)
+SW_Y = -44.8                # Body cleanly inside rear wall (-47.0), knob protrudes through rear cutout
 SW_Z = 43.0
 
 # ---------------------------------------------------------------------------
-# Low-Profile Sculpted Neck Turret & Head Tilt Mechanism (-20°..+25° Collision-Free!)
+# Low-Profile Sculpted Neck Turret & Head Tilt Mechanism (-20°..+22° Collision-Free!)
 # ---------------------------------------------------------------------------
-NECK_W = 46.0
-NECK_Y_CTR = -2.0
-NECK_D = 26.0
+NECK_W = 48.0
+NECK_Y_CTR = -8.1
+NECK_D = 36.2               # Upper yoke Y: -26.2..+10.0; lower stalk slimmed to 36x22mm for full tilt!
 HEAD_PIVOT_Y = -2.0
-HEAD_PIVOT_Z = 69.5         # Verified full -20° pitch-down clears sloped hood by >3.5mm!
+HEAD_PIVOT_Z = 73.0         # Verified full -20°..+22° pitch clears sloped hood, cowl & white wings!
 
 MG90S_L = 22.6
 MG90S_W = 12.1
@@ -120,17 +120,17 @@ MG90S_FLANGE_L = 32.5
 MG90S_SHAFT_OFFSET = 5.4
 
 # ---------------------------------------------------------------------------
-# Terra-Rover Wide-Sleek Astronaut Helmet Head (86W × 66D × 58H mm)
+# Terra-Rover Wide-Sleek Astronaut Helmet Head (88W × 68D × 63H mm)
 # ---------------------------------------------------------------------------
-HEAD_W = 86.0               # Wide athletic 1.48:1 proportion
-HEAD_D = 66.0
-HEAD_H = 58.0               # Z = 64.5 .. 122.5 mm (Total robot height = 122.5 mm)
-HEAD_Y_CTR = -1.0
-HEAD_Z_CTR = 93.5
-HEAD_Z_BOT = HEAD_Z_CTR - HEAD_H / 2.0   # 64.5
-HEAD_Z_TOP = HEAD_Z_CTR + HEAD_H / 2.0   # 122.5
+HEAD_W = 88.0               # Wide athletic 1.40:1 proportion
+HEAD_D = 68.0
+HEAD_H = 63.0               # Z = 68.0 .. 131.0 mm (Total robot height = 131.0 mm)
+HEAD_Y_CTR = -2.0           # Centered right over HEAD_PIVOT_Y for balanced full-range tilt!
+HEAD_Z_CTR = 99.5
+HEAD_Z_BOT = HEAD_Z_CTR - HEAD_H / 2.0   # 68.0
+HEAD_Z_TOP = HEAD_Z_CTR + HEAD_H / 2.0   # 131.0
 HEAD_Y_FRONT = HEAD_Y_CTR + HEAD_D / 2.0 # 32.0
-HEAD_Y_BACK = HEAD_Y_CTR - HEAD_D / 2.0  # -34.0
+HEAD_Y_BACK = HEAD_Y_CTR - HEAD_D / 2.0  # -36.0
 
 # 8. 2.0-inch ST7789V IPS TFT Display (Flush behind Edge-to-Edge Pitch-Black Visor!)
 LCD_PCB_W = 61.12
@@ -141,8 +141,8 @@ LCD_GLASS_H = 34.6
 LCD_GLASS_T = 2.1
 LCD_AA_W = 40.8
 LCD_AA_H = 30.6
-LCD_Z_CTR = 87.5            # PCB Z: 69.26..105.74, Active Z: 72.2..102.8
-LCD_Y_PCB = 18.5            # 1.8mm clear of OV5647 & 1.0mm clear of MG90S!
+LCD_Z_CTR = 87.2            # PCB Z: 68.96..105.44, Active Z: 71.9..102.5
+LCD_Y_PCB = 17.8            # SPI pins Y_min=11.3 (> MG90S 11.0); eyes Y_max=22.55 (< CAM 22.70)!
 
 # 9. Visor-Integrated OV5647 / IMX219 5MP 160° Wide-Angle CSI Camera
 CAM_PCB_W = 25.0
@@ -152,21 +152,22 @@ CAM_HOLE_X = 21.0
 CAM_HOLE_Z = 12.5
 CAM_LENS_DIA = 14.0
 CAM_LENS_L = 8.5
-CAM_Y_PCB = 26.5            # Rear connector at 24.5 -> 1.95mm clear of LCD!
-CAM_Z_CTR = 108.0           # PCB Z: 96.0..120.0 (inside 122.5 crown!), Lens right in upper visor bar!
+CAM_Y_PCB = 24.5            # Rear connector at 22.7 -> clear of LCD eyes (22.55mm)!
+CAM_Z_CTR = 111.5           # PCB Z: 99.5..123.5 (inside full-depth visor brow!), Lens right in upper visor bar!
 
 # 10. 28mm 8-Ohm 2W Speaker (Rear crown)
 SPK_DIA = 28.0
 SPK_H = 5.0
-SPK_Y = -14.0
-SPK_Z_TOP = HEAD_Z_TOP - 3.0  # 119.5mm
+SPK_Y = -10.0               # Y: -24.0..+4.0 -> centered cleanly inside B04 crown!
+SPK_Z_TOP = HEAD_Z_TOP - 6.0  # 125.0mm (2.5mm clear below B04 inner roof 127.5mm & 3.85mm below A07 grille!)
 
-# 11. INMP441 I2S MEMS Microphone (Chin shelf cleanly behind LCD & SPI header)
+# 11. INMP441 I2S MEMS Microphone (Mounted cleanly in chin, clear of neck & LCD!)
 MIC_W = 14.0
 MIC_H = 14.0
 MIC_T = 1.6
-MIC_Y = 3.0
-MIC_Z = 66.0
+MIC_X = 0.0
+MIC_Y = 17.5                # Y: +10.5..+24.5 -> clear in front of neck (+10.0) & inside B04 chin!
+MIC_Z = 66.8                # Z: 66.0..68.6 -> 0.36mm clear below LCD PCB (68.96mm)!
 
 # ---------------------------------------------------------------------------
 # Refined Terra-Rover Consumer Product CMF Palette (RGBA 0..1)

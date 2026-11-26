@@ -479,10 +479,10 @@ def build_fastener_kit() -> Compound:
     for i, (x, y) in enumerate(((-33.5, -39.0), (33.5, -39.0), (-33.5, 16.0), (33.5, 16.0))):
         items.append(build_din912_screw(3.0, 8.0, f"M3x8_TopHood_{i+1}").move(Location((x, y, C.CHASSIS_Z_TOP - 2.0))))
         items.append(build_brass_insert(4.5, 4.0, 2.5, f"Insert_TopHood_{i+1}").move(Location((x, y, C.CHASSIS_SPLIT_Z))))
-    # Head Shell Lock 2x M3x10 bolts + Brass Inserts (A09 Ear Hub -> B04 Shell -> A06 Core!)
+    # Head Shell Lock 2x M3x14 bolts + Brass Inserts (A09 Ear Hub -> B04 Shell -> A06 Core!)
     for side, sgn in (("L", -1.0), ("R", 1.0)):
-        items.append(build_din912_screw(3.0, 10.0, f"M3x10_EarLock_{side}").move(Location((sgn * 45.8, C.HEAD_Y_CTR - 2.0, C.HEAD_Z_CTR - 1.0), (0, -90 if sgn < 0 else 90, 0))))
-        items.append(build_brass_insert(4.5, 4.0, 2.5, f"Insert_EarLock_{side}").move(Location((sgn * 34.0, C.HEAD_Y_CTR - 2.0, C.HEAD_Z_CTR - 1.0), (0, 90 if sgn < 0 else -90, 0))))
+        items.append(build_din912_screw(3.0, 14.0, f"M3x14_EarLock_{side}").move(Location((sgn * 45.8, C.HEAD_Y_CTR - 1.0, C.HEAD_Z_CTR - 1.0), (0, -90 if sgn < 0 else 90, 0))))
+        items.append(build_brass_insert(4.5, 4.0, 2.5, f"Insert_EarLock_{side}").move(Location((sgn * 33.7, C.HEAD_Y_CTR - 1.0, C.HEAD_Z_CTR - 1.0), (0, 90 if sgn < 0 else -90, 0))))
     # Coaxial Right Neck Pivot M3x10 bolt + Brass Insert inside A02_Top_Hood neck!
     items.append(build_din912_screw(3.0, 10.0, "M3x10_NeckPivot_R").move(Location((31.5, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, 90, 0))))
     items.append(build_brass_insert(4.5, 4.0, 2.5, "Insert_NeckPivot_R").move(Location((21.0, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, -90, 0))))
