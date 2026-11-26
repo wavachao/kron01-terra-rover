@@ -7,7 +7,7 @@
 [![CAD & DFM Verification](https://github.com/wavachao/kron01-terra-rover/actions/workflows/ci.yml/badge.svg)](https://github.com/wavachao/kron01-terra-rover/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/wavachao/kron01-terra-rover?include_prereleases&label=Release&color=blue)](https://github.com/wavachao/kron01-terra-rover/releases/latest)
 ![CAD Engine](https://img.shields.io/badge/CAD-build123d%20B--Rep-0ea5e9)
-![DFM Audit](https://img.shields.io/badge/DFM%20Audit-38%2F38%20STLs%20Watertight-10b981)
+![DFM Audit](https://img.shields.io/badge/DFM%20Audit-40%2F40%20STLs%20Watertight-10b981)
 ![Platform](https://img.shields.io/badge/Compute-Raspberry%20Pi%20Zero%202W-c51a4a)
 
 <br />
@@ -37,10 +37,14 @@
 **KRON-01V5 Terra-Rover** 是一款面向桌面视觉交互与具身智能实验的开源四驱（4WD）AI 伴侣机器人。整机采用 Python 参数化实体建模框架 [`build123d`](https://github.com/gumyr/build123d) 从零构建 B-Rep CAD，完整覆盖真实 COTS 硬件干涉校验、电气引脚与 5V/3A 满载防掉电仿真、DFM 水密流形审计以及嘉立创/自用 FDM 双路线交付。
 
 - **低趴宽体四驱工业设计**：`122.0 × 109.2 × 142.4 mm` 紧凑比例，配备 `4× Ø42 mm` 宽体越野胎、6 辐深凹轮毂与暗金细圈，支持原地 360° 零半径差速转向。
-- **宇航头盔一体化隐形视觉**：`88 × 68 × 63 mm` 宽扁流线等厚保形头盔配合全黑曲面护目镜面罩（`A08_visor_mask`），将 `OV5647` 160° 广角 CSI 镜头与 `2.0"` ST7789V 表情彩屏无缝隐藏于面罩内，底部敞口可直接套入 `A06` 内胆。
-- **免电烙铁掀盖快装（Clamshell）**：外观全封闭流线造型，底盘内宽 `79.0 mm` 直接兼容常规 `76.5 mm` 淘宝 18650 电池盒；顶盖内留 `21.4 mm` 超高净空，直接支持**预焊直针树莓派 Zero 2WH + 标准 14 mm 立式杜邦母头**插接，无需电烙铁改针。
+- **外壳全榫卯免工具快拆（零外壳螺丝 / 零热熔螺母）**：
+  - **顶盖 5 点滑插榫 + 尾锁销**：`A02_top_hood` 垂直落位并前推 `5 mm` 刚性互锁全部 5 组实心 L 榫，车尾插入楔形燕尾锁销 [`A10_hood_lock_key`](export/stl_plate_A_charcoal/A10_hood_lock_key.stl) 即锁死，3 秒徒手开盖；
+  - **侧白护甲 & 引擎盖白翼**：`B02/B03` 采用垂直燕尾滑槽（由顶盖侧檐限位）、`B01` 采用隐藏钥匙孔燕尾滑槽，全程零螺丝免胶水；
+  - **头盔单反式 90° 旋锁耳罩 + 楔形面罩**：`A09` 耳罩插入旋转 `90°` 咔哒锁死 `B04` 头壳与 `A06` 内胆，`A08` 曲面黑面罩双楔形暗榫直插快拆；
+  - **内部电路板嵌入式金属六角螺母暗槽**：树莓派、N20 电机压板、屏幕、镜头与右颈转轴全部采用免电烙铁 **Captive Hex Nut Slot（普通 DIN 934 M2/M2.5/M3 金属螺母徒手滑入）**，彻底告别光敏树脂攻丝开裂与热熔螺母。
+- **免电烙铁立式杜邦大空间**：底盘内宽 `79.0 mm` 直接兼容常规 `76.5 mm` 淘宝 18650 电池盒；顶盖内留 `21.4 mm` 超高净空，直接支持**预焊直针树莓派 Zero 2WH + 标准 14 mm 立式杜邦母头**插接。
 - **零拆机日常开发与维护**：后壁外露 **Micro-SD 快捷槽口**、**5V/3A Type-C 充供电口**、**总电源开关** 及 **USB-OTG 扩展口**；树莓派 Zero 2W 运行完整 Linux，日常迭代通过 Wi-Fi / SSH / OTA 即可完成，无需拆机。
-- **全流程自动化 DFM 零碰撞质量门禁**：全部 38 个导出 STL（3 盘分色 22 件 + 嘉立创 16 件）均通过水密单体流形（`Shells == 1`）、全量 B-Rep 零碰撞（打印件↔打印件 0 干涉、打印件↔硬件 0 干涉、`-20° ~ +22°` 头部俯仰 0 碰撞）与 `180×180×180 mm`（Bambu A1 mini）打印尺寸校验。
+- **全流程自动化 DFM 零碰撞质量门禁**：全部 40 个导出 STL（3 盘分色 23 件 + 嘉立创 17 件）均通过水密单体流形（`Shells == 1`）、全量 B-Rep 零碰撞（打印件↔打印件 0 干涉、打印件↔硬件 0 干涉、`-20° ~ +22°` 头部俯仰 0 碰撞、全部榫卯装拆路径 0 剐蹭）与 `180×180×180 mm`（Bambu A1 mini）打印尺寸校验。
 
 ---
 
@@ -52,13 +56,13 @@
 | :--- | :--- | :---: |
 | **整机外包络尺寸** | `122.0 (W) × 109.2 (L) × 142.4 (H) mm`（轴距 `60.0 mm`） | **PASS** |
 | **整机质量与静态重心** | 估算总重 `431.5 g`，重心 `Y = +0.37 mm`（居中于 `[-30, +30] mm` 支承多边形内，50/50 配重） | **PASS** |
-| **全量 B-Rep 零碰撞审计** | 打印件↔打印件 `0` 干涉 · 打印件↔硬件 `0` 干涉 · `26/26` COTS 间隙 · `-20° ~ +22°` 俯仰 `0` 碰撞 · 立式杜邦头 `0` 干涉 | **PASS** |
-| **3D 打印 DFM 审计** | `38 / 38` 个导出 STL 为 100% 水密单体流形（`Watertight=True`, `Shells=1`），适配 `180×180 mm` 热床 | **PASS** |
+| **全量 B-Rep 零碰撞审计** | 打印件↔打印件 `0` 干涉 · 打印件↔硬件 `0` 干涉 · `26/26` COTS 间隙 · `-20° ~ +22°` 俯仰 `0` 碰撞 · 全榫卯装拆 `0` 干涉 | **PASS** |
+| **3D 打印 DFM 审计** | `40 / 40` 个导出 STL 为 100% 水密单体流形（`Watertight=True`, `Shells=1`），适配 `180×180 mm` 热床 | **PASS** |
 | **电气连线与 GPIO 审计** | 共 `44` 路连接（含 MIPI CSI-2 FFC 与 4WD 并联），占用 `15` 个 BCM GPIO，`0` 冲突；保留空闲 `I2C1` / `UART0` | **PASS** |
 | **5V/3A 满载防掉电** | 4WD + YOLO + 舵机 + 功放峰值 `2337 mA`（IP5328P `77.9%` 负载，DRV8833 `420 mA/路 < 1500 mA`） | **PASS** |
 | **续航能力（3000mAh 18650）** | 典型混合视觉交互 `2.45 h`（Linux 待机 `5.89 h` / 持续视觉追踪 `1.55 h`） | **PASS** |
 | **头部俯仰舵机裕度** | 需求扭矩 `0.227 kg·cm` vs MG90S 额定 `1.8 kg·cm`（`7.9×` 安全系数） | **PASS** |
-| **耗材与打印体积** | 22 个实物零件（16 个独立 STL），约 `214.7 g` PLA / `279.2 cm³`（分 3 盘单色打印） | **PASS** |
+| **耗材与打印体积** | 23 个实物零件（17 个独立 STL），约 `221.3 g` PLA / `287.7 cm³`（分 3 盘单色打印） | **PASS** |
 
 ---
 
@@ -72,8 +76,8 @@
 
 | 发布资产 | 适用场景 | 包含内容 |
 | :--- | :--- | :--- |
-| [`jlc3dp_ready_16_stl.zip`](https://github.com/wavachao/kron01-terra-rover/releases/latest/download/jlc3dp_ready_16_stl.zip) | **嘉立创 3D 打印（JLC3DP）一键下单** | 16 个归零居中单体水密 STL（共对应 22 个实物件）+ [`嘉立创下单数量与材料对照表.txt`](export/jlc3dp_ready/%E5%98%89%E7%AB%8B%E5%88%9B%E4%B8%8B%E5%8D%95%E6%95%B0%E9%87%8F%E4%B8%8E%E6%9D%90%E6%96%99%E5%AF%B9%E7%85%A7%E8%A1%A8.txt) |
-| `kron01-terra-rover-<tag>-fdm-plates-stl.zip` | **自用单色 FDM 打印机** | 按 3 盘分色整理的 22 件 STL + STEP（`plate_A_charcoal` / `plate_B_white` / `plate_C_orange`） |
+| [`jlc3dp_ready_17_stl.zip`](https://github.com/wavachao/kron01-terra-rover/releases/latest/download/jlc3dp_ready_17_stl.zip) | **嘉立创 3D 打印（JLC3DP）一键下单** | 17 个归零居中单体水密 STL（共对应 23 个实物件，含 `A10` 燕尾锁销）+ [`嘉立创下单数量与材料对照表.txt`](export/jlc3dp_ready/%E5%98%89%E7%AB%8B%E5%88%9B%E4%B8%8B%E5%8D%95%E6%95%B0%E9%87%8F%E4%B8%8E%E6%9D%90%E6%96%99%E5%AF%B9%E7%85%A7%E8%A1%A8.txt) |
+| `kron01-terra-rover-<tag>-fdm-plates-stl.zip` | **自用单色 FDM 打印机** | 按 3 盘分色整理的 23 件 STL + STEP（`plate_A_charcoal` / `plate_B_white` / `plate_C_orange`） |
 | [`KRON01_Printed_Assembly.3mf`](https://github.com/wavachao/kron01-terra-rover/releases/latest/download/KRON01_Printed_Assembly.3mf) | **Bambu Studio / OrcaSlicer / PrusaSlicer** | 多零件预分组 3MF 切片工程文件，直接拖入切片软件即可排版 |
 | `kron01-terra-rover-<tag>-cad-step.zip` | **二次开发 / SolidWorks / Fusion 360** | 完整总装 STEP、打印件总装 STEP、21 件 COTS 硬件独立 STEP 及 `build_summary.json` |
 | `kron01-terra-rover-<tag>-simulator.zip` | **离线仿真与接线查阅** | 独立运行的 3D 数字孪生仿真台 HTML 与电气/运动学仿真报告 JSON |
@@ -84,10 +88,10 @@
 <details>
 <summary><b>路线 A：嘉立创 3D 打印（JLC3DP）直接下单</b></summary>
 
-1. 从 [Releases](https://github.com/wavachao/kron01-terra-rover/releases/latest) 下载 `jlc3dp_ready_16_stl.zip` 并解压（或直接浏览 [`export/jlc3dp_ready/`](export/jlc3dp_ready/)）。
-2. 将 16 个 `.stl` 文件批量上传至嘉立创 3D 打印平台（均为单体水密流形，无需拆件）。
+1. 从 [Releases](https://github.com/wavachao/kron01-terra-rover/releases/latest) 下载 `jlc3dp_ready_17_stl.zip` 并解压（或直接浏览 [`export/jlc3dp_ready/`](export/jlc3dp_ready/)）。
+2. 将 17 个 `.stl` 文件批量上传至嘉立创 3D 打印平台（均为单体水密流形，无需拆件）。
 3. 严格按照 [`嘉立创下单数量与材料对照表.txt`](export/jlc3dp_ready/%E5%98%89%E7%AB%8B%E5%88%9B%E4%B8%8B%E5%8D%95%E6%95%B0%E9%87%8F%E4%B8%8E%E6%9D%90%E6%96%99%E5%AF%B9%E7%85%A7%E8%A1%A8.txt) 设置每件的 **数量（x1 / x2 / x4）** 与 **推荐材料**：
-   - `01`–`07`、`09`–`10`（结构件/轮毂/内胆）：黑色树脂 或 尼龙 PA12
+   - `01`–`07`、`09`–`10`、`17`（结构件/轮毂/内胆/顶盖锁销）：黑色树脂 或 尼龙 PA12
    - `08`（曲面黑面罩）：高光黑树脂 或 喷亮黑漆
    - `11`–`15`（白色外甲/宇航头盔壳）：9000R / 6060 白色树脂
    - `16`（轮毂细圈 `×4`）：白色树脂自喷暗金/橙漆 或 橙色 PLA
@@ -98,10 +102,10 @@
 <summary><b>路线 B：自用 FDM 3D 打印机（Bambu A1 mini 及以上均可）</b></summary>
 
 - 直接导入 [`export/full_assembly/KRON01_Printed_Assembly.3mf`](export/full_assembly/KRON01_Printed_Assembly.3mf)，或按 3 盘分色切片打印：
-  - **盘 A — 哑光枪灰 / 碳黑 PLA**（13 件，`155.7 g`）：[`export/stl_plate_A_charcoal/`](export/stl_plate_A_charcoal/)
-  - **盘 B — 珍珠白 PLA**（5 件，`58.1 g`）：[`export/stl_plate_B_white/`](export/stl_plate_B_white/)
+  - **盘 A — 哑光枪灰 / 碳黑 PLA**（14 件，`162.6 g`）：[`export/stl_plate_A_charcoal/`](export/stl_plate_A_charcoal/)
+  - **盘 B — 珍珠白 PLA**（5 件，`57.8 g`）：[`export/stl_plate_B_white/`](export/stl_plate_B_white/)
   - **盘 C — 暗金 / 香槟橙 PLA**（4 件，`0.9 g`）：[`export/stl_plate_C_orange/`](export/stl_plate_C_orange/)
-- **推荐切片参数**：`0.4 mm` 喷嘴、`0.20 mm` 层高、3 层壁厚、15%–20% Gyroid 填充；所有孔位已按 `0.25 mm` 常规间隙与 `0.15 mm` 紧配合预设 FDM 公差。
+- **推荐切片参数**：`0.4 mm` 喷嘴、`0.20 mm` 层高、3 层壁厚、15%–20% Gyroid 填充；所有榫卯滑槽与嵌入式六角螺母槽已预留 `0.22–0.30 mm` 公差。
 
 </details>
 
@@ -132,7 +136,7 @@
 | **四驱动力** | GA12-N20 6V 120RPM 金属减速电机 ×4 + DRV8833 双 H 桥 | 4 + 1 | ¥45 | 左右并联 4WD 差速越野驱动（标准 10mm D 轴） |
 | **头部俯仰** | MG90S 金属齿微型舵机 | 1 | ¥9 | 硬件 PWM1 驱动，-20° ~ +22° 无抖动抬头/低头追踪 |
 | **供电系统** | IP5328P / SW6106 5V/3A 充放板 + 3000mAh 10A 18650 + 开关 | 1 套 | ¥26 | 15W 稳压输出防掉电重启，支持边充边用 |
-| **轮胎与紧固** | Ø42mm 宽体越野橡胶胎 ×4 + M2/M2.5/M3 螺丝与热熔铜螺母 | 1 套 | ¥16 | 越野抓地、电机防甩压板及外壳机械定位锁紧 |
+| **轮胎与紧固** | Ø42mm 宽体越野橡胶胎 ×4 + 普通 DIN 934 M2/M2.5/M3 螺丝与六角螺母（**免热熔螺母**） | 1 套 | ¥16 | 越野抓地、电机防甩压板及内部板卡金属螺母紧固 |
 
 ### Raspberry Pi Zero 2W 总线与 GPIO 分配速览
 
@@ -179,14 +183,14 @@ pip install -r cad/requirements.txt
 # 1) 完整重建 CAD、COTS 干涉检查、导出 STEP/STL/3MF/JLC3DP 与渲染工程图
 python cad/build_all.py
 
-# 2) 运行 38 个 STL 水密性、单体流形 (shells == 1) 与 180mm 打印热床审计
+# 2) 运行 40 个 STL 水密性、单体流形 (shells == 1) 与 180mm 打印热床审计
 python cad/dfm_audit.py
 
 # 3) 运行 44 路电气网表、5V/3A 满载功耗与 4WD 动力学/重心仿真
 python cad/simulate_system.py
 
 # 4) 本地生成与 GitHub Release 完全一致的制造发布包及 SHA256SUMS.txt
-python scripts/package_release.py --version v1.0.0 --output dist
+python scripts/package_release.py --version v1.2.0 --output dist
 (cd dist && sha256sum -c SHA256SUMS.txt)
 ```
 
@@ -196,10 +200,10 @@ python scripts/package_release.py --version v1.0.0 --output dist
 
 - **方式一（推送语义化版本标签）**：
   ```bash
-  git tag v1.0.0
-  git push origin v1.0.0
+  git tag v1.2.0
+  git push origin v1.2.0
   ```
-- **方式二（GitHub Actions 手动触发）**：在仓库 **Actions → Release Manufacturing Packages → Run workflow** 中输入版本号（如 `v1.0.0`），流水线将自动通过全部 DFM / 电气门禁并发布包含 `jlc3dp_ready_16_stl.zip` 在内的全套制造包与 `SHA256SUMS.txt`。
+- **方式二（GitHub Actions 手动触发）**：在仓库 **Actions → Release Manufacturing Packages → Run workflow** 中输入版本号（如 `v1.2.0`），流水线将自动通过全部 DFM / 电气门禁并发布包含 `jlc3dp_ready_17_stl.zip` 在内的全套制造包与 `SHA256SUMS.txt`。
 
 ---
 
@@ -211,20 +215,20 @@ kron01-terra-rover/
 │   ├── ci.yml                              # Push / PR 自动化 DFM、电气仿真与打包验证
 │   └── release.yml                         # Tag / 手动触发的制造包 GitHub Release 流水线
 ├── cad/
-│   ├── config.py                           # 全局参数化尺寸、FDM 公差与 COTS 坐标定义
+│   ├── config.py                           # 全局参数化尺寸、FDM/SLA 公差与 COTS 坐标定义
 │   ├── cots_hardware.py                    # 21 件真实 COTS 硬件参数化 B-Rep 建模
-│   ├── printed_chassis.py                  # 底盘下盆、掀盖顶罩、电机压板与 4WD 轮毂建模
-│   ├── printed_head.py                     # 宇航头盔壳、内胆、黑面罩与耳罩建模
+│   ├── printed_chassis.py                  # 底盘下盆、5 点滑榫顶罩、尾锁销 A10、电机压板与轮毂建模
+│   ├── printed_head.py                     # 宇航头盔壳、内胆、楔形黑面罩与 90° 旋锁耳罩建模
 │   ├── build_all.py                        # 主构建脚本（总装、干涉检查、STL/STEP/3MF 导出与渲染）
-│   ├── dfm_audit.py                        # 38-STL 水密单体流形与打印热床尺寸审计脚本
+│   ├── dfm_audit.py                        # 40-STL 水密单体流形、B-Rep 零碰撞与热床尺寸审计脚本
 │   ├── simulate_system.py                  # 44 路网表校验、5V/3A 满载与动力学重心仿真
 │   ├── import_external_step.py             # 外部供应商 STEP 替换导入辅助工具
 │   └── requirements.txt                    # Python CAD 与 DFM 审计依赖清单
 ├── scripts/
 │   └── package_release.py                  # 确定性 Release 制造包生成与 SHA-256 校验脚本
 ├── export/
-│   ├── jlc3dp_ready/                       # 嘉立创 3D 打印 16 个居中单体 STL 与下单对照表
-│   ├── stl_plate_A_charcoal/               # FDM 盘 A：哑光枪灰 / 黑色零件（13 件 STL + STEP）
+│   ├── jlc3dp_ready/                       # 嘉立创 3D 打印 17 个居中单体 STL 与下单对照表
+│   ├── stl_plate_A_charcoal/               # FDM 盘 A：哑光枪灰 / 黑色零件（14 件 STL + STEP）
 │   ├── stl_plate_B_white/                  # FDM 盘 B：珍珠白外壳零件（5 件 STL + STEP）
 │   ├── stl_plate_C_orange/                 # FDM 盘 C：暗金 / 香槟橙点缀件（4 件 STL + STEP）
 │   ├── full_assembly/                      # 总装 STEP 与多零件 3MF 切片包
@@ -235,7 +239,7 @@ kron01-terra-rover/
 ├── simulator/
 │   └── kron01_full_simulator.html          # 独立可运行的 3D 数字孪生与原理图仿真台
 └── docs/
-    ├── DESIGN_REPORT.md                    # 工业设计演进、装配流程图与完整 DFM/DFA 工程报告
+    ├── DESIGN_REPORT.md                    # 工业设计演进、全榫卯装配流程图与完整 DFM/DFA 工程报告
     └── images/                             # 概念渲染图、CAD 工程四视图与内部排线图
 ```
 
@@ -243,5 +247,5 @@ kron01-terra-rover/
 
 ## 详细工程文档
 
-- 📘 **[完整工业设计与 DFM/DFA 工程报告（docs/DESIGN_REPORT.md）](docs/DESIGN_REPORT.md)** — 包含结构设计演进、Mermaid 五步装配流程图、热熔螺母/定位销加固细节及免拆机维护方案。
-- 📋 **[嘉立创 3D 打印下单数量与材料对照表](export/jlc3dp_ready/%E5%98%89%E7%AB%8B%E5%88%9B%E4%B8%8B%E5%8D%95%E6%95%B0%E9%87%8F%E4%B8%8E%E6%9D%90%E6%96%99%E5%AF%B9%E7%85%A7%E8%A1%A8.txt)** — 16 个独立 STL 的尺寸、体积、下单数量与推荐树脂/尼龙材料清单。
+- 📘 **[完整工业设计与 DFM/DFA 工程报告（docs/DESIGN_REPORT.md）](docs/DESIGN_REPORT.md)** — 包含结构设计演进、Mermaid 全榫卯装配流程图、嵌入式六角螺母暗槽细节及免拆机维护方案。
+- 📋 **[嘉立创 3D 打印下单数量与材料对照表](export/jlc3dp_ready/%E5%98%89%E7%AB%8B%E5%88%9B%E4%B8%8B%E5%8D%95%E6%95%B0%E9%87%8F%E4%B8%8E%E6%9D%90%E6%96%99%E5%AF%B9%E7%85%A7%E8%A1%A8.txt)** — 17 个独立 STL 的尺寸、体积、下单数量与推荐树脂/尼龙材料清单。

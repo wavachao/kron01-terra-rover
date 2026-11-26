@@ -85,7 +85,7 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            release-assets/jlc3dp_ready_16_stl.zip
+            release-assets/jlc3dp_ready_17_stl.zip
             release-assets/kron01-terra-rover-${{ steps.meta.outputs.tag }}-fdm-plates-stl.zip
             release-assets/KRON01_Printed_Assembly.3mf
             release-assets/kron01-terra-rover-${{ steps.meta.outputs.tag }}-cad-step.zip

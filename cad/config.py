@@ -11,16 +11,23 @@ Inspired by sleek cyber-rover industrial design:
 """
 
 # ---------------------------------------------------------------------------
-# FDM 3D Printing Tolerances (0.4mm nozzle, 0.2mm layer height)
+# 3D Printing Tolerances (SLA Resin & 0.4mm FDM) — Zero Heat-Set Inserts!
 # ---------------------------------------------------------------------------
 FDM_CLEARANCE = 0.25
 FDM_TIGHT = 0.15
 WALL = 2.5
-HEATSET_M3_DIA = 4.0
-HEATSET_M3_DEPTH = 5.2
+# Standard DIN 934 Captive Hex Nut Slots (+0.30mm drop-in tolerance, zero soldering iron!)
 M3_CLEAR_DIA = 3.3
-M25_PILOT_DIA = 2.2
-M2_PILOT_DIA = 1.85
+NUT_M3_AF = 5.8             # M3 hex nut across flats (5.5 + 0.30)
+NUT_M3_T = 2.7              # M3 hex nut thickness (2.4 + 0.30)
+M25_CLEAR_DIA = 2.8
+NUT_M25_AF = 5.3            # M2.5 hex nut across flats (5.0 + 0.30)
+NUT_M25_T = 2.3             # M2.5 hex nut thickness (2.0 + 0.30)
+M2_CLEAR_DIA = 2.3
+NUT_M2_AF = 4.3             # M2 hex nut across flats (4.0 + 0.30)
+NUT_M2_T = 1.9              # M2 hex nut thickness (1.6 + 0.30)
+# Mortise-and-tenon slide-lock travel
+HOOD_SLIDE_TRAVEL = 5.0     # A02 drops at Y=-5mm, slides +5mm forward to lock 5 tenons!
 
 # ---------------------------------------------------------------------------
 # Wide-Stance 4WD Drivetrain & Ground Contact (4× Ø42mm Off-Road Wheels)

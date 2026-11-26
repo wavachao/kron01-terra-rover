@@ -8,14 +8,14 @@
   },
   "plates": {
     "plate_A_charcoal": {
-      "count": 13,
-      "vol_cm3": 202.5,
-      "est_mass_g": 155.7
+      "count": 14,
+      "vol_cm3": 211.5,
+      "est_mass_g": 162.6
     },
     "plate_B_white": {
       "count": 5,
-      "vol_cm3": 75.6,
-      "est_mass_g": 58.1
+      "vol_cm3": 75.1,
+      "est_mass_g": 57.8
     },
     "plate_C_orange": {
       "count": 4,
@@ -23,7 +23,7 @@
       "est_mass_g": 0.9
     }
   },
-  "total_filament_g": 214.7,
+  "total_filament_g": 221.3,
   "all_cots_clear": true,
   "clearances": [
     {
@@ -162,23 +162,34 @@
       "name": "A01_chassis_tub",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        85.0,
+        88.0,
         108.3,
         47.2
       ],
-      "vol_cm3": 83.05,
-      "est_mass_g": 63.9
+      "vol_cm3": 88.09,
+      "est_mass_g": 67.7
     },
     {
       "name": "A02_top_hood",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        84.0,
+        91.2,
         99.4,
-        45.5
+        46.2
       ],
-      "vol_cm3": 51.7,
-      "est_mass_g": 39.8
+      "vol_cm3": 53.1,
+      "est_mass_g": 40.8
+    },
+    {
+      "name": "A10_hood_lock_key",
+      "plate": "plate_A_charcoal",
+      "size_mm": [
+        16.0,
+        7.6,
+        17.2
+      ],
+      "vol_cm3": 0.79,
+      "est_mass_g": 0.6
     },
     {
       "name": "A03_motor_clamp_F",
@@ -210,7 +221,7 @@
         29.4,
         29.4
       ],
-      "vol_cm3": 5.8,
+      "vol_cm3": 5.87,
       "est_mass_g": 4.5
     },
     {
@@ -221,7 +232,7 @@
         29.4,
         29.4
       ],
-      "vol_cm3": 5.8,
+      "vol_cm3": 5.87,
       "est_mass_g": 4.5
     },
     {
@@ -232,7 +243,7 @@
         29.4,
         29.4
       ],
-      "vol_cm3": 5.8,
+      "vol_cm3": 5.87,
       "est_mass_g": 4.5
     },
     {
@@ -243,7 +254,7 @@
         29.4,
         29.4
       ],
-      "vol_cm3": 5.8,
+      "vol_cm3": 5.87,
       "est_mass_g": 4.5
     },
     {
@@ -252,10 +263,10 @@
       "size_mm": [
         14.5,
         25.0,
-        4.4
+        4.5
       ],
-      "vol_cm3": 0.69,
-      "est_mass_g": 0.5
+      "vol_cm3": 0.74,
+      "est_mass_g": 0.6
     },
     {
       "name": "B01_hood_wing_R",
@@ -263,10 +274,10 @@
       "size_mm": [
         14.5,
         25.0,
-        4.4
+        4.5
       ],
-      "vol_cm3": 0.69,
-      "est_mass_g": 0.5
+      "vol_cm3": 0.74,
+      "est_mass_g": 0.6
     },
     {
       "name": "B02_side_fairing_L",
@@ -274,10 +285,10 @@
       "size_mm": [
         4.3,
         42.0,
-        24.0
+        26.0
       ],
-      "vol_cm3": 2.97,
-      "est_mass_g": 2.3
+      "vol_cm3": 2.81,
+      "est_mass_g": 2.2
     },
     {
       "name": "B03_side_fairing_R",
@@ -285,10 +296,10 @@
       "size_mm": [
         4.3,
         42.0,
-        24.0
+        26.0
       ],
-      "vol_cm3": 2.97,
-      "est_mass_g": 2.3
+      "vol_cm3": 2.81,
+      "est_mass_g": 2.2
     },
     {
       "name": "C03_wheel_rim_FL",
@@ -339,11 +350,11 @@
       "plate": "plate_A_charcoal",
       "size_mm": [
         67.4,
-        50.7,
+        50.8,
         56.7
       ],
-      "vol_cm3": 27.67,
-      "est_mass_g": 21.3
+      "vol_cm3": 27.01,
+      "est_mass_g": 20.8
     },
     {
       "name": "A07_top_grille",
@@ -361,33 +372,33 @@
       "plate": "plate_A_charcoal",
       "size_mm": [
         67.4,
-        13.1,
+        15.4,
         52.6
       ],
-      "vol_cm3": 6.95,
-      "est_mass_g": 5.3
+      "vol_cm3": 6.98,
+      "est_mass_g": 5.4
     },
     {
       "name": "A09_ear_hub_L",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        6.5,
+        21.9,
         24.0,
         24.0
       ],
-      "vol_cm3": 2.69,
-      "est_mass_g": 2.1
+      "vol_cm3": 3.74,
+      "est_mass_g": 2.9
     },
     {
       "name": "A09_ear_hub_R",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        6.5,
+        21.9,
         24.0,
         24.0
       ],
-      "vol_cm3": 2.69,
-      "est_mass_g": 2.1
+      "vol_cm3": 3.74,
+      "est_mass_g": 2.9
     },
     {
       "name": "B04_head_shell",
@@ -397,8 +408,8 @@
         71.1,
         63.0
       ],
-      "vol_cm3": 68.27,
-      "est_mass_g": 52.5
+      "vol_cm3": 68.05,
+      "est_mass_g": 52.3
     }
   ]
 }

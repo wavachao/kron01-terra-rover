@@ -40,6 +40,7 @@ DOCS_IMG_DIR = REPO_ROOT / "docs" / "images"
 EXPLODE_VECTORS = {
     "A01_chassis_tub":    (0, 0, 0),
     "A02_top_hood":       (0, 0, 26),
+    "A10_hood_lock_key":  (0, -14, 42),
     "A03_motor_clamp_F":  (0, 10, 12),
     "A03_motor_clamp_R":  (0, -10, 12),
     "B01_hood_wing_L":    (-16, 8, 34),
@@ -293,7 +294,7 @@ def export_webgl_json(all_submeshes: list, out_path: Path):
         )
         is_lid = (
             is_head
-            or part in ("A02_top_hood", "B01_hood_wing_L", "B01_hood_wing_R", "cots_mg90s_servo")
+            or part in ("A02_top_hood", "A10_hood_lock_key", "B01_hood_wing_L", "B01_hood_wing_R", "cots_mg90s_servo")
             or ("TopHood" in label and "M3x8" in label)
         )
         wh = ""
@@ -402,7 +403,7 @@ def main():
 
     print(f"      -> Built & exported {len(printed)} printable STL + STEP parts across 3 color plates.")
 
-    # 2b. Export JLC3DP-Ready Single-Body Centered STLs (16 unique STLs -> 22 physical parts)
+    # 2b. Export JLC3DP-Ready Single-Body Centered STLs (17 unique STLs -> 23 physical parts)
     jlc_dir = EXPORT_DIR / "jlc3dp_ready"
     jlc_dir.mkdir(parents=True, exist_ok=True)
     jlc_spec = [
@@ -422,9 +423,10 @@ def main():
         ("B03_side_fairing_R", "14_白_B03_右侧白护甲_x1.stl",     1, "9000R / 6060 白色树脂"),
         ("B04_head_shell",     "15_白_B04_宇航白头盔壳_x1.stl",    1, "9000R / 6060 白色树脂"),
         ("C03_wheel_rim_FL",   "16_金橙_C03_轮毂细圈_x4.stl",     4, "白色树脂自己喷金/橙漆 或 橙色PLA"),
+        ("A10_hood_lock_key",  "17_黑_A10_顶盖燕尾锁销_x1.stl",    1, "黑色树脂 / 尼龙PA12"),
     ]
     manifest_lines = [
-        "嘉立创 3D 打印（JLC3DP）一键下单核对清单（共 16 个独立 STL，总计 22 个实物零件）",
+        "嘉立创 3D 打印（JLC3DP）一键下单核对清单（共 17 个独立 STL，总计 23 个实物零件）",
         "=" * 78,
     ]
     total_jlc_vol = 0.0
@@ -445,10 +447,10 @@ def main():
         )
     manifest_lines.append("=" * 78)
     manifest_lines.append(
-        f"总打印体积（仅外壳，不含电子件）: {total_jlc_vol:.1f} cm³（全部 16 个 STL 均为单体水密流形，可直接上传嘉立创无需拆分！）"
+        f"总打印体积（仅外壳，不含电子件）: {total_jlc_vol:.1f} cm³（全部 17 个 STL 均为单体水密流形，可直接上传嘉立创无需拆分！）"
     )
     (jlc_dir / "嘉立创下单数量与材料对照表.txt").write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
-    print(f"      -> Exported 16 JLC3DP-ready centered single-body STLs to {jlc_dir}")
+    print(f"      -> Exported 17 JLC3DP-ready centered single-body STLs to {jlc_dir}")
 
     # 3. Export Full Colored Assemblies (STEP & 3MF!)
     print("[3/6] Exporting Master Assemblies (STEP + 3MF)...")

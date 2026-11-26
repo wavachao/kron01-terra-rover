@@ -114,7 +114,12 @@ def run_brep_collision_audit() -> bool:
         ok = False
 
     head_parts = [printed[k][1] for k in ("A06_head_core", "B04_head_shell", "A08_visor_mask", "A09_ear_hub_L", "A09_ear_hub_R")]
-    body_parts = [("A02_top_hood", printed["A02_top_hood"][1]), ("B01_L", printed["B01_hood_wing_L"][1]), ("B01_R", printed["B01_hood_wing_R"][1])]
+    body_parts = [
+        ("A02_top_hood", printed["A02_top_hood"][1]),
+        ("A10_hood_lock_key", printed["A10_hood_lock_key"][1]),
+        ("B01_L", printed["B01_hood_wing_L"][1]),
+        ("B01_R", printed["B01_hood_wing_R"][1]),
+    ]
     pivot = Axis((0, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (1, 0, 0))
     pitch_bad = 0
     for ang in (-20, -10, 0, 10, 22):

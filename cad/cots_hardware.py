@@ -471,23 +471,42 @@ def build_wiring_harness() -> Compound:
 
 
 # ---------------------------------------------------------------------------
-# 6. Fasteners & Heat-Set Inserts (Clean Hidden Clamshell Bolts + Ear Pivots)
+# 6. Internal Captive Metal Hex Nuts & Bolts (ZERO Exterior Screws / Inserts!)
 # ---------------------------------------------------------------------------
+def build_hex_nut(across_flats: float, thickness: float, bore_dia: float, label: str):
+    """Standard DIN 934 stainless hex nut (slides into captive pockets with zero soldering iron!)."""
+    with BuildPart() as nut:
+        with BuildSketch(Plane.XY):
+            RegularPolygon(radius=across_flats / math.sqrt(3.0), side_count=6)
+        extrude(amount=thickness)
+        Cylinder(radius=bore_dia / 2.0, height=thickness + 1.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+    return _tag(nut.part, label, "metal_silver")
+
+
 def build_fastener_kit() -> Compound:
     items = []
-    # Clamshell Top Hood 4x M3x8 flush recessed bolts (2 rear deck + 2 mid-flank)
-    bx_hood = C.CHASSIS_W / 2.0 - 6.5
-    for i, (x, y) in enumerate(((-bx_hood, -39.0), (bx_hood, -39.0), (-bx_hood, 16.0), (bx_hood, 16.0))):
-        items.append(build_din912_screw(3.0, 8.0, f"M3x8_TopHood_{i+1}").move(Location((x, y, C.CHASSIS_Z_TOP - 2.0))))
-        items.append(build_brass_insert(4.5, 4.0, 2.5, f"Insert_TopHood_{i+1}").move(Location((x, y, C.CHASSIS_SPLIT_Z))))
-    # Head Shell Lock 2x M3x14 bolts + Brass Inserts (A09 Ear Hub -> B04 Shell -> A06 Core!)
-    for side, sgn in (("L", -1.0), ("R", 1.0)):
-        items.append(build_din912_screw(3.0, 14.0, f"M3x14_EarLock_{side}").move(Location((sgn * 45.8, C.HEAD_Y_CTR - 1.0, C.HEAD_Z_CTR - 1.0), (0, -90 if sgn < 0 else 90, 0))))
-        items.append(build_brass_insert(4.5, 4.0, 2.5, f"Insert_EarLock_{side}").move(Location((sgn * 33.7, C.HEAD_Y_CTR - 1.0, C.HEAD_Z_CTR - 1.0), (0, 90 if sgn < 0 else -90, 0))))
-    # Coaxial Right Neck Pivot M3x10 bolt + Brass Insert inside A02_Top_Hood neck!
+    # Coaxial Right Neck Pivot: 1x M3x10 bolt + 1x Captive DIN 934 M3 Hex Nut inside A02_Top_Hood!
     items.append(build_din912_screw(3.0, 10.0, "M3x10_NeckPivot_R").move(Location((31.5, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, 90, 0))))
-    items.append(build_brass_insert(4.5, 4.0, 2.5, "Insert_NeckPivot_R").move(Location((21.0, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, -90, 0))))
-    return Compound(label="COTS_Fasteners_M3_Kit", children=items)
+    items.append(build_hex_nut(5.5, 2.4, 3.0, "Nut_M3_NeckPivot_R").move(Location((17.8, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, 90, 0))))
+    # Raspberry Pi Zero 2WH: 4x M2.5x6 bolts + 4x Captive M2.5 Hex Nuts in A01 standoffs!
+    idx = 0
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            idx += 1
+            px = C.RPI_X_CTR + sx * (C.RPI_HOLE_X / 2.0)
+            py = C.RPI_Y_CTR + sy * (C.RPI_HOLE_Y / 2.0)
+            items.append(build_din912_screw(2.5, 6.0, f"M25x6_RPi_{idx}").move(Location((px, py, C.RPI_Z_PCB + C.RPI_PCB_T))))
+            items.append(build_hex_nut(5.0, 2.0, 2.5, f"Nut_M25_RPi_{idx}").move(Location((px, py, C.RPI_Z_PCB - 4.7))))
+    # N20 Motor Clamps (A03_F/R): 8x M2.5x10 bolts + 8x Captive M2.5 Hex Nuts in A01 saddles!
+    bx_clamp = C.CHASSIS_W / 2.0 - 12.0
+    idx = 0
+    for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
+        for sgn in (-1.0, 1.0):
+            for dy_b in (-7.2, 7.2):
+                idx += 1
+                items.append(build_din912_screw(2.5, 9.0, f"M25x9_Clamp_{idx}").move(Location((sgn * bx_clamp, y_ax + dy_b, C.Z_AXLE + C.N20_H / 2.0 + 2.7))))
+                items.append(build_hex_nut(5.0, 2.0, 2.5, f"Nut_M25_Clamp_{idx}").move(Location((sgn * bx_clamp, y_ax + dy_b, C.CHASSIS_Z_FLOOR + 3.1))))
+    return Compound(label="COTS_Fasteners_CaptiveNut_Kit", children=items)
 
 
 def build_all_cots() -> dict:
