@@ -93,11 +93,11 @@ def build_chassis_tub() -> Part:
         # Angled Front Off-Road Skid Plate + Recessed Grille + Headlight Bezels
         with Locations(Location((0, 53.5, 22.0), (28, 0, 0))):
             Box(28.0, 3.6, 15.0)
-        with Locations((0, 53.5, 31.5)):
-            Box(24.0, 5.0, 6.5, mode=Mode.SUBTRACT)
+        with Locations((0, 56.5, 31.5)):
+            Box(24.0, 6.0, 6.5, mode=Mode.SUBTRACT)
         for sx in (-1, 1):
-            with Locations((sx * 21.0, 52.5, 32.5)):
-                Box(10.0, 5.0, 5.5, mode=Mode.SUBTRACT)
+            with Locations((sx * 21.0, 55.5, 32.5)):
+                Box(10.0, 6.0, 5.5, mode=Mode.SUBTRACT)
 
         # 2. Hollow interior cavity (open cleanly at top Z = 48.5, closed ALL 4 vertical walls!)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_FLOOR)):
@@ -105,9 +105,9 @@ def build_chassis_tub() -> Part:
                 RectangleRounded(w - 2 * wall, l - 10.0, radius=7.5)
         extrude(amount=h + 4.0, mode=Mode.SUBTRACT)
 
-        # Front Nose Interlock Catch Ledge (receives A02_top_hood front catch tongue -> zero nose lift!)
-        with Locations((0, 44.0, 41.5)):
-            Box(28.0, 5.0, 3.0)
+        # Front Nose Interlock Catch Ledge (fused solidly into front inner wall at Y=47..48.5; receives A02 tongue!)
+        with Locations((0, 45.5, 38.3)):
+            Box(28.0, 6.0, 3.0)
 
         # 3. 4× N20 Gearmotor Cradles + M2.5 Bolt Bosses for A03 Motor Clamp Straps!
         for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
@@ -237,9 +237,11 @@ def build_top_hood() -> Part:
             with Locations((bx, by, C.CHASSIS_SPLIT_Z - 3.5)):
                 Cylinder(radius=5.2, height=4.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Front Interlock Catch Tongue (slides cleanly under A01 front catch ledge!)
-        with Locations((0, 44.5, 44.2)):
-            Box(22.0, 4.5, 2.4)
+        # Front Interlock Catch Hook (L-shaped stem + tongue fused solidly into hood underside; slides cleanly under A01 ledge!)
+        with Locations((0, 34.25, 42.0)):
+            Box(22.0, 3.5, 16.0)
+        with Locations((0, 39.25, 35.2)):
+            Box(22.0, 13.5, 2.4)
 
         # Raised Sporty Rear-Deck Fastback Cowl + Unbreakable Sculpted Aero Shark-Fin Antenna!
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 1.5)):

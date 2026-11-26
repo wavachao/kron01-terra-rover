@@ -81,16 +81,21 @@ def build_head_core() -> Part:
             for sz in (-1, 1):
                 bx = sx * (C.LCD_PCB_W / 2.0 - 3.0)
                 bz = C.LCD_Z_CTR + sz * (C.LCD_PCB_H / 2.0 - 3.0)
+                # Horizontal rib fusing each LCD M2 boss solidly into A06 inner side wall (|X|=32..34)
+                with Locations((sx * 30.8, C.LCD_Y_PCB - 2.5, bz)):
+                    Box(6.8, 4.5, 5.2)
                 with Locations((bx, C.LCD_Y_PCB - 2.5, bz)):
                     Cylinder(radius=2.6, height=4.5, rotation=(90, 0, 0))
                 with Locations((bx, C.LCD_Y_PCB - 2.0, bz)):
                     Cylinder(radius=C.M2_PILOT_DIA / 2.0, height=6.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
 
-        # Upper-Visor OV5647 Camera Mount + 4× M2 Bosses (21.0 × 12.5mm)
+        # Upper-Visor OV5647 Camera Mount + 4× M2 Bosses (21.0 × 12.5mm), fused solidly into upper front wall
         with Locations((0, C.CAM_Y_PCB - 2.0, C.CAM_Z_CTR)):
             Box(28.0, 3.0, 22.0)
+        with Locations((0, 22.5, 112.25)):
+            Box(28.0, 4.0, 10.5)
         with Locations((0, C.CAM_Y_PCB + 1.0, C.CAM_Z_CTR)):
-            Cylinder(radius=8.0, height=14.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
+            Cylinder(radius=8.0, height=16.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
         for sx in (-1, 1):
             for sz in (-1, 1):
                 cx = sx * (C.CAM_HOLE_X / 2.0)

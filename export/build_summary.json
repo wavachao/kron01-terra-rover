@@ -9,8 +9,8 @@
   "plates": {
     "plate_A_charcoal": {
       "count": 13,
-      "vol_cm3": 201.6,
-      "est_mass_g": 155.0
+      "vol_cm3": 203.5,
+      "est_mass_g": 156.4
     },
     "plate_B_white": {
       "count": 5,
@@ -23,7 +23,7 @@
       "est_mass_g": 0.8
     }
   },
-  "total_filament_g": 215.1,
+  "total_filament_g": 216.5,
   "all_cots_clear": true,
   "clearances": [
     {
@@ -166,19 +166,19 @@
         110.3,
         34.5
       ],
-      "vol_cm3": 68.98,
-      "est_mass_g": 53.0
+      "vol_cm3": 69.35,
+      "est_mass_g": 53.3
     },
     {
       "name": "A02_top_hood",
       "plate": "plate_A_charcoal",
       "size_mm": [
         80.0,
-        96.8,
-        33.0
+        96.0,
+        42.0
       ],
-      "vol_cm3": 45.2,
-      "est_mass_g": 34.8
+      "vol_cm3": 46.61,
+      "est_mass_g": 35.8
     },
     {
       "name": "A03_motor_clamp_F",
@@ -342,8 +342,8 @@
         57.2,
         56.0
       ],
-      "vol_cm3": 32.97,
-      "est_mass_g": 25.4
+      "vol_cm3": 33.12,
+      "est_mass_g": 25.5
     },
     {
       "name": "A07_top_grille",

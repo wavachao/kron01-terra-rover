@@ -31,11 +31,10 @@ from cots_hardware import build_all_cots
 from printed_chassis import build_all_chassis_parts
 from printed_head import build_all_head_parts
 
-ROOT = Path(__file__).parent
-EXPORT_DIR = ROOT / "export"
-ARTIFACT_DIR = Path(
-    "/home/antigravity/.gemini/jetski/brain/v1/default/jetski_remote_agents_3p_devbox/a8bb7a46-54a3-4d35-854f-f0376db0b749"
-)
+ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent
+EXPORT_DIR = REPO_ROOT / "export"
+DOCS_IMG_DIR = REPO_ROOT / "docs" / "images"
 
 # Explode direction vectors (dx, dy, dz) in mm — showcases Terra-Rover Clamshell Open-Hood Assembly!
 EXPLODE_VECTORS = {
@@ -375,6 +374,12 @@ def main():
     part_manifest = []
 
     for name, (plate, part) in printed.items():
+        solids_n = len(part.solids())
+        shells_n = len(part.shells())
+        if solids_n != 1 or shells_n != 1:
+            raise RuntimeError(
+                f"DFM ERROR: {name} must be 1 solid & 1 shell (got solids={solids_n}, shells={shells_n})!"
+            )
         pdir = plate_dirs[plate]
         stl_path = pdir / f"{name}.stl"
         step_path = pdir / f"{name}.step"
@@ -396,6 +401,54 @@ def main():
         })
 
     print(f"      -> Built & exported {len(printed)} printable STL + STEP parts across 3 color plates.")
+
+    # 2b. Export JLC3DP-Ready Single-Body Centered STLs (16 unique STLs -> 22 physical parts)
+    jlc_dir = EXPORT_DIR / "jlc3dp_ready"
+    jlc_dir.mkdir(parents=True, exist_ok=True)
+    jlc_spec = [
+        ("A01_chassis_tub",    "01_黑_A01_底盘下盆_x1.stl",       1, "黑色树脂 / 尼龙PA12"),
+        ("A02_top_hood",       "02_黑_A02_掀盖顶罩_x1.stl",       1, "黑色树脂 / 尼龙PA12"),
+        ("A03_motor_clamp_F",  "03_黑_A03_电机压板_x2.stl",       2, "黑色树脂 / 尼龙PA12"),
+        ("A04_wheel_hub_FL",   "04_黑_A04_左轮毂_x2.stl",        2, "黑色树脂 / 尼龙PA12"),
+        ("A04_wheel_hub_FR",   "05_黑_A04_右轮毂_x2.stl",        2, "黑色树脂 / 尼龙PA12"),
+        ("A06_head_core",      "06_黑_A06_头盔内胆_x1.stl",       1, "黑色树脂 / 尼龙PA12"),
+        ("A07_top_grille",     "07_黑_A07_顶置喇叭格栅_x1.stl",    1, "黑色树脂 / 尼龙PA12"),
+        ("A08_visor_mask",     "08_黑亮_A08_曲面黑面罩_x1.stl",    1, "高光黑树脂 / 喷亮黑漆"),
+        ("A09_ear_hub_L",      "09_黑_A09_左耳罩_x1.stl",        1, "黑色树脂 / 尼龙PA12"),
+        ("A09_ear_hub_R",      "10_黑_A09_右耳罩_x1.stl",        1, "黑色树脂 / 尼龙PA12"),
+        ("B01_hood_wing_L",    "11_白_B01_左引擎盖白翼_x1.stl",    1, "9000R / 6060 白色树脂"),
+        ("B01_hood_wing_R",    "12_白_B01_右引擎盖白翼_x1.stl",    1, "9000R / 6060 白色树脂"),
+        ("B02_side_fairing_L", "13_白_B02_左侧白护甲_x1.stl",     1, "9000R / 6060 白色树脂"),
+        ("B03_side_fairing_R", "14_白_B03_右侧白护甲_x1.stl",     1, "9000R / 6060 白色树脂"),
+        ("B04_head_shell",     "15_白_B04_宇航白头盔壳_x1.stl",    1, "9000R / 6060 白色树脂"),
+        ("C03_wheel_rim_FL",   "16_金橙_C03_轮毂细圈_x4.stl",     4, "白色树脂自己喷金/橙漆 或 橙色PLA"),
+    ]
+    manifest_lines = [
+        "嘉立创 3D 打印（JLC3DP）一键下单核对清单（共 16 个独立 STL，总计 22 个实物零件）",
+        "=" * 78,
+    ]
+    total_jlc_vol = 0.0
+    for key, fname, qty, mat in jlc_spec:
+        plate, _ = printed[key]
+        src_stl = plate_dirs[plate] / f"{key}.stl"
+        m = trimesh.load(str(src_stl), force="mesh")
+        b = m.bounds
+        cx, cy = (b[0][0] + b[1][0]) / 2.0, (b[0][1] + b[1][1]) / 2.0
+        zmin = b[0][2]
+        m.apply_translation([-cx, -cy, -zmin])
+        m.export(str(jlc_dir / fname))
+        sx, sy, sz = m.extents
+        vol_cm3 = float(m.volume) / 1000.0
+        total_jlc_vol += vol_cm3 * qty
+        manifest_lines.append(
+            f"{fname:28s} | 数量={qty} | {sx:5.1f}×{sy:5.1f}×{sz:5.1f}mm | 单件={vol_cm3:5.1f}cm³ | 推荐材料: {mat}"
+        )
+    manifest_lines.append("=" * 78)
+    manifest_lines.append(
+        f"总打印体积（仅外壳，不含电子件）: {total_jlc_vol:.1f} cm³（全部 16 个 STL 均为单体水密流形，可直接上传嘉立创无需拆分！）"
+    )
+    (jlc_dir / "嘉立创下单数量与材料对照表.txt").write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
+    print(f"      -> Exported 16 JLC3DP-ready centered single-body STLs to {jlc_dir}")
 
     # 3. Export Full Colored Assemblies (STEP & 3MF!)
     print("[3/6] Exporting Master Assemblies (STEP + 3MF)...")
@@ -426,6 +479,7 @@ def main():
 
     # 5. Tessellate & Render Multi-View Engineering Verification Sheets
     print("[5/6] Rendering CAD Verification Sheets (Assembly + Internals/Wiring)...")
+    DOCS_IMG_DIR.mkdir(parents=True, exist_ok=True)
     all_submeshes = []
     for name, (plate, part) in printed.items():
         all_submeshes.extend(extract_colored_submeshes(name, part, plate, tolerance=0.45))
@@ -433,7 +487,7 @@ def main():
         cat = "wiring" if name == "cots_wiring" else "cots"
         all_submeshes.extend(extract_colored_submeshes(name, comp, cat, tolerance=0.5))
 
-    views_png = ARTIFACT_DIR / "kron01_cad_views.png"
+    views_png = DOCS_IMG_DIR / "kron01_cad_views.png"
     render_engineering_views(all_submeshes, views_png, dims_str)
     print(f"      -> Saved CAD verification views to {views_png}")
 
@@ -478,14 +532,14 @@ def main():
         color="#ffffff", fontsize=13, fontweight="bold", y=0.98,
     )
     plt.tight_layout(rect=[0, 0, 1, 0.94])
-    internals_png = ARTIFACT_DIR / "kron01_internals_wiring.png"
+    internals_png = DOCS_IMG_DIR / "kron01_internals_wiring.png"
     plt.savefig(str(internals_png), dpi=170, facecolor=fig.get_facecolor())
     plt.close(fig)
     print(f"      -> Saved internals & wiring sheet to {internals_png}")
 
     # 6. Export Compact WebGL Mesh Bundle & Build Summary JSON
     print("[6/6] Exporting Interactive 3D Viewer Mesh Bundle...")
-    webgl_json = ROOT / "export" / "viewer_meshes.json"
+    webgl_json = EXPORT_DIR / "viewer_meshes.json"
     js_bytes = export_webgl_json(all_submeshes, webgl_json)
     print(f"      -> Exported viewer_meshes.json ({js_bytes / 1024:.1f} KB, {len(all_submeshes)} colored bodies)")
 
