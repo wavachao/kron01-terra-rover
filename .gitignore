@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Temporary CAD / build outputs
+_tmp_*
+dist/
+release-assets/
+*.zip
+
+# OS / Editor
+.DS_Store
+Thumbs.db
