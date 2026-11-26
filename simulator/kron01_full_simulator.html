@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KRON-01V5 Terra-Rover 赛博四驱探索车 — 全链路数字孪生仿真台</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    canvas { display: block; }
+    .tab-active { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased m-0 p-3 sm:p-4">
+  <div class="max-w-7xl mx-auto space-y-3">
+
+    <!-- Top Control Banner -->
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-3">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2 py-0.5 text-xs font-bold rounded bg-[var(--primary)] text-[var(--primary-foreground)]">TERRA-ROVER 4WD</span>
+          <h1 class="text-base font-bold tracking-tight">KRON-01V5 赛博四驱探索车 — 宽屏宇航头盔 + 流线掀盖快装仿真台</h1>
+          <span id="stateBadge" class="px-2 py-0.5 text-xs font-mono rounded border border-[var(--border)] bg-[var(--content)] text-[var(--success)]">● TRACKING</span>
+        </div>
+        <p class="text-xs text-[var(--muted-foreground)] mt-0.5">
+          宽扁宇航头盔（曲面全黑一体大面罩 + 隐藏式 OV5647 广角镜头）· 俯冲双色越野车身 · 4×Ø42mm 宽体越野轮+暗金细圈 · 上下掀盖快装
+        </p>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <button id="pwrSwitchBtn" class="px-3 py-1.5 rounded-lg border border-[var(--success)] bg-[var(--content)] font-mono font-semibold text-[var(--success)] hover:opacity-90 transition">
+          ⚡ 电源开关: ON
+        </button>
+        <div class="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--content)] font-mono tabular-nums">
+          <span id="topVolt">4.13V</span> · <span id="topCurr">720mA</span> · <span id="topSoc">95%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap gap-1.5 text-xs">
+        <button data-tab="sim3d" class="tab-btn tab-active px-3.5 py-2 rounded-lg border border-[var(--border)] font-medium transition">
+          1. 3D Terra-Rover 精模预览 + 掀盖快装 + X光透视
+        </button>
+        <button data-tab="wiring" class="tab-btn px-3.5 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] font-medium transition">
+          2. 树莓派 Zero 2W 44路四驱真实连线 + MIPI CSI-2 原理图
+        </button>
+        <button data-tab="scope" class="tab-btn px-3.5 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] font-medium transition">
+          3. 4通道示波器 + 4WD 5V/3A 满载与 50/50 重心校验
+        </button>
+      </div>
+      <div class="text-xs text-[var(--muted-foreground)]">
+        360° 拖拽欣赏流线车身与全黑曲面面罩 · 点击 <b>「🔓 掀开顶盖」</b> 查看无损快装结构！
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+
+      <!-- LEFT 8 COLS -->
+      <div class="lg:col-span-8 space-y-3">
+
+        <!-- TAB 1: 3D TERRA-ROVER STUDIO SHOWROOM + CLAMSHELL OPEN-HOOD DEMO -->
+        <div id="panel-sim3d" class="tab-panel bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[var(--border)] text-xs">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button id="lidToggleBtn" class="px-2.5 py-1 rounded-lg border border-[var(--primary)] bg-[var(--primary)]/15 text-[var(--primary)] font-semibold hover:bg-[var(--primary)]/25 transition">
+                🔓 掀开顶盖（演示便捷组装）
+              </button>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input id="sim3dXray" type="checkbox" class="accent-[var(--primary)]" />
+                <span>X 光透视（4×N20 + 居中18650 + 树莓派）</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input id="sim3dFollow" type="checkbox" checked class="accent-[var(--primary)]" />
+                <span>镜头跟随</span>
+              </label>
+            </div>
+            <div class="font-mono text-[var(--muted-foreground)]">
+              坐标: <span id="posReadout">X=0.0, Y=0.0 cm</span> · 航向: <span id="hdgReadout">0°</span>
+            </div>
+          </div>
+          <div class="relative w-full" style="height: 470px;">
+            <canvas id="sim3dCanvas" class="w-full h-full cursor-grab"></canvas>
+            <div class="pointer-events-none absolute top-3 left-3 px-2.5 py-1.5 rounded-lg bg-slate-950/80 border border-slate-700/80 text-slate-100 text-xs font-mono">
+              <div>4WD 左(FL+RL): <span id="rpmL" class="text-cyan-400">0 RPM</span> · 右(FR+RR): <span id="rpmR" class="text-cyan-400">0 RPM</span></div>
+              <div>宇航头盔俯仰 (MG90S): <span id="servoAng3d" class="text-cyan-400">0.0°</span> · 顶盖: <span id="lidStatus" class="text-emerald-400">100% 全封闭锁紧</span></div>
+            </div>
+            <div class="pointer-events-none absolute bottom-3 left-3 px-2.5 py-1 rounded bg-slate-950/80 border border-slate-700/70 text-xs text-slate-300">
+              拖拽 360° 环绕欣赏 · 滚轮缩放 · W/A/S/D 四驱驾驶
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: RASPBERRY PI ZERO 2W 44-CONNECTION 4WD PIN-TO-PIN SCHEMATIC -->
+        <div id="panel-wiring" class="tab-panel hidden bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[var(--border)] text-xs">
+            <div class="flex flex-wrap gap-1">
+              <button data-bus="ALL" class="bus-btn px-2 py-1 rounded border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">全部 44 路</button>
+              <button data-bus="CSI_CAM" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">MIPI CSI摄像头</button>
+              <button data-bus="POWER" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">5V/3A电源树</button>
+              <button data-bus="SPI_LCD" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">SPI0彩屏 (8)</button>
+              <button data-bus="I2S_MIC" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">I2S麦 (6)</button>
+              <button data-bus="I2S_AMP" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">功放+喇叭 (7)</button>
+              <button data-bus="MOTOR" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">四驱电机 (14)</button>
+              <button data-bus="SERVO" class="bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]">硬件PWM舵机 (3)</button>
+            </div>
+            <span class="font-mono text-[var(--success)]">DRV8833 单板带4轮 (0新增GPIO) ✓</span>
+          </div>
+          <div class="relative w-full" style="height: 410px;">
+            <canvas id="wiringCanvas" class="w-full h-full"></canvas>
+            <div class="pointer-events-none absolute bottom-2 left-2 px-2.5 py-1 rounded bg-[var(--card)]/95 border border-[var(--border)] text-xs font-mono text-[var(--foreground)]">
+              四驱并联策略：左前 FL + 左后 RL 并联接 DRV8833 OUT1/2，右前 FR + 右后 RR 并联接 OUT3/4，省成本且同步零偏差！
+            </div>
+          </div>
+          <div class="border-t border-[var(--border)] p-3 bg-[var(--content)]">
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span class="font-semibold">树莓派 Zero 2W 40-Pin BCM 四驱完整实物接线表（含物理针脚号 P1~P40）</span>
+              <span id="netCountLabel" class="font-mono text-[var(--muted-foreground)]">显示 44 / 44 路连接</span>
+            </div>
+            <div class="max-h-48 overflow-y-auto border border-[var(--border)] rounded-lg bg-[var(--card)]">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="sticky top-0 bg-[var(--content)] border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                  <tr>
+                    <th class="py-1.5 px-2">编号</th>
+                    <th class="py-1.5 px-2">总线</th>
+                    <th class="py-1.5 px-2">起点引脚 (From)</th>
+                    <th class="py-1.5 px-2">终点引脚 (To)</th>
+                    <th class="py-1.5 px-2">信号</th>
+                    <th class="py-1.5 px-2">电平</th>
+                    <th class="py-1.5 px-2">线材/色</th>
+                  </tr>
+                </thead>
+                <tbody id="netTableBody" class="divide-y divide-[var(--border)] font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: 4-CHANNEL OSCILLOSCOPE + IP5328P 5V/3A POWER TELEMETRY -->
+        <div id="panel-scope" class="tab-panel hidden bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[var(--border)] text-xs">
+            <span class="font-semibold">实时 4 通道示波器 · 4WD 四驱峰值电流 + IP5328P 5V/3A 防掉电监测</span>
+            <div class="flex items-center gap-2">
+              <span class="text-[var(--muted-foreground)]">放电倍率:</span>
+              <button data-speed="1" class="spd-btn px-2 py-0.5 rounded border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]">1×</button>
+              <button data-speed="120" class="spd-btn px-2 py-0.5 rounded border border-[var(--border)] bg-[var(--content)]">120×</button>
+              <button data-speed="600" class="spd-btn px-2 py-0.5 rounded border border-[var(--border)] bg-[var(--content)]">600×快测</button>
+              <button id="rechargeBtn" class="px-2 py-0.5 rounded border border-[var(--success)] text-[var(--success)] bg-[var(--content)]">🔌 充满电</button>
+            </div>
+          </div>
+          <div class="p-3 space-y-3">
+            <div class="w-full border border-[var(--border)] rounded-lg overflow-hidden" style="height: 290px;">
+              <canvas id="scopeCanvas" class="w-full h-full"></canvas>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--content)]">
+                <div class="text-[var(--muted-foreground)]">IP5328P 5V/3A 负载</div>
+                <div id="kpiLoad" class="text-sm font-mono font-bold mt-0.5 text-[var(--success)]">720 / 3000 mA</div>
+                <div class="text-[var(--muted-foreground)] mt-0.5">4WD+YOLO峰值 2337mA ✓</div>
+              </div>
+              <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--content)]">
+                <div class="text-[var(--muted-foreground)]">3000mAh 居中 18650</div>
+                <div id="kpiBat" class="text-sm font-mono font-bold mt-0.5">4.13V · 剩余 2.5h</div>
+                <div class="text-[var(--muted-foreground)] mt-0.5">DRV8833 单路 420mA &lt;1.5A ✓</div>
+              </div>
+              <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--content)]">
+                <div class="text-[var(--muted-foreground)]">50/50 居中重心校验</div>
+                <div class="text-sm font-mono font-bold mt-0.5 text-[var(--success)]">Y = +0.36 mm ✓</div>
+                <div class="text-[var(--muted-foreground)] mt-0.5">正居 [-30, +30] 60mm 轴距</div>
+              </div>
+              <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--content)]">
+                <div class="text-[var(--muted-foreground)]">4WD 爬坡与头部扭矩</div>
+                <div class="text-sm font-mono font-bold mt-0.5 text-[var(--success)]">MG90S 7.9× 裕度 ✓</div>
+                <div class="text-[var(--muted-foreground)] mt-0.5">0.227 vs 1.8 kg·cm</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT 4 COLS: LIVE OV5647 CAMERA VISION FEED + 2.0" ST7789 SCREEN + AI CONSOLE -->
+      <div class="lg:col-span-4 space-y-3">
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              面罩集成 OV5647 160° 摄像头实时视觉
+            </span>
+            <button id="trackToggleBtn" class="px-2 py-0.5 rounded border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">
+              👁️ 视觉追踪: ON
+            </button>
+          </div>
+          <div class="relative rounded-lg overflow-hidden border-2 mx-auto cursor-crosshair" style="border-color:#0ea5e9; background:#070d14; aspect-ratio: 16/10;">
+            <canvas id="camCanvas" width="320" height="200" class="w-full h-full"></canvas>
+            <div class="pointer-events-none absolute bottom-1 left-1.5 text-[10px] font-mono text-cyan-300/90">
+              拖动目标人物，宇航头盔与四驱车轮自动联动追踪！
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold">2.0" ST7789V 曲面黑镜表情屏 (SPI0)</span>
+            <span id="lcdModeTag" class="font-mono text-[var(--primary)]">320×240 IPS</span>
+          </div>
+          <div class="rounded-lg overflow-hidden border-2 mx-auto" style="border-color:#22d3ee; background:#03060a; aspect-ratio: 16/9;">
+            <canvas id="lcdCanvas" width="320" height="180" class="w-full h-full"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 space-y-2 text-xs">
+          <div class="font-semibold text-sm flex items-center justify-between">
+            <span>多模态 AI（视觉+语音+四驱）仿真</span>
+            <span class="font-mono text-[var(--muted-foreground)]">Pi Zero 2W Linux</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button data-cmd="vision_scan" class="ai-btn px-2 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] text-left transition">👁️ 看看桌上有什么</button>
+            <button data-cmd="face_track" class="ai-btn px-2 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] text-left transition">🎯 人脸自动追踪</button>
+            <button data-cmd="patrol" class="ai-btn px-2 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] text-left transition">🚙 四驱越野巡航</button>
+            <button data-cmd="dance" class="ai-btn px-2 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] text-left transition">🕺 4WD 满载压测</button>
+          </div>
+          <div class="flex gap-1.5">
+            <input id="chatInput" type="text" placeholder="输入指令，如：掀开顶盖 / 向前开 / 你看到了什么..." class="flex-1 px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--content)] text-[var(--foreground)] placeholder-[var(--placeholder)] focus:outline-none focus:border-[var(--primary)]" />
+            <button id="chatSend" class="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">发送</button>
+          </div>
+          <div id="aiLog" class="h-24 overflow-y-auto p-2 rounded-lg border border-[var(--border)] bg-[var(--content)] font-mono space-y-1 text-[11px]">
+            <div class="text-[var(--success)]">[BOOT] KRON-01V5 Terra-Rover 启动 · 全黑宇航面罩 + 宽体四驱就绪</div>
+            <div class="text-[var(--muted-foreground)]">[CV  ] OV5647 160° 视觉追踪已激活 · 点击「掀开顶盖」可预览内部快装结构</div>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-2.5 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold">手动遥控 Terra-Rover 四驱底盘</span>
+            <span id="pwmDebug" class="font-mono text-[var(--muted-foreground)]">L:0% R:0%</span>
+          </div>
+          <div class="flex items-center justify-center gap-1.5">
+            <button data-drv="fwd" class="drv-btn px-3 py-1 rounded border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] font-bold">▲</button>
+            <button data-drv="left" class="drv-btn px-3 py-1 rounded border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] font-bold">◀</button>
+            <button data-drv="stop" class="drv-btn px-3 py-1 rounded border border-[var(--error)] text-[var(--error)] bg-[var(--content)] font-bold">■</button>
+            <button data-drv="right" class="drv-btn px-3 py-1 rounded border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] font-bold">▶</button>
+            <button data-drv="rev" class="drv-btn px-3 py-1 rounded border border-[var(--border)] bg-[var(--content)] hover:border-[var(--primary)] font-bold">▼</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============================================================================
+// 1. VERIFIED 44-CONNECTION RASPBERRY PI ZERO 2W 4WD + MIPI CSI-2 NETLIST
+// ============================================================================
+const NETLIST = [
+  { id:'W01', bus:'POWER',   from:'18650_BAT', fPin:'B+(3.7V)',    to:'SW_PWR',    tPin:'COM',     sig:'VBAT_RAW',    v:'3.7V',   col:'#ef4444', cName:'红 20AWG' },
+  { id:'W02', bus:'POWER',   from:'SW_PWR',    fPin:'ON',          to:'IP5328P',   tPin:'BAT+',    sig:'VBAT_SW',     v:'3.7V',   col:'#ef4444', cName:'红 20AWG' },
+  { id:'W03', bus:'POWER',   from:'18650_BAT', fPin:'B-(GND)',     to:'IP5328P',   tPin:'BAT-',    sig:'GND_BAT',     v:'0V',     col:'#475569', cName:'黑 20AWG' },
+  { id:'W04', bus:'POWER',   from:'IP5328P',   fPin:'5V_3A',       to:'RPI_Z2W',   tPin:'P2(5V)',  sig:'5V_3A_RAIL',  v:'5.0V',   col:'#dc2626', cName:'红 20AWG' },
+  { id:'W05', bus:'POWER',   from:'IP5328P',   fPin:'GND',         to:'RPI_Z2W',   tPin:'P6(GND)', sig:'GND_BUS',     v:'0V',     col:'#334155', cName:'黑 20AWG' },
+  { id:'W06', bus:'CSI_CAM', from:'RPI_Z2W',   fPin:'CSI2_22P',    to:'OV5647',    tPin:'CSI_15P', sig:'MIPI_CSI2_2L',v:'1.2/3.3V',col:'#38bdf8', cName:'白扁平FFC 15cm' },
+  { id:'W07', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'P1(3V3)',     to:'ST7789',    tPin:'VCC',     sig:'LCD_3V3',     v:'3.3V',   col:'#f87171', cName:'红' },
+  { id:'W08', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'P6(GND)',     to:'ST7789',    tPin:'GND',     sig:'LCD_GND',     v:'0V',     col:'#475569', cName:'黑' },
+  { id:'W09', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'GPIO11(P23)', to:'ST7789',    tPin:'SCL',     sig:'SPI0_SCLK',   v:'3.3V',   col:'#facc15', cName:'黄' },
+  { id:'W10', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'GPIO10(P19)', to:'ST7789',    tPin:'SDA',     sig:'SPI0_MOSI',   v:'3.3V',   col:'#3b82f6', cName:'蓝' },
+  { id:'W11', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'GPIO24(P18)', to:'ST7789',    tPin:'RES',     sig:'LCD_RST',     v:'3.3V',   col:'#22c55e', cName:'绿' },
+  { id:'W12', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'GPIO25(P22)', to:'ST7789',    tPin:'DC',      sig:'LCD_DC',      v:'3.3V',   col:'#f97316', cName:'橙' },
+  { id:'W13', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'GPIO8(P24)',  to:'ST7789',    tPin:'CS',      sig:'SPI0_CE0',    v:'3.3V',   col:'#e2e8f0', cName:'白' },
+  { id:'W14', bus:'SPI_LCD', from:'RPI_Z2W',   fPin:'GPIO12(P32)', to:'ST7789',    tPin:'BLK',     sig:'LCD_PWM0',    v:'3.3V',   col:'#94a3b8', cName:'灰' },
+  { id:'W15', bus:'I2S_MIC', from:'RPI_Z2W',   fPin:'P1(3V3)',     to:'INMP441',   tPin:'VDD',     sig:'MIC_3V3',     v:'3.3V',   col:'#f87171', cName:'红' },
+  { id:'W16', bus:'I2S_MIC', from:'RPI_Z2W',   fPin:'P6(GND)',     to:'INMP441',   tPin:'GND',     sig:'MIC_GND',     v:'0V',     col:'#475569', cName:'黑' },
+  { id:'W17', bus:'I2S_MIC', from:'INMP441',   fPin:'GND',         to:'INMP441',   tPin:'L/R',     sig:'LEFT_CH',     v:'0V',     col:'#64748b', cName:'黑(短接)' },
+  { id:'W18', bus:'I2S_MIC', from:'RPI_Z2W',   fPin:'GPIO18(P12)', to:'INMP441',   tPin:'SCK',     sig:'I2S_BCLK*',   v:'3.3V',   col:'#e2e8f0', cName:'白(共用)' },
+  { id:'W19', bus:'I2S_MIC', from:'RPI_Z2W',   fPin:'GPIO19(P35)', to:'INMP441',   tPin:'WS',      sig:'I2S_LRCLK*',  v:'3.3V',   col:'#a855f7', cName:'紫(共用)' },
+  { id:'W20', bus:'I2S_MIC', from:'RPI_Z2W',   fPin:'GPIO20(P38)', to:'INMP441',   tPin:'SD',      sig:'I2S_PCM_DIN', v:'3.3V',   col:'#06b6d4', cName:'青' },
+  { id:'W21', bus:'I2S_AMP', from:'IP5328P',   fPin:'5V_3A',       to:'MAX98357',  tPin:'VIN',     sig:'AMP_5V',      v:'5.0V',   col:'#ef4444', cName:'红' },
+  { id:'W22', bus:'I2S_AMP', from:'IP5328P',   fPin:'GND',         to:'MAX98357',  tPin:'GND',     sig:'AMP_GND',     v:'0V',     col:'#475569', cName:'黑' },
+  { id:'W23', bus:'I2S_AMP', from:'RPI_Z2W',   fPin:'GPIO18(P12)', to:'MAX98357',  tPin:'BCLK',    sig:'I2S_BCLK*',   v:'3.3V',   col:'#38bdf8', cName:'蓝(共用)' },
+  { id:'W24', bus:'I2S_AMP', from:'RPI_Z2W',   fPin:'GPIO19(P35)', to:'MAX98357',  tPin:'LRC',     sig:'I2S_LRCLK*',  v:'3.3V',   col:'#4ade80', cName:'绿(共用)' },
+  { id:'W25', bus:'I2S_AMP', from:'RPI_Z2W',   fPin:'GPIO21(P40)', to:'MAX98357',  tPin:'DIN',     sig:'I2S_PCM_OUT', v:'3.3V',   col:'#fde047', cName:'黄' },
+  { id:'W26', bus:'I2S_AMP', from:'MAX98357',  fPin:'SPK+',        to:'SPEAKER',   tPin:'+',       sig:'SPK_OUT+',    v:'BTL',    col:'#ef4444', cName:'红' },
+  { id:'W27', bus:'I2S_AMP', from:'MAX98357',  fPin:'SPK-',        to:'SPEAKER',   tPin:'-',       sig:'SPK_OUT-',    v:'BTL',    col:'#475569', cName:'黑' },
+  { id:'W28', bus:'MOTOR',   from:'IP5328P',   fPin:'5V_3A',       to:'DRV8833',   tPin:'VCC',     sig:'MOT_5V',      v:'5.0V',   col:'#ef4444', cName:'红' },
+  { id:'W29', bus:'MOTOR',   from:'IP5328P',   fPin:'GND',         to:'DRV8833',   tPin:'GND',     sig:'MOT_GND',     v:'0V',     col:'#475569', cName:'黑' },
+  { id:'W30', bus:'MOTOR',   from:'RPI_Z2W',   fPin:'GPIO5(P29)',  to:'DRV8833',   tPin:'IN1',     sig:'MOT_L_FWD',   v:'3.3V',   col:'#facc15', cName:'黄' },
+  { id:'W31', bus:'MOTOR',   from:'RPI_Z2W',   fPin:'GPIO6(P31)',  to:'DRV8833',   tPin:'IN2',     sig:'MOT_L_REV',   v:'3.3V',   col:'#fb923c', cName:'橙' },
+  { id:'W32', bus:'MOTOR',   from:'RPI_Z2W',   fPin:'GPIO22(P15)', to:'DRV8833',   tPin:'IN3',     sig:'MOT_R_FWD',   v:'3.3V',   col:'#60a5fa', cName:'蓝' },
+  { id:'W33', bus:'MOTOR',   from:'RPI_Z2W',   fPin:'GPIO23(P16)', to:'DRV8833',   tPin:'IN4',     sig:'MOT_R_REV',   v:'3.3V',   col:'#c084fc', cName:'紫' },
+  { id:'W34', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT1',        to:'N20_L',     tPin:'FL+',     sig:'N20_FL+',     v:'5V PWM', col:'#facc15', cName:'黄' },
+  { id:'W35', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT2',        to:'N20_L',     tPin:'FL-',     sig:'N20_FL-',     v:'5V PWM', col:'#475569', cName:'黑' },
+  { id:'W36', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT1',        to:'N20_L',     tPin:'RL+',     sig:'N20_RL+(并)', v:'5V PWM', col:'#eab308', cName:'黄(并联)' },
+  { id:'W37', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT2',        to:'N20_L',     tPin:'RL-',     sig:'N20_RL-(并)', v:'5V PWM', col:'#334155', cName:'黑(并联)' },
+  { id:'W38', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT3',        to:'N20_R',     tPin:'FR+',     sig:'N20_FR+',     v:'5V PWM', col:'#3b82f6', cName:'蓝' },
+  { id:'W39', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT4',        to:'N20_R',     tPin:'FR-',     sig:'N20_FR-',     v:'5V PWM', col:'#475569', cName:'黑' },
+  { id:'W40', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT3',        to:'N20_R',     tPin:'RR+',     sig:'N20_RR+(并)', v:'5V PWM', col:'#2563eb', cName:'蓝(并联)' },
+  { id:'W41', bus:'MOTOR',   from:'DRV8833',   fPin:'OUT4',        to:'N20_R',     tPin:'RR-',     sig:'N20_RR-(并)', v:'5V PWM', col:'#334155', cName:'黑(并联)' },
+  { id:'W42', bus:'SERVO',   from:'IP5328P',   fPin:'5V_3A',       to:'MG90S',     tPin:'VCC',     sig:'SERVO_5V',    v:'5.0V',   col:'#ef4444', cName:'红' },
+  { id:'W43', bus:'SERVO',   from:'IP5328P',   fPin:'GND',         to:'MG90S',     tPin:'GND',     sig:'SERVO_GND',   v:'0V',     col:'#92400e', cName:'棕' },
+  { id:'W44', bus:'SERVO',   from:'RPI_Z2W',   fPin:'GPIO13(P33)', to:'MG90S',     tPin:'SIG',     sig:'HEAD_PWM1',   v:'50Hz HW',col:'#f97316', cName:'橙' },
+];
+
+// ============================================================================
+// 2. UNIFIED FULL-SYSTEM STATE
+// ============================================================================
+const SIM = {
+  powerOn: true,
+  visionTrack: true,
+  lidOpen: false,
+  lidLift: 0,
+  state: 'TRACKING',
+  stateTimer: 0,
+  expression: 'happy',
+  caption: 'Terra-Rover 四驱视觉已上线 · 锁定目标',
+  tgtX: 0.0, tgtY: 0.04, tgtAuto: false,
+  x: 0, y: 0, hdg: 0,
+  pwmL: 0, pwmR: 0,
+  wheelAngleL: 0, wheelAngleR: 0,
+  servoTarget: 0, servoAngle: 0,
+  soc: 0.95, batVolt: 4.13, i5v: 720, batSpeed: 1,
+  act: { POWER: 1, CSI_CAM: 1, SPI_LCD: 0.7, I2S_MIC: 0.2, I2S_AMP: 0.1, MOTOR: 0, SERVO: 0.2 },
+  audioAmp: 0,
+  chMotor: new Array(180).fill(0),
+  chServo: new Array(180).fill(1.55),
+  chAudio: new Array(180).fill(0),
+  chCurr:  new Array(180).fill(720),
+  activeTab: 'sim3d',
+  busFilter: 'ALL',
+  t: 0,
+};
+
+const aiLog = document.getElementById('aiLog');
+function logEvent(tag, msg, colorVar='--foreground') {
+  const d = document.createElement('div');
+  d.style.color = `var(${colorVar})`;
+  d.textContent = `[${tag}] ${msg}`;
+  aiLog.appendChild(d);
+  aiLog.scrollTop = aiLog.scrollHeight;
+  while (aiLog.children.length > 40) aiLog.removeChild(aiLog.firstChild);
+}
+
+const netTableBody = document.getElementById('netTableBody');
+const netCountLabel = document.getElementById('netCountLabel');
+function renderNetTable() {
+  const rows = SIM.busFilter === 'ALL' ? NETLIST : NETLIST.filter(w => w.bus === SIM.busFilter);
+  netCountLabel.textContent = `显示 ${rows.length} / ${NETLIST.length} 路连接`;
+  netTableBody.innerHTML = rows.map(w => `
+    <tr class="hover:bg-[var(--content)]">
+      <td class="py-1 px-2 text-[var(--muted-foreground)]">${w.id}</td>
+      <td class="py-1 px-2">${w.bus}</td>
+      <td class="py-1 px-2 text-[var(--primary)]">${w.from}.${w.fPin}</td>
+      <td class="py-1 px-2">${w.to}.${w.tPin}</td>
+      <td class="py-1 px-2">${w.sig}</td>
+      <td class="py-1 px-2">${w.v}</td>
+      <td class="py-1 px-2"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${w.col}"></span>${w.cName}</td>
+    </tr>
+  `).join('');
+}
+renderNetTable();
+
+// ============================================================================
+// 3. TAB 2: SCHEMATIC
+// ============================================================================
+const wCanvas = document.getElementById('wiringCanvas');
+const wCtx = wCanvas.getContext('2d');
+const MODS = {
+  '18650_BAT': { x: 20,  y: 18,  w: 122, h: 64,  title:'居中 18650 电池', sub:'3.7V 3000mAh 10A', hdr:'#be185d', pins:['B+(3.7V)','B-(GND)'] },
+  'SW_PWR':    { x: 20,  y: 96,  w: 122, h: 52,  title:'SS12D00G3', sub:'后置总开关', hdr:'#475569', pins:['COM','ON'] },
+  'IP5328P':   { x: 20,  y: 162, w: 134, h: 96,  title:'IP5328P 电源板', sub:'Type-C 5V / 3.0A', hdr:'#0f766e', pins:['BAT+','BAT-','5V_3A','GND'] },
+  'DRV8833':   { x: 20,  y: 274, w: 146, h: 148, title:'DRV8833 四驱H桥', sub:'1.5A×2 并联带4轮', hdr:'#15803d', pins:['VCC','GND','IN1','IN2','IN3','IN4','OUT1','OUT2','OUT3','OUT4'] },
+  'N20_L':     { x: 188, y: 342, w: 98,  h: 82,  title:'左侧 2×N20', sub:'FL+RL 并联四驱', hdr:'#b45309', pins:['FL+','FL-','RL+','RL-'] },
+  'N20_R':     { x: 298, y: 342, w: 98,  h: 82,  title:'右侧 2×N20', sub:'FR+RR 并联四驱', hdr:'#b45309', pins:['FR+','FR-','RR+','RR-'] },
+  'RPI_Z2W':   { x: 332, y: 18,  w: 238, h: 310, title:'Raspberry Pi Zero 2W', sub:'4核A53 · 512M · Linux · 40-Pin', hdr:'#15803d',
+    leftPins:  ['P2(5V)','P6(GND)','P1(3V3)','GPIO5(P29)','GPIO6(P31)','GPIO22(P15)','GPIO23(P16)','GPIO18(P12)','GPIO19(P35)','GPIO20(P38)'],
+    rightPins: ['CSI2_22P','GPIO11(P23)','GPIO10(P19)','GPIO24(P18)','GPIO25(P22)','GPIO8(P24)','GPIO12(P32)','GPIO21(P40)','GPIO13(P33)']
+  },
+  'OV5647':    { x: 728, y: 14,  w: 204, h: 52,  title:'面罩内 OV5647 镜头', sub:'5MP 160° 广角 · MIPI CSI-2', hdr:'#0284c7', pins:['CSI_15P'] },
+  'ST7789':    { x: 728, y: 76,  w: 204, h: 124, title:'2.0" ST7789V IPS', sub:'320×240 SPI0 40MHz', hdr:'#b91c1c', pins:['VCC','GND','SCL','SDA','RES','DC','CS','BLK'] },
+  'INMP441':   { x: 728, y: 210, w: 204, h: 86,  title:'INMP441 麦克风', sub:'全双工 I2S RX (共用时钟)', hdr:'#6d28d9', pins:['VDD','GND','L/R','SCK','WS','SD'] },
+  'MAX98357':  { x: 728, y: 306, w: 132, h: 112, title:'MAX98357A', sub:'3W I2S TX 功放', hdr:'#7e22ce', pins:['VIN','GND','BCLK','LRC','DIN','SPK+','SPK-'] },
+  'SPEAKER':   { x: 874, y: 344, w: 74,  h: 66,  title:'28mm喇叭', sub:'8Ω 2W', hdr:'#334155', pins:['+','-'] },
+  'MG90S':     { x: 580, y: 346, w: 134, h: 74,  title:'MG90S 舵机', sub:'头部俯仰 硬件PWM1', hdr:'#0369a1', pins:['VCC','GND','SIG'] },
+};
+function getPinXY(modId, pinName) {
+  const m = MODS[modId];
+  if (modId === 'RPI_Z2W') {
+    const li = m.leftPins.indexOf(pinName);
+    if (li >= 0) return [m.x, m.y + 40 + li * 26.8];
+    const ri = m.rightPins.indexOf(pinName);
+    if (ri >= 0) return [m.x + m.w, m.y + 40 + ri * 29.8];
+    return [m.x, m.y + 60];
+  }
+  const idx = m.pins.indexOf(pinName);
+  const step = (m.h - 28) / Math.max(1, m.pins.length);
+  const py = m.y + 28 + idx * step + step * 0.4;
+  const isRightMod = m.x > 560;
+  if (modId === 'MAX98357' && (pinName === 'SPK+' || pinName === 'SPK-')) return [m.x + m.w, py];
+  if (modId === 'DRV8833' && pinName.startsWith('OUT')) return [m.x + m.w, py];
+  return [isRightMod ? m.x : m.x + m.w, py];
+}
+function drawWiringSchematic() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = wCanvas.clientWidth, H = wCanvas.clientHeight;
+  if (!W || !H) return;
+  if (wCanvas.width !== W*dpr || wCanvas.height !== H*dpr) { wCanvas.width=W*dpr; wCanvas.height=H*dpr; }
+  wCtx.save(); wCtx.scale(dpr, dpr);
+  const isLight = document.documentElement.classList.contains('light');
+  wCtx.fillStyle = isLight ? '#f8fafc' : '#0b1018';
+  wCtx.fillRect(0, 0, W, H);
+  const sc = Math.min(W / 965, H / 440);
+  wCtx.translate((W - 965*sc)/2, (H - 440*sc)/2);
+  wCtx.scale(sc, sc);
+  wCtx.strokeStyle = isLight ? 'rgba(15,23,42,0.05)' : 'rgba(148,163,184,0.06)';
+  for (let gx=0; gx<=960; gx+=24) { wCtx.beginPath(); wCtx.moveTo(gx,0); wCtx.lineTo(gx,438); wCtx.stroke(); }
+  for (let gy=0; gy<=438; gy+=24) { wCtx.beginPath(); wCtx.moveTo(0,gy); wCtx.lineTo(960,gy); wCtx.stroke(); }
+  NETLIST.forEach((w, idx) => {
+    const match = (SIM.busFilter === 'ALL' || SIM.busFilter === w.bus);
+    const [x1, y1] = getPinXY(w.from, w.fPin);
+    const [x2, y2] = getPinXY(w.to, w.tPin);
+    const act = SIM.powerOn ? (SIM.act[w.bus] || 0) : 0;
+    wCtx.beginPath();
+    if (w.from === w.to) { wCtx.moveTo(x1, y1); wCtx.bezierCurveTo(x1-16, y1, x2-16, y2, x2, y2); }
+    else {
+      const dx = Math.abs(x2 - x1), off = ((idx % 7) - 3) * 4;
+      const cx1 = x1 + (x2 >= x1 ? 1 : -1) * Math.max(24, dx * 0.35) + off;
+      const cx2 = x2 - (x2 >= x1 ? 1 : -1) * Math.max(24, dx * 0.35) + off;
+      wCtx.moveTo(x1, y1); wCtx.bezierCurveTo(cx1, y1, cx2, y2, x2, y2);
+    }
+    wCtx.strokeStyle = w.col;
+    wCtx.globalAlpha = match ? (w.bus === 'CSI_CAM' ? 0.98 : (act > 0.25 ? 0.95 : 0.62)) : 0.08;
+    wCtx.lineWidth = match ? (w.bus === 'CSI_CAM' ? 6.0 : (w.bus === 'POWER' ? 2.4 : 1.6)) : 1.0;
+    wCtx.stroke();
+    if (match && SIM.powerOn && act > 0.18 && w.from !== w.to) {
+      const spd = w.bus === 'CSI_CAM' ? 2.4 : (w.bus === 'SPI_LCD' ? 1.8 : 1.2);
+      const u = (SIM.t * spd + idx * 0.13) % 1.0;
+      const dx = Math.abs(x2 - x1), off = ((idx % 7) - 3) * 4;
+      const cx1 = x1 + (x2 >= x1 ? 1 : -1) * Math.max(24, dx * 0.35) + off;
+      const cx2 = x2 - (x2 >= x1 ? 1 : -1) * Math.max(24, dx * 0.35) + off;
+      const mu = 1 - u;
+      const px = mu*mu*mu*x1 + 3*mu*mu*u*cx1 + 3*mu*u*u*cx2 + u*u*u*x2;
+      const py = mu*mu*mu*y1 + 3*mu*mu*u*y1  + 3*mu*u*u*y2  + u*u*u*y2;
+      wCtx.globalAlpha = 1.0; wCtx.fillStyle = '#ffffff';
+      wCtx.beginPath(); wCtx.arc(px, py, w.bus==='CSI_CAM'?3.5:2.5, 0, Math.PI*2); wCtx.fill();
+    }
+  });
+  wCtx.globalAlpha = 1.0;
+  for (const [id, m] of Object.entries(MODS)) {
+    wCtx.fillStyle = isLight ? '#ffffff' : '#131b26';
+    wCtx.strokeStyle = isLight ? '#cbd5e1' : '#2a3647';
+    wCtx.lineWidth = 1.4;
+    wCtx.beginPath(); wCtx.roundRect(m.x, m.y, m.w, m.h, 6); wCtx.fill(); wCtx.stroke();
+    wCtx.fillStyle = m.hdr;
+    wCtx.beginPath(); wCtx.roundRect(m.x, m.y, m.w, 23, [6,6,0,0]); wCtx.fill();
+    wCtx.fillStyle = '#ffffff'; wCtx.font = 'bold 10px sans-serif'; wCtx.fillText(m.title, m.x+7, m.y+11);
+    wCtx.font = '8px monospace'; wCtx.fillStyle = 'rgba(255,255,255,0.88)'; wCtx.fillText(m.sub, m.x+7, m.y+20);
+    if (id === 'RPI_Z2W') {
+      wCtx.fillStyle = '#1e293b'; wCtx.strokeStyle = '#64748b';
+      wCtx.fillRect(m.x+78, m.y+78, 82, 74); wCtx.strokeRect(m.x+78, m.y+78, 82, 74);
+      wCtx.fillStyle = '#e2e8f0'; wCtx.font = 'bold 9.5px monospace';
+      wCtx.fillText('RP3A0 SoC', m.x+92, m.y+108); wCtx.fillText('4x A53 1GHz', m.x+86, m.y+122); wCtx.fillText('+铝散热片', m.x+92, m.y+138);
+      wCtx.fillStyle = SIM.powerOn ? '#22c55e' : '#334155';
+      wCtx.beginPath(); wCtx.arc(m.x+119, m.y+174, 4.5, 0, Math.PI*2); wCtx.fill();
+      m.leftPins.forEach(p => { const [px, py] = getPinXY(id, p); wCtx.fillStyle = '#facc15'; wCtx.beginPath(); wCtx.arc(px, py, 3, 0, Math.PI*2); wCtx.fill(); wCtx.fillStyle = isLight ? '#0f172a' : '#e2e8f0'; wCtx.font = '8.5px monospace'; wCtx.fillText(p, px+6, py+3); });
+      m.rightPins.forEach(p => { const [px, py] = getPinXY(id, p); wCtx.fillStyle = p==='CSI2_22P' ? '#38bdf8' : '#facc15'; wCtx.beginPath(); wCtx.arc(px, py, p==='CSI2_22P'?4.2:3, 0, Math.PI*2); wCtx.fill(); wCtx.fillStyle = isLight ? '#0f172a' : '#e2e8f0'; wCtx.font = '8.5px monospace'; wCtx.fillText(p, px - wCtx.measureText(p).width - 6, py+3); });
+    } else {
+      m.pins.forEach(p => { const [px, py] = getPinXY(id, p); wCtx.fillStyle = p==='CSI_15P' ? '#38bdf8' : '#facc15'; wCtx.beginPath(); wCtx.arc(px, py, p==='CSI_15P'?4:2.5, 0, Math.PI*2); wCtx.fill(); wCtx.fillStyle = isLight ? '#0f172a' : '#e2e8f0'; wCtx.font = '8.5px monospace'; const isL = (px === m.x); wCtx.fillText(p, isL ? px+6 : px - wCtx.measureText(p).width - 6, py+3); });
+    }
+  }
+  wCtx.restore();
+}
+
+// ============================================================================
+// 4. LIVE OV5647 CAMERA & ST7789 IPS DISPLAY
+// ============================================================================
+const camCanvas = document.getElementById('camCanvas');
+const camCtx = camCanvas.getContext('2d');
+let camDragging = false;
+function updateCamTarget(e) {
+  const rect = camCanvas.getBoundingClientRect();
+  SIM.tgtX = Math.max(-0.85, Math.min(0.85, ((e.clientX - rect.left) / rect.width) * 2 - 1));
+  SIM.tgtY = Math.max(-0.80, Math.min(0.80, -(((e.clientY - rect.top) / rect.height) * 2 - 1)));
+  SIM.tgtAuto = false;
+}
+camCanvas.addEventListener('pointerdown', e => { camDragging = true; updateCamTarget(e); camCanvas.setPointerCapture(e.pointerId); });
+camCanvas.addEventListener('pointermove', e => { if (camDragging) updateCamTarget(e); });
+camCanvas.addEventListener('pointerup', () => camDragging = false);
+
+function drawCameraVisionFeed() {
+  const W = 320, H = 200;
+  camCtx.fillStyle = '#071018'; camCtx.fillRect(0, 0, W, H);
+  if (!SIM.powerOn) { camCtx.fillStyle='#334155'; camCtx.font='12px monospace'; camCtx.fillText('CSI-2 CAMERA OFFLINE', 84, 105); return; }
+  const horY = 108 + SIM.servoAngle * 2.6;
+  const grad = camCtx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#0c1929'); grad.addColorStop(0.55, '#132436'); grad.addColorStop(1, '#1e293b');
+  camCtx.fillStyle = grad; camCtx.fillRect(0, 0, W, H);
+  camCtx.fillStyle = '#182230'; camCtx.fillRect(0, horY, W, H - horY);
+  camCtx.strokeStyle = 'rgba(56,189,248,0.22)'; camCtx.beginPath(); camCtx.moveTo(0, horY); camCtx.lineTo(W, horY); camCtx.stroke();
+  const cupX = 248 - ((SIM.hdg * 80) % 140), cupY = horY + 18;
+  camCtx.fillStyle = '#334155'; camCtx.fillRect(cupX - 11, cupY - 18, 22, 24);
+  camCtx.strokeStyle = '#f59e0b'; camCtx.lineWidth = 1.3; camCtx.strokeRect(cupX - 15, cupY - 22, 30, 30);
+  camCtx.fillStyle = '#f59e0b'; camCtx.font = '9px monospace'; camCtx.fillText('CUP 93%', cupX - 16, cupY - 25);
+  const fx = W * 0.5 + SIM.tgtX * (W * 0.44);
+  const fy = H * 0.5 - (SIM.tgtY - SIM.servoAngle / 34) * (H * 0.42);
+  camCtx.fillStyle = '#38bdf8'; camCtx.globalAlpha = 0.25;
+  camCtx.beginPath(); camCtx.arc(fx, fy, 20, 0, Math.PI * 2); camCtx.fill();
+  camCtx.beginPath(); camCtx.ellipse(fx, fy + 38, 32, 20, 0, Math.PI, Math.PI * 2); camCtx.fill();
+  camCtx.globalAlpha = 1.0;
+  const locked = Math.hypot(fx - W/2, fy - H/2) < 34;
+  camCtx.strokeStyle = locked ? '#22c55e' : '#38bdf8'; camCtx.lineWidth = 1.8;
+  camCtx.strokeRect(fx - 24, fy - 24, 48, 48);
+  camCtx.fillStyle = locked ? '#22c55e' : '#38bdf8'; camCtx.font = 'bold 9.5px monospace';
+  camCtx.fillText(locked ? 'FACE 98% [LOCK]' : 'FACE 96% [TRACK]', fx - 26, fy - 28);
+  camCtx.strokeStyle = 'rgba(34,211,238,0.65)'; camCtx.lineWidth = 1;
+  camCtx.beginPath(); camCtx.moveTo(W/2 - 12, H/2); camCtx.lineTo(W/2 + 12, H/2); camCtx.moveTo(W/2, H/2 - 12); camCtx.lineTo(W/2, H/2 + 12); camCtx.stroke();
+  camCtx.fillStyle = 'rgba(15,23,42,0.72)'; camCtx.fillRect(0, 0, W, 17);
+  camCtx.fillStyle = '#38bdf8'; camCtx.font = '9.5px monospace';
+  camCtx.fillText(`OV5647 CSI-2 · 640×480@30fps · TERRA-ROVER · TILT ${SIM.servoAngle.toFixed(0)}°`, 6, 12);
+}
+
+const lcdCanvas = document.getElementById('lcdCanvas');
+const lcdCtx = lcdCanvas.getContext('2d');
+function drawST7789Screen() {
+  lcdCtx.fillStyle = '#03060b'; lcdCtx.fillRect(0, 0, 320, 180);
+  if (!SIM.powerOn) { lcdCtx.fillStyle='#334155'; lcdCtx.font='12px monospace'; lcdCtx.fillText('POWER OFF', 124, 95); return; }
+  lcdCtx.fillStyle = '#0ea5e9'; lcdCtx.font = 'bold 10px monospace';
+  lcdCtx.fillText(`TERRA-ROVER · ${SIM.state}`, 10, 15);
+  lcdCtx.fillStyle = '#22c55e'; lcdCtx.fillText(`BAT ${Math.round(SIM.soc*100)}% ${SIM.batVolt.toFixed(2)}V`, 212, 15);
+  const blink = (SIM.t % 4.5 > 4.34) ? 0.14 : 1.0;
+  const gx = SIM.visionTrack ? SIM.tgtX * 16 : Math.sin(SIM.t * 1.4) * 6;
+  const gy = SIM.visionTrack ? -SIM.tgtY * 8 : 0;
+  lcdCtx.save();
+  lcdCtx.shadowColor = '#06b6d4'; lcdCtx.shadowBlur = 18;
+  lcdCtx.strokeStyle = SIM.expression === 'love' ? '#fb7185' : '#22d3ee';
+  lcdCtx.fillStyle = lcdCtx.strokeStyle; lcdCtx.lineWidth = 9; lcdCtx.lineCap = 'round';
+  [-1, 1].forEach(s => {
+    const cx = 160 + s * 62 + gx, cy = 96 + gy;
+    if (blink < 0.3) {
+      lcdCtx.beginPath(); lcdCtx.moveTo(cx - 24, cy); lcdCtx.lineTo(cx + 24, cy); lcdCtx.stroke();
+    } else {
+      // Iconic Terra-Rover happy glowing crescent arc eyes!
+      lcdCtx.beginPath(); lcdCtx.arc(cx, cy + 8, 25, Math.PI * 1.12, Math.PI * 1.88); lcdCtx.stroke();
+    }
+  });
+  lcdCtx.restore();
+  lcdCtx.fillStyle = '#94a3b8'; lcdCtx.font = '11px sans-serif'; lcdCtx.textAlign = 'center';
+  lcdCtx.fillText(SIM.caption, 160, 166); lcdCtx.textAlign = 'left';
+}
+
+// ============================================================================
+// 5. TAB 1: STUDIO-GRADE TERRA-ROVER 3D WEBGL SHOWROOM (CLEARCOAT + LOFT!)
+// ============================================================================
+const s3Canvas = document.getElementById('sim3dCanvas');
+const gl = s3Canvas.getContext('webgl', { antialias: true });
+const VS = `
+  attribute vec3 aPos, aNorm;
+  uniform mat4 uMVP, uModel;
+  varying vec3 vN, vP;
+  void main() {
+    vec4 wp = uModel * vec4(aPos, 1.0);
+    vP = wp.xyz;
+    vN = normalize(mat3(uModel) * aNorm);
+    gl_Position = uMVP * vec4(aPos, 1.0);
+  }
+`;
+const FS = `
+  precision mediump float;
+  varying vec3 vN, vP;
+  uniform vec4 uCol;
+  uniform vec3 uEye;
+  uniform float uEm;
+  uniform float uGloss;
+  void main() {
+    vec3 n = normalize(vN);
+    vec3 v = normalize(uEye - vP);
+    // 3-Point Dark Studio Product Photography Lighting
+    vec3 lKey  = normalize(vec3(0.55, 0.72, 0.85));  // Overhead softbox key
+    vec3 lFill = normalize(vec3(-0.75, 0.25, 0.35)); // Cool studio fill
+    vec3 lRim  = normalize(vec3(-0.20, -0.85, 0.65));// Crisp cyan-white back rim
+
+    float dKey  = max(dot(n, lKey), 0.0);
+    float dFill = max(dot(n, lFill), 0.0) * 0.30;
+    float dRim  = max(dot(n, lRim), 0.0) * 0.22;
+    float hemi  = 0.26 + 0.14 * (n.z * 0.5 + 0.5);
+
+    // Clearcoat specular + subtle Fresnel rim (keeps center of black visor INKY PITCH-BLACK!)
+    float specPow = mix(24.0, 128.0, uGloss);
+    float specStr = mix(0.14, 0.95, uGloss);
+    float sKey = pow(max(dot(n, normalize(lKey + v)), 0.0), specPow) * specStr;
+    float sRim = pow(max(dot(n, normalize(lRim + v)), 0.0), 48.0) * (0.12 + 0.35 * uGloss);
+    float fres = pow(1.0 - max(dot(n, v), 0.0), 4.8) * (0.06 + 0.16 * uGloss);
+
+    vec3 base = uCol.rgb * (hemi + 0.62 * dKey + dFill + dRim);
+    vec3 spec = vec3(1.0, 0.99, 0.97) * sKey + vec3(0.45, 0.85, 1.0) * (sRim + fres);
+    vec3 finalC = base + spec + uCol.rgb * uEm;
+    gl_FragColor = vec4(min(finalC, 1.0), uCol.a);
+  }
+`;
+function mkSh(t,s){ const sh=gl.createShader(t); gl.shaderSource(sh,s); gl.compileShader(sh); return sh; }
+const prg = gl.createProgram();
+gl.attachShader(prg, mkSh(gl.VERTEX_SHADER, VS)); gl.attachShader(prg, mkSh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(prg); gl.useProgram(prg);
+const aP=gl.getAttribLocation(prg,'aPos'), aN=gl.getAttribLocation(prg,'aNorm');
+const uMVP=gl.getUniformLocation(prg,'uMVP'), uM=gl.getUniformLocation(prg,'uModel');
+const uC=gl.getUniformLocation(prg,'uCol'), uE=gl.getUniformLocation(prg,'uEm');
+const uG=gl.getUniformLocation(prg,'uGloss'), uEye=gl.getUniformLocation(prg,'uEye');
+
+const M4 = {
+  id: ()=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]),
+  mul(a,b){ const o=new Float32Array(16); for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3]; return o; },
+  persp(f,a,n,fa){ const t=1/Math.tan(f/2),nf=1/(n-fa); return new Float32Array([t/a,0,0,0,0,t,0,0,0,0,(fa+n)*nf,-1,0,0,2*fa*n*nf,0]); },
+  lookAt(e,c,u){ let zx=e[0]-c[0],zy=e[1]-c[1],zz=e[2]-c[2],zl=Math.hypot(zx,zy,zz); zx/=zl;zy/=zl;zz/=zl; let xx=u[1]*zz-u[2]*zy,xy=u[2]*zx-u[0]*zz,xz=u[0]*zy-u[1]*zx,xl=Math.hypot(xx,xy,xz); xx/=xl;xy/=xl;xz/=xl; let yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx; return new Float32Array([xx,yx,zx,0,xy,yy,zy,0,xz,yz,zz,0,-(xx*e[0]+xy*e[1]+xz*e[2]),-(yx*e[0]+yy*e[1]+yz*e[2]),-(zx*e[0]+zy*e[1]+zz*e[2]),1]); },
+  tr:(x,y,z)=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1]),
+  rx:(r)=>{const c=Math.cos(r),s=Math.sin(r); return new Float32Array([1,0,0,0,0,c,s,0,0,-s,c,0,0,0,0,1]);},
+  ry:(r)=>{const c=Math.cos(r),s=Math.sin(r); return new Float32Array([c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1]);},
+  rz:(r)=>{const c=Math.cos(r),s=Math.sin(r); return new Float32Array([c,s,0,0,-s,c,0,0,0,0,1,0,0,0,0,1]);},
+};
+function mkM(P,N){ const vb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,vb); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(P),gl.STATIC_DRAW); const nb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,nb); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(N),gl.STATIC_DRAW); return {vb,nb,n:P.length/3}; }
+function qd(P,N,a,b,c,d){ const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2]; let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx,nl=Math.hypot(nx,ny,nz)||1; nx/=nl;ny/=nl;nz/=nl; for(const p of [a,b,c,a,c,d]){P.push(...p);N.push(nx,ny,nz);} }
+function bx(w,d,h){ const x=w/2,y=d/2,z=h/2,P=[],N=[]; qd(P,N,[-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]); qd(P,N,[-x,y,-z],[x,y,-z],[x,-y,-z],[-x,-y,-z]); qd(P,N,[-x,y,-z],[-x,y,z],[x,y,z],[x,y,-z]); qd(P,N,[x,-y,-z],[x,-y,z],[-x,-y,z],[-x,-y,-z]); qd(P,N,[x,y,-z],[x,y,z],[x,-y,z],[x,-y,-z]); qd(P,N,[-x,-y,-z],[-x,-y,z],[-x,y,z],[-x,y,-z]); return mkM(P,N); }
+
+function rRectPts(W, D, R, seg=6) {
+  R = Math.min(R, W*0.49, D*0.49);
+  const pts = [], cx = W/2 - R, cy = D/2 - R;
+  const cs = [[cx,cy,0],[-cx,cy,Math.PI/2],[-cx,-cy,Math.PI],[cx,-cy,Math.PI*1.5]];
+  for (const [ox,oy,a0] of cs) {
+    for (let i=0; i<=seg; i++) {
+      const a = a0 + (i/seg)*(Math.PI/2);
+      pts.push([ox + R*Math.cos(a), oy + R*Math.sin(a)]);
+    }
+  }
+  return pts;
+}
+
+// TRUE ORGANIC MULTI-SECTION LOFTED SOLID WITH SMOOTH VERTEX NORMALS
+function loftRRect(slices, seg=6) {
+  const rings = slices.map(s => rRectPts(s.w, s.d, s.r, seg).map(([x,y]) => [x, y + (s.oy||0), s.z + y * (s.tiltY||0)]));
+  const M = rings.length, K = rings[0].length;
+  const norms = rings.map(() => new Array(K).fill(null).map(() => [0,0,0]));
+  for (let i=0; i<M-1; i++) {
+    for (let j=0; j<K; j++) {
+      const jn = (j+1)%K;
+      const a = rings[i][j], b = rings[i][jn], c = rings[i+1][jn], d = rings[i+1][j];
+      const ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2], vx=d[0]-a[0], vy=d[1]-a[1], vz=d[2]-a[2];
+      const nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+      for (const [ri, ci] of [[i,j],[i,jn],[i+1,jn],[i+1,j]]) { norms[ri][ci][0]+=nx; norms[ri][ci][1]+=ny; norms[ri][ci][2]+=nz; }
+    }
+  }
+  for (let i=0; i<M; i++) for (let j=0; j<K; j++) {
+    const v = norms[i][j], l = Math.hypot(v[0],v[1],v[2]) || 1;
+    v[0]/=l; v[1]/=l; v[2]/=l;
+  }
+  const P = [], N = [];
+  for (let i=0; i<M-1; i++) {
+    for (let j=0; j<K; j++) {
+      const jn = (j+1)%K;
+      const idx = [[i,j],[i,jn],[i+1,jn], [i,j],[i+1,jn],[i+1,j]];
+      for (const [ri, ci] of idx) { P.push(...rings[ri][ci]); N.push(...norms[ri][ci]); }
+    }
+  }
+  const botC = [0, slices[0].oy||0, slices[0].z], topC = [0, slices[M-1].oy||0, slices[M-1].z];
+  for (let j=0; j<K; j++) {
+    const jn = (j+1)%K;
+    P.push(...botC, ...rings[0][jn], ...rings[0][j]); N.push(0,0,-1, 0,0,-1, 0,0,-1);
+    P.push(...topC, ...rings[M-1][j], ...rings[M-1][jn]); N.push(0,0,1, 0,0,1, 0,0,1);
+  }
+  return mkM(P, N);
+}
+
+// CURVED EDGE-TO-EDGE SOLID GLOSSY PITCH-BLACK ASTRONAUT VISOR (100% closed returns!)
+function curvedVisor(rx, ry, zBot, zTop, aMin, aMax, su=32, sv=14) {
+  const P=[], N=[];
+  function evalV(u, v) {
+    const a = aMin + u*(aMax - aMin);
+    const z = zBot + v*(zTop - zBot);
+    const bulge = 1.0 + 0.055 * Math.sin(v * Math.PI);
+    const x = rx * bulge * Math.sin(a);
+    const y = ry * bulge * Math.cos(a);
+    const nx = Math.sin(a) / rx, ny = Math.cos(a) / ry, nz = (v - 0.5) * 0.22 / (zTop - zBot);
+    const nl = Math.hypot(nx, ny, nz) || 1;
+    return [[x, y, z], [nx/nl, ny/nl, nz/nl]];
+  }
+  for (let i=0; i<sv; i++) {
+    for (let j=0; j<su; j++) {
+      const a = evalV(j/su, i/sv), b = evalV((j+1)/su, i/sv);
+      const c = evalV((j+1)/su, (i+1)/sv), d = evalV(j/su, (i+1)/sv);
+      for (const k of [a,b,c, a,c,d]) { P.push(...k[0]); N.push(...k[1]); }
+    }
+  }
+  for (let j=0; j<su; j++) {
+    const t0 = evalV(j/su, 1)[0], t1 = evalV((j+1)/su, 1)[0];
+    qd(P, N, t0, t1, [t1[0]*0.86, t1[1]-10, t1[2]-2], [t0[0]*0.86, t0[1]-10, t0[2]-2]);
+    const b0 = evalV(j/su, 0)[0], b1 = evalV((j+1)/su, 0)[0];
+    qd(P, N, [b0[0]*0.86, b0[1]-10, b0[2]+2], [b1[0]*0.86, b1[1]-10, b1[2]+2], b1, b0);
+  }
+  for (let i=0; i<sv; i++) {
+    const l0 = evalV(0, i/sv)[0], l1 = evalV(0, (i+1)/sv)[0];
+    qd(P, N, [l0[0]*0.86, l0[1]-10, l0[2]], l0, l1, [l1[0]*0.86, l1[1]-10, l1[2]]);
+    const r0 = evalV(1, i/sv)[0], r1 = evalV(1, (i+1)/sv)[0];
+    qd(P, N, r0, [r0[0]*0.86, r0[1]-10, r0[2]], [r1[0]*0.86, r1[1]-10, r1[2]], r1);
+  }
+  return mkM(P, N);
+}
+
+// GLOWING CURVED HAPPY CRESCENT ARC EYE ON THE VISOR!
+function crescentEye(xCenter, rx, ry, zBase, rad, thick, seg=20) {
+  const P=[], N=[];
+  for (let i=0; i<seg; i++) {
+    const t0 = 0.12*Math.PI + (i/seg)*0.76*Math.PI;
+    const t1 = 0.12*Math.PI + ((i+1)/seg)*0.76*Math.PI;
+    const mkPt = (t, dr) => {
+      const x = xCenter + (rad + dr) * Math.cos(t);
+      const z = zBase + (rad + dr) * Math.sin(t) * 0.80;
+      const s = Math.max(-0.92, Math.min(0.92, x / rx));
+      const y = (ry * 1.055) * Math.sqrt(1 - s*s) + 1.1;
+      return [x, y, z];
+    };
+    const p0=mkPt(t0,-thick/2), p1=mkPt(t1,-thick/2), p2=mkPt(t1,thick/2), p3=mkPt(t0,thick/2);
+    qd(P, N, p0, p1, p2, p3);
+  }
+  return mkM(P, N);
+}
+
+// 100%-SEALED LOWER ROVER TUB (Top rim matches sloped Top Hood at EVERY point -> ZERO gap!)
+function roverTub() {
+  const P=[], N=[];
+  const wall=2.6, z0=15.0;
+  const out = rRectPts(80, 102, 11, 6).map(([x,y])=>[x, y+1]);
+  const inn = rRectPts(74.8, 94, 8, 6).map(([x,y])=>[x, y-1]);
+  const bot = rRectPts(72, 92, 10, 6).map(([x,y])=>[x, y]);
+  // Shared exact parting plane height zSplit(y) = 48.5 - 0.14 * max(0, y - 8)
+  const zSplit = y => y > 8 ? Math.max(40.0, 48.5 - (y - 8) * 0.18) : 48.5;
+  for (let i=0; i<out.length; i++) {
+    const j = (i+1)%out.length;
+    const o0=out[i], o1=out[j], b0=bot[i], b1=bot[j], i0=inn[i], i1=inn[j];
+    const zTop0 = zSplit(o0[1]), zTop1 = zSplit(o1[1]);
+    qd(P,N, [b0[0],b0[1],z0], [b1[0],b1[1],z0], [o1[0],o1[1],zTop1], [o0[0],o0[1],zTop0]);
+    qd(P,N, [i1[0],i1[1],z0+wall], [i0[0],i0[1],z0+wall], [i0[0],i0[1],zTop0], [i1[0],i1[1],zTop1]);
+    qd(P,N, [o0[0],o0[1],zTop0], [o1[0],o1[1],zTop1], [i1[0],i1[1],zTop1], [i0[0],i0[1],zTop0]);
+    P.push(0,0,z0, b1[0],b1[1],z0, b0[0],b0[1],z0); N.push(0,0,-1, 0,0,-1, 0,0,-1);
+    P.push(0,0,z0+wall, i0[0],i0[1],z0+wall, i1[0],i1[1],z0+wall); N.push(0,0,1, 0,0,1, 0,0,1);
+  }
+  return mkM(P, N);
+}
+
+// MATCHING 100%-SEALED SLOPED TOP HOOD SHELL (Rests flush on roverTub's exact parting line!)
+function roverTopHood() {
+  const zSplit = y => y > 8 ? Math.max(40.0, 48.5 - (y - 8) * 0.18) : 48.5;
+  const out0 = rRectPts(80, 102, 11, 6).map(([x,y])=>[x, y+1, zSplit(y+1)]);
+  const out1 = rRectPts(73, 93, 10, 6).map(([x,y])=>[x, y-1, zSplit(y-1) + 4.8]);
+  const out2 = rRectPts(60, 78, 9, 6).map(([x,y])=>[x, y-4, zSplit(y-4) + 6.6]);
+  const rings = [out0, out1, out2], M = rings.length, K = rings[0].length;
+  const P=[], N=[];
+  for (let i=0; i<M-1; i++) for (let j=0; j<K; j++) {
+    const jn = (j+1)%K;
+    qd(P, N, rings[i][j], rings[i][jn], rings[i+1][jn], rings[i+1][j]);
+  }
+  const topC = [0, -4, zSplit(-4) + 6.6], botC = [0, 1, 48.5];
+  for (let j=0; j<K; j++) {
+    const jn = (j+1)%K;
+    P.push(...topC, ...rings[M-1][j], ...rings[M-1][jn]); N.push(0,0,1, 0,0,1, 0,0,1);
+    P.push(...botC, ...rings[0][jn], ...rings[0][j]); N.push(0,0,-1, 0,0,-1, 0,0,-1);
+  }
+  return mkM(P, N);
+}
+
+function cy(r,h,seg=24,ax='z'){ const P=[],N=[],hh=h/2,mp=(u,v,w)=>ax==='x'?[w,u,v]:ax==='y'?[u,w,v]:[u,v,w]; for(let i=0;i<seg;i++){const a0=i*6.2832/seg,a1=(i+1)*6.2832/seg,c0=Math.cos(a0),s0=Math.sin(a0),c1=Math.cos(a1),s1=Math.sin(a1); qd(P,N,mp(r*c0,r*s0,-hh),mp(r*c1,r*s1,-hh),mp(r*c1,r*s1,hh),mp(r*c0,r*s0,hh)); P.push(...mp(0,0,hh),...mp(r*c0,r*s0,hh),...mp(r*c1,r*s1,hh)); N.push(...mp(0,0,1),...mp(0,0,1),...mp(0,0,1)); P.push(...mp(0,0,-hh),...mp(r*c1,r*s1,-hh),...mp(r*c0,r*s0,-hh)); N.push(...mp(0,0,-1),...mp(0,0,-1),...mp(0,0,-1));} return mkM(P,N); }
+
+function treadedTire(r, w, lugs=20) {
+  const P=[], N=[], hx=w/2, rCore=r-1.8;
+  for (let i=0; i<lugs; i++) {
+    const a0=i*6.2832/lugs, a1=(i+1)*6.2832/lugs, am=(a0+a1)/2;
+    const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+    qd(P,N, [-hx,rCore*c0,rCore*s0],[hx,rCore*c0,rCore*s0],[hx,rCore*c1,rCore*s1],[-hx,rCore*c1,rCore*s1]);
+    qd(P,N, [hx,14.2*c0,14.2*s0],[hx,rCore*c0,rCore*s0],[hx,rCore*c1,rCore*s1],[hx,14.2*c1,14.2*s1]);
+    qd(P,N, [-hx,rCore*c0,rCore*s0],[-hx,14.2*c0,14.2*s0],[-hx,14.2*c1,14.2*s1],[-hx,rCore*c1,rCore*s1]);
+    const b0 = a0 + 0.03, b1 = am + 0.03;
+    const cb0=Math.cos(b0), sb0=Math.sin(b0), cb1=Math.cos(b1), sb1=Math.sin(b1);
+    const lx = hx - 0.7;
+    qd(P,N, [-lx,r*cb0,r*sb0],[lx,r*cb0,r*sb0],[lx,r*cb1,r*sb1],[-lx,r*cb1,r*sb1]);
+    qd(P,N, [-lx,rCore*cb0,rCore*sb0],[lx,rCore*cb0,rCore*sb0],[lx,r*cb0,r*sb0],[-lx,r*cb0,r*sb0]);
+    qd(P,N, [lx,rCore*cb1,rCore*sb1],[-lx,rCore*cb1,rCore*sb1],[-lx,r*cb1,r*sb1],[lx,r*cb1,r*sb1]);
+  }
+  return mkM(P, N);
+}
+
+function xRing(rIn, rOut, w, seg=28) {
+  const P=[], N=[], hx=w/2;
+  for (let i=0; i<seg; i++) {
+    const a0=i*6.2832/seg, a1=(i+1)*6.2832/seg;
+    const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+    qd(P,N, [hx,rIn*c0,rIn*s0],[hx,rOut*c0,rOut*s0],[hx,rOut*c1,rOut*s1],[hx,rIn*c1,rIn*s1]);
+    qd(P,N, [-hx,rOut*c0,rOut*s0],[-hx,rIn*c0,rIn*s0],[-hx,rIn*c1,rIn*s1],[-hx,rOut*c1,rOut*s1]);
+    qd(P,N, [-hx,rOut*c0,rOut*s0],[hx,rOut*c0,rOut*s0],[hx,rOut*c1,rOut*s1],[-hx,rOut*c1,rOut*s1]);
+  }
+  return mkM(P, N);
+}
+
+// ============================================================================
+// BUILD TERRA-ROVER 4WD ASSEMBLY PARTS
+// ============================================================================
+const RPARTS = [
+  // === 1. LOWER SCULPTED GUNMETAL ROVER TUB (100% SEALED WITH TOP HOOD!) ===
+  { sh:1, lid:0, p:[0, 0, 0], m:roverTub(), c:[0.22,0.25,0.30], gl:0.25 },
+  // Front Angled Silver-Titanium Skid Plate + Recessed Grille + Dual Glowing Headlights!
+  { sh:1, lid:0, p:[0, 52.2, 22], rx:0.46, m:bx(26, 3.2, 15), c:[0.58,0.62,0.68], gl:0.45 },
+  { sh:1, lid:0, p:[0, 52.0, 31], m:bx(26, 2.2, 6.2), c:[0.07,0.08,0.10], gl:0.1 },
+  { sh:1, lid:0, p:[-21, 50.8, 32], m:bx(11, 2.2, 4.8), c:[0.08,0.10,0.12], gl:0.4 },
+  { sh:1, lid:0, p:[ 21, 50.8, 32], m:bx(11, 2.2, 4.8), c:[0.08,0.10,0.12], gl:0.4 },
+  { sh:1, lid:0, eye:1, p:[-21, 52.1, 32], m:bx(7.5, 0.8, 2.2), c:[0.82,0.96,1.0] },
+  { sh:1, lid:0, eye:1, p:[ 21, 52.1, 32], m:bx(7.5, 0.8, 2.2), c:[0.82,0.96,1.0] },
+
+  // Sculpted Pearl-White Side Body Armor Panels
+  { sh:1, lid:0, p:[-41.2, -6, 36.5], m:loftRRect([{z:-8,w:4,d:44,r:2},{z:0,w:5.5,d:50,r:2.5},{z:8,w:4,d:42,r:2}], 4), c:[0.93,0.94,0.96], gl:0.25 },
+  { sh:1, lid:0, p:[ 41.2, -6, 36.5], m:loftRRect([{z:-8,w:4,d:44,r:2},{z:0,w:5.5,d:50,r:2.5},{z:8,w:4,d:42,r:2}], 4), c:[0.93,0.94,0.96], gl:0.25 },
+  { sh:1, lid:0, p:[-44.0, -16, 36.5], m:bx(1.2, 11, 9), c:[0.10,0.12,0.15] },
+  { sh:1, lid:0, p:[ 44.0, -16, 36.5], m:bx(1.2, 11, 9), c:[0.10,0.12,0.15] },
+
+  // Exposed Muscular 4WD Off-Road Suspension Wishbone Arms & Shock Struts!
+  ...[[-1,31],[1,31],[-1,-30],[1,-30]].flatMap(([s, y]) => [
+    { sh:0, lid:0, p:[s*43, y, 22], m:cy(3.6, 13, 14, 'x'), c:[0.28,0.31,0.36], gl:0.35 },
+    { sh:0, lid:0, p:[s*42, y, 27], ry:s*0.42, m:bx(12, 5.2, 2.4), c:[0.18,0.20,0.24] },
+    { sh:0, lid:0, p:[s*42, y, 17], ry:-s*0.18, m:bx(12, 5.5, 2.2), c:[0.18,0.20,0.24] },
+    { sh:0, lid:0, p:[s*41, y+3, 26], ry:s*0.30, m:cy(1.8, 12, 10, 'z'), c:[0.72,0.75,0.80], gl:0.6 },
+  ]),
+
+  // Rear Tactical I/O Ports
+  { sh:1, lid:0, p:[26.5, -49.5, 44.0], m:bx(11, 1.2, 5.2), c:[0.72,0.76,0.82] },
+  { sh:1, lid:0, p:[-27.5,-49.8, 43.0], m:bx(8.5, 2.0, 3.8), c:[0.90,0.64,0.20] },
+  { sh:1, lid:0, p:[-2.0, -49.5, 43.0], m:bx(14, 1.0, 3.5), c:[0.07,0.09,0.12] },
+
+  // === 2. REMOVABLE 100%-SEALED SLOPED TOP HOOD + WHITE HOOD WINGS + ANTENNA ===
+  { sh:1, lid:1, p:[0, 0, 0], m:roverTopHood(), c:[0.23,0.26,0.32], gl:0.30 },
+  // Sculpted Pearl-White Hood Shoulder Wings hugging the sloped hood!
+  { sh:1, lid:1, p:[-25, 16, 0], m:loftRRect([
+      {z:47.0, w:22, d:54, r:7, tiltY:-0.16},
+      {z:51.8, w:17, d:44, r:6, tiltY:-0.16},
+      {z:53.5, w:12, d:34, r:4, tiltY:-0.15},
+    ], 5), c:[0.93,0.94,0.96], gl:0.32 },
+  { sh:1, lid:1, p:[ 25, 16, 0], m:loftRRect([
+      {z:47.0, w:22, d:54, r:7, tiltY:-0.16},
+      {z:51.8, w:17, d:44, r:6, tiltY:-0.16},
+      {z:53.5, w:12, d:34, r:4, tiltY:-0.15},
+    ], 5), c:[0.93,0.94,0.96], gl:0.32 },
+  // Raised Sporty Rear-Deck Fastback Cowl + Stubby Cyber-Antenna
+  { sh:1, lid:1, p:[0, -32, 0], m:loftRRect([
+      {z:53.5, w:46, d:28, r:7},
+      {z:58.0, w:34, d:20, r:5},
+    ], 5), c:[0.20,0.23,0.28], gl:0.30 },
+  { sh:1, lid:1, p:[19, -40, 63], rx:-0.36, m:cy(1.7, 16, 12, 'z'), c:[0.16,0.18,0.22], gl:0.4 },
+  { sh:1, lid:1, p:[19, -37.5, 56], m:cy(3.6, 3.5, 14, 'z'), c:[0.28,0.31,0.36] },
+  // Compact Sculpted Circular Neck Collar
+  { sh:1, lid:1, p:[0, -2, 59.5], m:cy(21, 13, 28, 'z'), c:[0.14,0.16,0.20], gl:0.35 },
+  { sh:1, lid:1, p:[0, -2, 61.5], m:cy(23, 2.5, 28, 'z'), c:[0.30,0.34,0.40], gl:0.5 },
+
+  // === 3. REAL INTERNAL HARDWARE (HIDDEN UNTIL YOU OPEN TOP HOOD OR X-RAY!) ===
+  { sh:0, lid:0, p:[-3,-14,41.5],  m:bx(30,65,1.8),     c:[0.07,0.46,0.21] },
+  { sh:0, lid:0, p:[-1.5,-12,45.2],m:bx(14,14,5.0),     c:[0.11,0.12,0.14] },
+  { sh:0, lid:0, p:[-14.5,-14,45.2],m:bx(5,50.8,5.5),   c:[0.95,0.78,0.20] },
+  { sh:0, lid:0, p:[2, 8, 72],     m:bx(12,1.2,52),     c:[0.94,0.96,0.99], bus:'CSI_CAM' },
+  { sh:0, lid:0, p:[0, 0, 28.0],   m:cy(9.2,65,18,'x'), c:[0.86,0.28,0.48] },
+  { sh:0, lid:0, p:[26.5,-32,42.0],m:bx(18,30,2.2),     c:[0.09,0.16,0.26] },
+  { sh:0, lid:0, p:[-28, 30, 21],  m:bx(24,10,12),      c:[0.86,0.68,0.24] },
+  { sh:0, lid:0, p:[ 28, 30, 21],  m:bx(24,10,12),      c:[0.86,0.68,0.24] },
+  { sh:0, lid:0, p:[-28,-30, 21],  m:bx(24,10,12),      c:[0.86,0.68,0.24] },
+  { sh:0, lid:0, p:[ 28,-30, 21],  m:bx(24,10,12),      c:[0.86,0.68,0.24] },
+  { sh:0, lid:0, p:[0,  30, 20],   m:bx(18.5,16,2),     c:[0.10,0.52,0.24] },
+  { sh:0, lid:0, p:[0, -30, 20],   m:bx(19,18,2),       c:[0.44,0.16,0.58] },
+  { sh:0, lid:1, p:[-11,-5,66],    m:bx(22,22,12),      c:[0.14,0.42,0.86] },
+
+  // === 4. FOUR CHUNKY WIDE-STANCE Ø44mm OFF-ROAD WHEELS + STAR RIMS + SATIN GOLD LIPS! ===
+  ...[
+    ['L', -53.5,  31], ['R', 53.5,  31],
+    ['L', -53.5, -30], ['R', 53.5, -30],
+  ].flatMap(([wh, x, y]) => {
+    const sgn = wh === 'L' ? -1 : 1;
+    return [
+      { sh:0, lid:0, wh, p:[x, y, 22],            m:treadedTire(22.0, 18.0, 20), c:[0.09,0.10,0.11], gl:0.12 },
+      { sh:0, lid:0, wh, p:[x, y, 22],            m:cy(14.5, 12.0, 24, 'x'),     c:[0.18,0.20,0.24], gl:0.45 },
+      { sh:0, lid:0, wh, p:[x+sgn*7.2, y, 22],    m:xRing(12.2, 14.3, 1.8, 28),  c:[0.92,0.68,0.22], gl:0.80 },
+      { sh:0, lid:0, wh, p:[x+sgn*5.0, y, 22],    m:cy(4.8, 4.0, 16, 'x'),       c:[0.40,0.44,0.50], gl:0.65 },
+      { sh:0, lid:0, wh, p:[x+sgn*5.0, y, 22],    m:bx(3.2, 3.0, 26),            c:[0.36,0.40,0.46], gl:0.60 },
+      { sh:0, lid:0, wh, p:[x+sgn*5.0, y, 22],    m:bx(3.2, 26, 3.0),            c:[0.36,0.40,0.46], gl:0.60 },
+    ];
+  }),
+
+  // === 5. TERRA-ROVER WIDE ORGANIC ASTRONAUT HELMET ===
+  { sh:1, lid:1, hd:1, p:[0, 0, 0], m:loftRRect([
+      {z:61.5, w:64, d:48, r:16, oy:0},
+      {z:68.0, w:78, d:60, r:19, oy:-1},
+      {z:80.0, w:85, d:64, r:20, oy:-2},
+      {z:96.0, w:86, d:65, r:20, oy:-2},
+      {z:108., w:78, d:59, r:19, oy:-3},
+      {z:115., w:62, d:47, r:16, oy:-4},
+      {z:119., w:40, d:30, r:12, oy:-5},
+    ], 8), c:[0.93,0.94,0.96], gl:0.35 },
+  { sh:1, lid:1, hd:1, p:[0, -5, 0], m:loftRRect([
+      {z:116.5, w:36, d:32, r:10},
+      {z:119.8, w:28, d:24, r:8},
+    ], 6), c:[0.26,0.29,0.35], gl:0.45 },
+  { sh:1, lid:1, hd:1, p:[0, 23, 64.5], m:loftRRect([
+      {z:-2.2, w:42, d:14, r:5},
+      {z: 2.2, w:46, d:16, r:6},
+    ], 5), c:[0.24,0.27,0.32], gl:0.40 },
+  { sh:1, lid:1, hd:1, p:[-43.5, -2, 89], m:cy(12.0, 6.0, 24, 'x'), c:[0.20,0.23,0.28], gl:0.45 },
+  { sh:1, lid:1, hd:1, p:[ 43.5, -2, 89], m:cy(12.0, 6.0, 24, 'x'), c:[0.20,0.23,0.28], gl:0.45 },
+  { sh:1, lid:1, hd:1, p:[-46.6, -2, 89], m:xRing(7.5, 9.8, 1.4, 24), c:[0.62,0.66,0.72], gl:0.7 },
+  { sh:1, lid:1, hd:1, p:[ 46.6, -2, 89], m:xRing(7.5, 9.8, 1.4, 24), c:[0.62,0.66,0.72], gl:0.7 },
+
+  // === 6. INKY PITCH-BLACK CURVED VISOR + FLUSH CAMERA + GLOWING HAPPY CYAN EYES! ===
+  { sh:1, lid:1, hd:1, p:[0, 0.5, 0], m:curvedVisor(45.2, 34.8, 67.5, 110.2, -1.16, 1.16, 36, 14), c:[0.01,0.015,0.025], gl:1.0 },
+  { sh:1, lid:1, hd:1, p:[0, 35.4, 104.5], m:cy(6.0, 2.0, 22, 'y'), c:[0.14,0.17,0.22], gl:0.65 },
+  { sh:0, lid:1, hd:1, p:[0, 36.4, 104.5], m:cy(4.0, 1.4, 22, 'y'), c:[0.04,0.05,0.08], gl:0.95 },
+  { sh:0, lid:1, hd:1, eye:1, p:[0, 37.2, 104.5], m:cy(2.3, 0.8, 20, 'y'), c:[0.12,0.48,0.95], gl:1.0 },
+  { sh:0, lid:1, hd:1, eye:1, p:[0, 0.5, 0], m:crescentEye(-14.5, 45.2, 34.8, 82.0, 8.8, 3.8, 20), c:[0.08,0.96,1.0] },
+  { sh:0, lid:1, hd:1, eye:1, p:[0, 0.5, 0], m:crescentEye( 14.5, 45.2, 34.8, 82.0, 8.8, 3.8, 20), c:[0.08,0.96,1.0] },
+  { sh:0, lid:1, hd:1, p:[0, 18.5, 84.0],  m:bx(61, 1.6, 36.5), c:[0.70,0.14,0.16] },
+  { sh:0, lid:1, hd:1, p:[0, 26.5, 104.5], m:bx(25, 1.6, 24.0), c:[0.08,0.14,0.22] },
+];
+
+const dP=[], dN=[];
+for (let i=-320; i<=320; i+=40) { dP.push(i,-320,0, i,320,0, -320,i,0, 320,i,0); dN.push(0,0,1,0,0,1,0,0,1,0,0,1); }
+const deskGrid = mkM(dP, dN);
+
+// Hero automotive 3/4 front-left studio camera angle!
+let camYaw = -0.52, camPitch = 0.24, camDist = 315, drag3 = false, lx3 = 0, ly3 = 0;
+s3Canvas.addEventListener('pointerdown', e => { drag3=true; lx3=e.clientX; ly3=e.clientY; s3Canvas.setPointerCapture(e.pointerId); });
+s3Canvas.addEventListener('pointermove', e => { if(!drag3)return; camYaw-=(e.clientX-lx3)*0.008; camPitch=Math.max(0.06,Math.min(1.38,camPitch+(e.clientY-ly3)*0.008)); lx3=e.clientX; ly3=e.clientY; });
+s3Canvas.addEventListener('pointerup', ()=>drag3=false);
+s3Canvas.addEventListener('wheel', e => { e.preventDefault(); camDist=Math.max(150,Math.min(720,camDist+e.deltaY*0.3)); }, {passive:false});
+
+function draw3DSim() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = s3Canvas.clientWidth, H = s3Canvas.clientHeight;
+  if (!W || !H) return;
+  if (s3Canvas.width !== W*dpr || s3Canvas.height !== H*dpr) { s3Canvas.width=W*dpr; s3Canvas.height=H*dpr; }
+  gl.viewport(0, 0, s3Canvas.width, s3Canvas.height);
+  const isLight = document.documentElement.classList.contains('light');
+  gl.clearColor(isLight?0.94:0.05, isLight?0.95:0.07, isLight?0.97:0.10, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  const follow = document.getElementById('sim3dFollow').checked;
+  const rx_mm = SIM.x * 10, ry_mm = SIM.y * 10;
+  const tgt = follow ? [rx_mm, ry_mm, 58 + SIM.lidLift * 0.32] : [0, 0, 58];
+  const eye = [tgt[0]+camDist*Math.cos(camPitch)*Math.sin(camYaw), tgt[1]+camDist*Math.cos(camPitch)*Math.cos(camYaw), tgt[2]+camDist*Math.sin(camPitch)];
+  const vp = M4.mul(M4.persp(38*Math.PI/180, s3Canvas.width/s3Canvas.height, 5, 2200), M4.lookAt(eye, tgt, [0,0,1]));
+  gl.uniform3f(uEye, eye[0], eye[1], eye[2]);
+
+  gl.uniformMatrix4fv(uMVP,false,vp); gl.uniformMatrix4fv(uM,false,M4.id());
+  gl.uniform4f(uC, 0.28,0.36,0.46,0.38); gl.uniform1f(uE, 0.20); gl.uniform1f(uG, 0.0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, deskGrid.vb); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, deskGrid.nb); gl.enableVertexAttribArray(aN); gl.vertexAttribPointer(aN,3,gl.FLOAT,false,0,0);
+  gl.drawArrays(gl.LINES, 0, deskGrid.n);
+
+  const robotM = M4.mul(M4.tr(rx_mm, ry_mm, 0), M4.rz(SIM.hdg));
+  const lidM = M4.tr(0, 0, SIM.lidLift);
+  const xray = document.getElementById('sim3dXray').checked;
+  const headM = M4.mul(M4.tr(0,-2,66), M4.mul(M4.rx(SIM.servoAngle * Math.PI / 180), M4.tr(0,2,-66)));
+
+  const drawOne = (pt, alpha) => {
+    let m = robotM;
+    if (pt.lid) m = M4.mul(m, lidM);
+    if (pt.hd) m = M4.mul(m, headM);
+    let lm = M4.tr(pt.p[0], pt.p[1], pt.p[2]);
+    if (pt.rx) lm = M4.mul(lm, M4.rx(pt.rx));
+    if (pt.ry) lm = M4.mul(lm, M4.ry(pt.ry));
+    if (pt.wh) lm = M4.mul(lm, M4.rx(pt.wh==='L'?SIM.wheelAngleL:SIM.wheelAngleR));
+    m = M4.mul(m, lm);
+    let col = pt.c, em = 0;
+    if (pt.eye && SIM.powerOn) em = 0.85;
+    if (pt.bus === 'CSI_CAM' && SIM.powerOn) em = 0.35 + 0.25 * Math.sin(SIM.t * 10);
+    gl.uniformMatrix4fv(uMVP,false,M4.mul(vp,m)); gl.uniformMatrix4fv(uM,false,m);
+    gl.uniform4f(uC, col[0], col[1], col[2], alpha); gl.uniform1f(uE, em); gl.uniform1f(uG, pt.gl || 0.15);
+    gl.bindBuffer(gl.ARRAY_BUFFER, pt.m.vb); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP,3,gl.FLOAT,false,0,0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, pt.m.nb); gl.enableVertexAttribArray(aN); gl.vertexAttribPointer(aN,3,gl.FLOAT,false,0,0);
+    gl.drawArrays(gl.TRIANGLES, 0, pt.m.n);
+  };
+
+  gl.disable(gl.BLEND); gl.depthMask(true);
+  for (const pt of RPARTS) { if (xray && pt.sh) continue; drawOne(pt, 1.0); }
+  if (xray) {
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    for (const pt of RPARTS) { if (pt.sh) drawOne(pt, 0.18); }
+    gl.depthMask(true); gl.disable(gl.BLEND);
+  }
+}
+
+// ============================================================================
+// 6. TAB 3: 4-CHANNEL LIVE OSCILLOSCOPE
+// ============================================================================
+const scCanvas = document.getElementById('scopeCanvas');
+const scCtx = scCanvas.getContext('2d');
+function drawScope() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = scCanvas.clientWidth, H = scCanvas.clientHeight;
+  if (!W || !H) return;
+  if (scCanvas.width !== W*dpr || scCanvas.height !== H*dpr) { scCanvas.width=W*dpr; scCanvas.height=H*dpr; }
+  scCtx.save(); scCtx.scale(dpr, dpr);
+  const isLight = document.documentElement.classList.contains('light');
+  scCtx.fillStyle = isLight ? '#f8fafc' : '#090e15'; scCtx.fillRect(0, 0, W, H);
+  const chs = [
+    { name:'CH1: DRV8833 四驱并联 PWM (FL+RL / FR+RR)', data:SIM.chMotor, col:'#facc15', min:-1.1, max:1.1, unit:`L:${Math.round(SIM.pwmL*100)}% R:${Math.round(SIM.pwmR*100)}%` },
+    { name:'CH2: MG90S 硬件 PWM1 脉宽 (GPIO13)', data:SIM.chServo, col:'#f97316', min:0.8,  max:2.2, unit:`${(1.5+SIM.servoAngle/44*0.5).toFixed(2)} ms (${SIM.servoAngle.toFixed(1)}°)` },
+    { name:'CH3: 全双工 I2S 音频 (GPIO18/19/20/21)', data:SIM.chAudio, col:'#22d3ee', min:-1.1, max:1.1, unit:SIM.state==='SPEAKING'?'TX 播报':'实时监听' },
+    { name:'CH4: IP5328P 5V/3A 四驱总电流 (上限 3000mA)', data:SIM.chCurr, col:'#4ade80', min:0, max:3000, unit:`${Math.round(SIM.i5v)} mA` },
+  ];
+  const rowH = H / 4;
+  chs.forEach((ch, idx) => {
+    const y0 = idx * rowH;
+    scCtx.strokeStyle = isLight ? '#e2e8f0' : '#1e293b'; scCtx.beginPath(); scCtx.moveTo(0, y0); scCtx.lineTo(W, y0); scCtx.stroke();
+    if (idx === 3) {
+      const yLim = y0 + rowH - ((2700)/(3000))*(rowH-18) - 6;
+      scCtx.strokeStyle = 'rgba(239,68,68,0.55)'; scCtx.setLineDash([4,4]); scCtx.beginPath(); scCtx.moveTo(0, yLim); scCtx.lineTo(W, yLim); scCtx.stroke(); scCtx.setLineDash([]);
+    }
+    scCtx.strokeStyle = ch.col; scCtx.lineWidth = 1.8; scCtx.beginPath();
+    for (let i=0; i<ch.data.length; i++) {
+      const px = (i/(ch.data.length-1))*W;
+      const py = y0 + rowH - 6 - Math.max(0, Math.min(1, (ch.data[i]-ch.min)/(ch.max-ch.min)))*(rowH-22);
+      if (i===0) scCtx.moveTo(px, py); else scCtx.lineTo(px, py);
+    }
+    scCtx.stroke();
+    scCtx.fillStyle = isLight ? '#0f172a' : '#e2e8f0'; scCtx.font = 'bold 10.5px monospace'; scCtx.fillText(ch.name, 8, y0+14);
+    scCtx.fillStyle = ch.col; scCtx.fillText(ch.unit, W - scCtx.measureText(ch.unit).width - 10, y0+14);
+  });
+  scCtx.restore();
+}
+
+// ============================================================================
+// 7. INTERACTION HANDLERS
+// ============================================================================
+function setLidOpen(open) {
+  SIM.lidOpen = open;
+  document.getElementById('lidToggleBtn').textContent = open ? '🔒 合上顶盖（恢复流线全封闭）' : '🔓 掀开顶盖（演示便捷组装）';
+  document.getElementById('lidStatus').textContent = open ? '顶盖已掀开（俯视快装模式）' : '100% 全封闭锁紧';
+  logEvent('MECH', open ? '拧下 4 颗 M3 螺丝掀起流线引擎盖：内部 4×N20、居中 18650 与树莓派 Zero 2W 一览无余！' : '流线引擎盖已闭合锁紧，外观 100% 全封闭 ✓', open?'--primary':'--success');
+}
+document.getElementById('lidToggleBtn').onclick = () => setLidOpen(!SIM.lidOpen);
+
+function triggerScenario(cmd, customText='') {
+  if (!SIM.powerOn) return;
+  const msg = customText || { vision_scan:'看看桌上有什么？', face_track:'开启人脸自动追踪！', patrol:'开启四驱越野巡航', dance:'4WD 满载峰值压测！' }[cmd] || cmd;
+  logEvent('MIC ', `INMP441(GPIO20) 拾音: "${msg}"`, '--primary');
+  if (msg.includes('掀') || msg.includes('开盖') || msg.includes('组装')) { setLidOpen(true); SIM.caption = '顶盖已掀开！可直接从正上方装入主板、电池和四驱电机'; }
+  else if (msg.includes('合') || msg.includes('关盖')) { setLidOpen(false); SIM.caption = '顶盖已闭合，Terra-Rover 100% 流线全封闭！'; }
+  else if (cmd === 'vision_scan' || msg.includes('看') || msg.includes('什么')) { SIM.state = 'SPEAKING'; SIM.stateTimer = 3.5; SIM.expression = 'happy'; SIM.caption = '我看到了你（人脸 98%）和桌面上的水杯（93%）！'; logEvent('VLM ', 'OV5647 抓帧 -> 树莓派 Zero 2W YOLOv8n 识别完成', '--success'); }
+  else if (cmd === 'face_track' || msg.includes('追')) { SIM.visionTrack = true; SIM.state = 'TRACKING'; SIM.stateTimer = 0; SIM.caption = 'Terra-Rover 视觉闭环追踪中！'; document.getElementById('trackToggleBtn').textContent = '👁️ 视觉追踪: ON'; }
+  else if (cmd === 'patrol' || msg.includes('巡') || msg.includes('前')) { SIM.visionTrack = false; SIM.state = 'PATROL'; SIM.stateTimer = 5.0; SIM.caption = '四驱 4×Ø42mm 宽体越野巡航中'; document.getElementById('trackToggleBtn').textContent = '👁️ 视觉追踪: OFF'; }
+  else if (cmd === 'dance' || msg.includes('压测') || msg.includes('舞')) { SIM.visionTrack = false; SIM.state = 'DANCE'; SIM.stateTimer = 4.5; SIM.expression = 'love'; SIM.caption = '4WD 满载压测 (~2337mA < 3A)'; document.getElementById('trackToggleBtn').textContent = '👁️ 视觉追踪: OFF'; }
+  else { SIM.state = 'SPEAKING'; SIM.stateTimer = 3.0; SIM.caption = '收到！Terra-Rover 四驱探索车随时待命！'; }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    SIM.activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('tab-active'); b.classList.add('bg-[var(--card)]'); });
+    btn.classList.add('tab-active'); btn.classList.remove('bg-[var(--card)]');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById('panel-' + SIM.activeTab).classList.remove('hidden');
+  };
+});
+document.querySelectorAll('.bus-btn').forEach(btn => {
+  btn.onclick = () => {
+    SIM.busFilter = btn.dataset.bus;
+    document.querySelectorAll('.bus-btn').forEach(b => b.className = 'bus-btn px-2 py-1 rounded border border-[var(--border)] bg-[var(--content)]');
+    btn.className = 'bus-btn px-2 py-1 rounded border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium';
+    renderNetTable();
+  };
+});
+document.querySelectorAll('.ai-btn').forEach(b => b.onclick = () => triggerScenario(b.dataset.cmd));
+document.getElementById('chatSend').onclick = () => { const inp = document.getElementById('chatInput'); if (inp.value.trim()) { triggerScenario('custom', inp.value.trim()); inp.value = ''; } };
+document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('chatSend').click(); });
+document.getElementById('trackToggleBtn').onclick = () => {
+  SIM.visionTrack = !SIM.visionTrack;
+  document.getElementById('trackToggleBtn').textContent = SIM.visionTrack ? '👁️ 视觉追踪: ON' : '👁️ 视觉追踪: OFF';
+  if (SIM.visionTrack) { SIM.state = 'TRACKING'; } else { SIM.state = 'IDLE'; SIM.pwmL = 0; SIM.pwmR = 0; }
+};
+const pwrBtn = document.getElementById('pwrSwitchBtn');
+pwrBtn.onclick = () => {
+  SIM.powerOn = !SIM.powerOn;
+  pwrBtn.textContent = SIM.powerOn ? '⚡ 电源开关: ON' : '⏻ 电源开关: OFF';
+  pwrBtn.className = SIM.powerOn ? 'px-3 py-1.5 rounded-lg border border-[var(--success)] bg-[var(--content)] font-mono font-semibold text-[var(--success)]' : 'px-3 py-1.5 rounded-lg border border-[var(--error)] bg-[var(--content)] font-mono font-semibold text-[var(--error)]';
+  if (!SIM.powerOn) { SIM.pwmL = 0; SIM.pwmR = 0; SIM.state = 'OFF'; } else { SIM.state = 'TRACKING'; }
+};
+const drvMap = { fwd:[0.75,0.75], rev:[-0.65,-0.65], left:[-0.6,0.6], right:[0.6,-0.6], stop:[0,0] };
+document.querySelectorAll('.drv-btn').forEach(b => {
+  b.onclick = () => { if (!SIM.powerOn) return; SIM.visionTrack = false; document.getElementById('trackToggleBtn').textContent = '👁️ 视觉追踪: OFF'; [SIM.pwmL, SIM.pwmR] = drvMap[b.dataset.drv]; SIM.state = (SIM.pwmL===0 && SIM.pwmR===0) ? 'IDLE' : 'MANUAL'; };
+});
+const keys = {};
+window.addEventListener('keydown', e => { if (document.activeElement.tagName!=='INPUT') keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup',   e => { keys[e.key.toLowerCase()] = false; });
+document.querySelectorAll('.spd-btn').forEach(b => {
+  b.onclick = () => { SIM.batSpeed = +b.dataset.speed; document.querySelectorAll('.spd-btn').forEach(x => x.className = 'spd-btn px-2 py-0.5 rounded border border-[var(--border)] bg-[var(--content)]'); b.className = 'spd-btn px-2 py-0.5 rounded border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]'; };
+});
+document.getElementById('rechargeBtn').onclick = () => { SIM.soc = 1.0; logEvent('CHG ', 'IP5328P Type-C 充满 3000mAh 18650 (4.20V)', '--success'); };
+
+// ============================================================================
+// 8. MAIN 60 FPS DIGITAL TWIN LOOP
+// ============================================================================
+let lastTs = null;
+function tick(now) {
+  if (lastTs === null) lastTs = now;
+  const dt = Math.max(0.0, Math.min(0.05, (now - lastTs) / 1000));
+  lastTs = now; SIM.t += dt;
+  const targetLift = SIM.lidOpen ? 46.0 : 0.0;
+  SIM.lidLift += (targetLift - SIM.lidLift) * Math.min(1, dt * 8.5);
+
+  if (SIM.powerOn) {
+    if (SIM.tgtAuto) { SIM.tgtX = Math.sin(SIM.t * 0.65) * 0.45; SIM.tgtY = Math.cos(SIM.t * 0.45) * 0.35; }
+    if (keys['w']||keys['arrowup'])    { SIM.visionTrack=false; SIM.pwmL=0.8; SIM.pwmR=0.8; SIM.state='MANUAL'; }
+    else if (keys['s']||keys['arrowdown'])  { SIM.visionTrack=false; SIM.pwmL=-0.7; SIM.pwmR=-0.7; SIM.state='MANUAL'; }
+    else if (keys['a']||keys['arrowleft'])  { SIM.visionTrack=false; SIM.pwmL=-0.6; SIM.pwmR=0.6; SIM.state='MANUAL'; }
+    else if (keys['d']||keys['arrowright']) { SIM.visionTrack=false; SIM.pwmL=0.6; SIM.pwmR=-0.6; SIM.state='MANUAL'; }
+
+    if (SIM.visionTrack && SIM.state === 'TRACKING') {
+      SIM.servoTarget = Math.max(-18, Math.min(20, SIM.tgtY * 24));
+      const yawErr = SIM.tgtX;
+      if (Math.abs(yawErr) > 0.14) { const turn = Math.max(-0.45, Math.min(0.45, yawErr * 0.65)); SIM.pwmL = turn; SIM.pwmR = -turn; }
+      else { SIM.pwmL = 0; SIM.pwmR = 0; }
+    }
+    if (SIM.stateTimer > 0) {
+      SIM.stateTimer -= dt;
+      if (SIM.state === 'PATROL') { SIM.pwmL = 0.65; SIM.pwmR = 0.35; SIM.servoTarget = Math.sin(SIM.t*2)*10; }
+      else if (SIM.state === 'DANCE') { SIM.pwmL = Math.sin(SIM.t*5)*0.9; SIM.pwmR = -SIM.pwmL; SIM.servoTarget = Math.sin(SIM.t*6)*16; SIM.audioAmp = 0.85; }
+      else if (SIM.state === 'SPEAKING') { SIM.servoTarget = Math.sin(SIM.t*5.5)*10; SIM.audioAmp = 0.7; }
+      if (SIM.stateTimer <= 0) { SIM.state = SIM.visionTrack ? 'TRACKING' : 'IDLE'; SIM.expression = 'happy'; SIM.pwmL = 0; SIM.pwmR = 0; SIM.audioAmp = 0; }
+    } else { SIM.audioAmp = 0; }
+
+    const sErr = SIM.servoTarget - SIM.servoAngle;
+    SIM.servoAngle += Math.sign(sErr) * Math.min(Math.abs(sErr), 95 * dt);
+    const servoMoving = Math.abs(sErr) > 0.4;
+
+    const vL = SIM.pwmL * 26.4, vR = SIM.pwmR * 26.4;
+    const vLin = (vL + vR) * 0.5, omega = (vR - vL) / 10.5;
+    SIM.hdg += omega * dt;
+    SIM.x = Math.max(-24, Math.min(24, SIM.x - Math.sin(SIM.hdg) * vLin * dt));
+    SIM.y = Math.max(-24, Math.min(24, SIM.y + Math.cos(SIM.hdg) * vLin * dt));
+    SIM.wheelAngleL += (vL / 2.1) * dt;
+    SIM.wheelAngleR += (vR / 2.1) * dt;
+
+    const iPi  = (SIM.state==='DANCE') ? 720 : (SIM.visionTrack || SIM.state==='PATROL' ? 540 : 280);
+    const iMot = (Math.abs(SIM.pwmL) + Math.abs(SIM.pwmR)) * 465;
+    const iAmp = (SIM.state==='SPEAKING' || SIM.state==='DANCE') ? (120 + SIM.audioAmp*200) : 15;
+    SIM.i5v = iPi + 170 + 45 + 2 + iAmp + iMot + (servoMoving ? 215 : 12);
+
+    const iBat = (SIM.i5v * 5.0 / 0.89) / Math.max(3.3, SIM.batVolt);
+    SIM.soc = Math.max(0.0, SIM.soc - (iBat / 3000.0) * (dt / 3600.0) * SIM.batSpeed);
+    SIM.batVolt = 3.30 + 0.90 * Math.pow(SIM.soc, 0.85);
+    if (SIM.soc <= 0.01) { SIM.powerOn = false; SIM.state = 'OFF'; SIM.pwmL = 0; SIM.pwmR = 0; }
+
+    SIM.act.POWER = 0.85; SIM.act.CSI_CAM = 1.0; SIM.act.SPI_LCD = 0.8;
+    SIM.act.I2S_MIC = 0.35; SIM.act.I2S_AMP = (SIM.state==='SPEAKING'||SIM.state==='DANCE')?1.0:0.08;
+    SIM.act.MOTOR = (Math.abs(SIM.pwmL)+Math.abs(SIM.pwmR))>0.05?1.0:0.0;
+    SIM.act.SERVO = servoMoving?1.0:0.08;
+  } else { SIM.i5v = 0; SIM.audioAmp = 0; }
+
+  SIM.chMotor.shift(); SIM.chMotor.push(SIM.powerOn ? (SIM.pwmL!==0 ? Math.sign(SIM.pwmL)*(Math.sin(SIM.t*40)>(1-Math.abs(SIM.pwmL)*2)?1:0) : 0) : 0);
+  SIM.chServo.shift(); SIM.chServo.push(SIM.powerOn ? (1.5 + SIM.servoAngle/44*0.5) : 0.8);
+  SIM.chAudio.shift(); SIM.chAudio.push(SIM.powerOn ? Math.sin(SIM.t*38)*SIM.audioAmp : 0);
+  SIM.chCurr.shift();  SIM.chCurr.push(SIM.i5v);
+
+  document.getElementById('topVolt').textContent = SIM.batVolt.toFixed(2) + 'V';
+  document.getElementById('topCurr').textContent = Math.round(SIM.i5v) + 'mA';
+  document.getElementById('topSoc').textContent  = Math.round(SIM.soc*100) + '%';
+  document.getElementById('stateBadge').textContent = SIM.powerOn ? `● ${SIM.state}` : '● POWER OFF';
+  document.getElementById('pwmDebug').textContent = `L:${Math.round(SIM.pwmL*100)}% R:${Math.round(SIM.pwmR*100)}%`;
+  document.getElementById('posReadout').textContent = `X=${SIM.x.toFixed(1)}, Y=${SIM.y.toFixed(1)} cm`;
+  document.getElementById('hdgReadout').textContent = `${Math.round((SIM.hdg*180/Math.PI)%360)}°`;
+  document.getElementById('rpmL').textContent = `${Math.round(SIM.pwmL*120)} RPM`;
+  document.getElementById('rpmR').textContent = `${Math.round(SIM.pwmR*120)} RPM`;
+  document.getElementById('servoAng3d').textContent = `${SIM.servoAngle.toFixed(1)}°`;
+  document.getElementById('kpiLoad').textContent = `${Math.round(SIM.i5v)} / 3000 mA (${(SIM.i5v/30).toFixed(1)}%)`;
+  const estH = SIM.i5v > 10 ? ((3.0*3.7*SIM.soc*0.9)/(SIM.i5v/1000*5/0.89)).toFixed(1) : '∞';
+  document.getElementById('kpiBat').textContent = `${SIM.batVolt.toFixed(2)}V · 剩余 ${estH}h`;
+
+  drawCameraVisionFeed();
+  drawST7789Screen();
+  if (SIM.activeTab === 'wiring') drawWiringSchematic();
+  else if (SIM.activeTab === 'sim3d') draw3DSim();
+  else if (SIM.activeTab === 'scope') drawScope();
+  requestAnimationFrame(tick);
+}
+window.addEventListener('themechange', () => {});
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
