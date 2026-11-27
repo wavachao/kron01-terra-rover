@@ -1,18 +1,18 @@
 """
-KRON-01V (Vision Edition) Real Off-The-Shelf (COTS) Hardware CAD Library + CSI FFC & Wiring
-===========================================================================================
-Datasheet-accurate multi-body B-Rep CAD library for:
-  - Raspberry Pi Zero 2W (65x30mm green PCB, RP3A0 SiP + finned black aluminum heatsink,
-    40-pin 2x20 gold GPIO header, 22-pin CSI-2 camera socket, Micro-SD slot, Mini-HDMI,
-    dual Micro-USB ports, Wi-Fi ceramic antenna, 4x official M2.5 mounting holes)
-  - OV5647 / IMX219 5MP 160-deg Wide-Angle CSI Camera (25x24mm PCB, 4x M2 holes, M12
-    threaded lens barrel with multi-coated blue-tint dark optical glass + 15-pin CSI socket)
-  - 15cm Pi Zero MIPI CSI-2 FFC Flat Ribbon Cable (swept smoothly from Pi Zero 2W front
-    edge up through widened 18mm neck slot directly into the forehead camera!)
-  - 2.0-inch ST7789V IPS TFT LCD with glowing cyber-cyan eyes
-  - IP5328P / SW6106 5V 3A Type-C Bidirectional Power Board + 3000mAh 18650 High-Drain Cell
-  - 2x GA12-N20 Motors, MG90S Servo, DRV8833, MAX98357A, 28mm Speaker, INMP441 Mic,
-    CY-12A Caster, 44mm Rubber Tires, DIN 912 M3 Screws, Brass Inserts & 3D Wire Harnesses
+KRON-01V6 (ESP32-S3-CAM N16R8 Edition, v2.0.0) — Real COTS Hardware CAD Library
+===============================================================================
+Datasheet-accurate multi-body B-Rep CAD library matching the user's exact purchased kit:
+  - ESP32-S3-CAM N16R8 (58.0×27.94mm PCB + 6.04mm Wi-Fi antenna = 64.04mm, dual Type-C,
+    ESP32-S3-WROOM-1 RF shield, 24-pin FPC camera socket, downward 2×22P gold headers)
+  - OV3660 Short-Ribbon Camera Module (8.5×8.5×6.0mm lens head + ~20mm FPC ribbon)
+  - GMT020-02 2.0" IPS SPI TFT LCD (62.0×37.5×3.4mm, 8-pin header, glowing cyan eyes)
+  - Dual-18650 Parallel Type-C Power Board (85.0×44.0×23.0mm, 2× EVE 18650-2500mAh cells,
+    3× 2×6P header banks, right-edge Type-C VIN + ON/OFF slide switch + 4× battery LEDs)
+  - PCA9685A 16-Channel I2C PWM Driver (62.0×25.0mm blue PCB, 16×3P headers + 6P I2C)
+  - 2× DRV8833 Red Motor Drivers (21.0×18.0mm each, pre-soldered straight headers)
+  - 4× GA12-N20 Pre-Wired Motors + 4× Complete Ø43×18mm D-Shaft Rubber Wheels
+  - 3020 Cavity Speaker (30.0×20.0×7.0mm), MAX98357A Purple I2S Amp, INMP441 MEMS Mic
+  - MG90S 180° Metal-Gear Servo, 7-Wire Neck DuPont Ribbon & Unified M3 Captive Nut Kit
 """
 
 from pathlib import Path
@@ -33,7 +33,6 @@ from build123d import (
     Plane,
     Rectangle,
     RegularPolygon,
-    Sphere,
     Spline,
     extrude,
     import_step,
@@ -89,7 +88,6 @@ def _make_cable(points: list, radius: float, label: str, color_key: str):
 
 
 def _make_flat_ribbon(points: list, width: float, thickness: float, label: str, color_key: str):
-    """Build a realistic flat MIPI CSI-2 FFC ribbon cable swept along a 3D curve."""
     with BuildPart() as rib:
         with BuildLine() as path:
             Spline(points)
@@ -100,12 +98,12 @@ def _make_flat_ribbon(points: list, width: float, thickness: float, label: str, 
 
 
 # ---------------------------------------------------------------------------
-# Fasteners (DIN 912 Socket Head Cap Screws & Brass Heat-Set Inserts)
+# Fasteners (Unified DIN 912 M3 Socket Cap Screws & DIN 934 M3 Captive Nuts)
 # ---------------------------------------------------------------------------
-def build_din912_screw(dia: float = 3.0, length: float = 8.0, label: str = "M3x8_DIN912") -> Compound:
-    head_d = 5.5 if dia >= 2.8 else 3.8
-    head_h = 3.0 if dia >= 2.8 else 2.0
-    hex_r = (2.5 / math.sqrt(3.0)) if dia >= 2.8 else (1.5 / math.sqrt(3.0))
+def build_din912_screw(dia: float = 3.0, length: float = 10.0, label: str = "M3x10_DIN912") -> Compound:
+    head_d = 5.5
+    head_h = 3.0
+    hex_r = 2.5 / math.sqrt(3.0)
     with BuildPart() as head:
         Cylinder(radius=head_d / 2.0, height=head_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
         with BuildSketch(Plane.XY.offset(head_h)):
@@ -117,191 +115,227 @@ def build_din912_screw(dia: float = 3.0, length: float = 8.0, label: str = "M3x8
     return Compound(label=label, children=[body])
 
 
-def build_brass_insert(od: float = 4.5, length: float = 4.0, bore: float = 2.5, label: str = "M3_Brass_Insert") -> Compound:
-    with BuildPart() as ins:
-        Cylinder(radius=od / 2.0, height=length, align=(Align.CENTER, Align.CENTER, Align.MAX))
-        Cylinder(radius=bore / 2.0, height=length + 0.2, align=(Align.CENTER, Align.CENTER, Align.MAX), mode=Mode.SUBTRACT)
-    _tag(ins.part, label, "brass")
-    return Compound(label=label, children=[ins.part])
+def build_hex_nut(across_flats: float = 5.5, thickness: float = 2.4, bore_dia: float = 3.0, label: str = "Nut_M3"):
+    with BuildPart() as nut:
+        with BuildSketch(Plane.XY):
+            RegularPolygon(radius=across_flats / math.sqrt(3.0), side_count=6)
+        extrude(amount=thickness)
+        Cylinder(radius=bore_dia / 2.0, height=thickness + 1.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+    return _tag(nut.part, label, "metal_silver")
 
 
 # ---------------------------------------------------------------------------
-# 1. Raspberry Pi Zero 2W (Official 30.0 x 65.0 mm Mechanical Drawing!)
+# 1. ESP32-S3-CAM N16R8 (58.0 × 27.94 mm PCB + 6.04 mm Antenna = 64.04 mm)
 # ---------------------------------------------------------------------------
-def build_rpi_zero_2w() -> Compound:
+def build_esp32_s3_cam() -> Compound:
     """
-    Raspberry Pi Zero 2W:
-      - 30.0(X) x 65.0(Y) x 1.6mm Official Raspberry Green PCB w/ 4x Ø2.75mm corner holes (23x58mm)
-      - RP3A0 Quad-Core Cortex-A53 SiP + 14x14x5mm finned black aluminum heatsink
-      - 40-pin (2x20) 2.54mm GPIO header along -X edge (upward pins!)
-      - 22-pin 0.5mm-pitch MIPI CSI-2 camera socket on +Y front short edge!
-      - Micro-SD card slot on -Y rear short edge (accessible through Rear Hatch!)
-      - Mini-HDMI + Dual Micro-USB (OTG & PWR) along +X edge + Wi-Fi RF shield & green ACT LED
-    """
-    parts = []
-    # Official Green PCB with 4x M2.5 mounting holes (23.0 x 58.0mm centers)
-    with BuildPart() as pcb:
-        Box(C.RPI_W, C.RPI_L, C.RPI_PCB_T, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        for sx in (-1, 1):
-            for sy in (-1, 1):
-                with Locations((sx * C.RPI_HOLE_X / 2.0, sy * C.RPI_HOLE_Y / 2.0, -0.5)):
-                    Cylinder(radius=1.375, height=3.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    parts.append(_tag(pcb.part, "RPi_Zero2W_PCB", "pcb_green"))
-
-    # RP3A0 SiP + Black Finned Aluminum Heatsink (14 x 14 x 5.0mm)
-    with BuildPart() as hs:
-        with Locations((1.5, 2.0, C.RPI_PCB_T)):
-            Box(14.0, 14.0, 5.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        for fy in (-4.5, -1.5, 1.5, 4.5):
-            with Locations((1.5, 2.0 + fy, C.RPI_PCB_T + 2.0)):
-                Box(15.0, 1.2, 3.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    parts.append(_tag(hs.part, "RPi_RP3A0_Heatsink", "black_oxide"))
-
-    # Wi-Fi / BT Metallic RF Shield (SYN43436)
-    rf = Location((2.5, -16.0, C.RPI_PCB_T)) * Box(8.0, 10.0, 1.4, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    parts.append(_tag(rf, "RPi_WiFi_Shield", "metal_silver"))
-
-    # 22-Pin MIPI CSI-2 Camera Connector at Front Short Edge (+Y = +30.0)
-    csi_body = Location((0.0, C.RPI_L / 2.0 - 2.2, C.RPI_PCB_T)) * Box(
-        15.0, 4.4, 2.0, align=(Align.CENTER, Align.CENTER, Align.MIN)
-    )
-    csi_latch = Location((0.0, C.RPI_L / 2.0 - 0.3, C.RPI_PCB_T + 0.3)) * Box(
-        15.6, 1.2, 1.7, align=(Align.CENTER, Align.CENTER, Align.MIN)
-    )
-    parts.append(_tag(csi_body, "RPi_CSI2_Socket", "white"))
-    parts.append(_tag(csi_latch, "RPi_CSI2_Latch", "black_oxide"))
-
-    # Micro-SD Card Slot at Rear Short Edge (-Y = -30.5)
-    sd = Location((1.0, -C.RPI_L / 2.0 + 6.5, C.RPI_PCB_T)) * Box(
-        12.0, 13.5, 1.9, align=(Align.CENTER, Align.CENTER, Align.MIN)
-    )
-    parts.append(_tag(sd, "RPi_MicroSD_Slot", "metal_silver"))
-
-    # Mini-HDMI + Dual Micro-USB ports along +X edge
-    hdmi = Location((C.RPI_W / 2.0 - 3.8, -19.5, C.RPI_PCB_T)) * Box(7.6, 11.2, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    usb_otg = Location((C.RPI_W / 2.0 - 3.0, 8.5, C.RPI_PCB_T)) * Box(6.0, 7.6, 2.6, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    usb_pwr = Location((C.RPI_W / 2.0 - 3.0, 21.0, C.RPI_PCB_T)) * Box(6.0, 7.6, 2.6, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    parts.append(_tag(hdmi, "RPi_MiniHDMI", "metal_silver"))
-    parts.append(_tag(usb_otg, "RPi_MicroUSB_OTG", "metal_silver"))
-    parts.append(_tag(usb_pwr, "RPi_MicroUSB_PWR", "metal_silver"))
-
-    # 40-Pin (2x20) 2.54mm GPIO Header along -X edge (X = -11.5, upward pins!)
-    hdr_base = Location((-C.RPI_W / 2.0 + 3.5, 0.0, C.RPI_PCB_T)) * Box(
-        5.08, 50.8, 2.5, align=(Align.CENTER, Align.CENTER, Align.MIN)
-    )
-    parts.append(_tag(hdr_base, "RPi_40Pin_Base", "black_oxide"))
-    with BuildPart() as pins40:
-        for row_x in (-C.RPI_W / 2.0 + 2.23, -C.RPI_W / 2.0 + 4.77):
-            for i in range(20):
-                py = -24.13 + i * 2.54
-                with Locations((row_x, py, C.RPI_PCB_T + 2.5)):
-                    Box(0.64, 0.64, 5.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    parts.append(_tag(pins40.part, "RPi_40Pin_GoldPins", "gold"))
-
-    # Green ACT Status LED
-    led = Location((-5.0, -28.0, C.RPI_PCB_T)) * Box(2.0, 1.2, 0.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    parts.append(_tag(led, "RPi_ACT_LED", "rgb_green"))
-
-    comp = Compound(label="COTS_RaspberryPi_Zero2W", children=parts)
-    return comp.move(Location((C.RPI_X_CTR, C.RPI_Y_CTR, C.RPI_Z_PCB)))
-
-
-# ---------------------------------------------------------------------------
-# 2. OV5647 / IMX219 5MP 160° Wide-Angle Forehead CSI Camera Module
-# ---------------------------------------------------------------------------
-def build_csi_camera_ov5647() -> Compound:
-    """
-    Standard Raspberry Pi Camera V1/V2 Footprint (25.0 x 24.0 mm PCB):
-      - 4x Ø2.2mm M2 mounting holes at 21.0 x 12.5mm
-      - 15-pin 1.0mm CSI FFC connector on bottom back edge
-      - M12 Wide-Angle 160-deg optical lens barrel (Ø14mm x 10.5mm) + multi-coated dark blue optical glass!
+    ESP32-S3-CAM N16R8 mounted horizontally inside head core (pins pointing DOWN):
+      - Main PCB: 58.0(X) × 27.94(Y) × 1.6(Z) mm, offset so total 64.04mm centers at X=0
+      - Protruding PCB Wi-Fi Antenna on +X end: 6.04 × 18.0 × 1.2 mm
+      - ESP32-S3-WROOM-1 metallic RF shield on top (+Z)
+      - Dual USB Type-C ports on -X short edge
+      - 24-pin OV3660 FPC camera connector along front (+Y) top edge
+      - Pre-soldered 2×22P 2.54mm headers pointing DOWN (-Z) for 1-to-1 DuPont plugs!
     """
     parts = []
-    with BuildPart() as pcb:
-        Box(C.CAM_PCB_W, C.CAM_PCB_T, C.CAM_PCB_H, align=(Align.CENTER, Align.MIN, Align.CENTER))
-        for sx in (-1, 1):
-            for sz in (-1, 1):
-                with Locations((sx * C.CAM_HOLE_X / 2.0, 0, sz * C.CAM_HOLE_Z / 2.0)):
-                    Cylinder(radius=1.1, height=C.CAM_PCB_T + 1.5, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
-    parts.append(_tag(pcb.part, "CSI_Cam_PCB", "pcb_dark"))
+    # Main PCB X: -32.02 .. +25.98 (center at -3.02), Antenna X: +25.98 .. +32.02
+    x_pcb_ctr = -C.S3_ANT_L / 2.0
+    pcb = Location((x_pcb_ctr, 0, 0)) * Box(C.S3_PCB_L, C.S3_PCB_W, C.S3_PCB_T, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(pcb, "S3CAM_PCB", "pcb_dark"))
 
-    # Lens mount base square (14x14x4mm)
-    mount = Location((0, C.CAM_PCB_T, 0)) * Box(14.5, 4.0, 14.5, align=(Align.CENTER, Align.MIN, Align.CENTER))
-    parts.append(_tag(mount, "CSI_Cam_M12_Base", "black_oxide"))
-
-    # Stepped wide-angle M12 lens barrel protruding forward (+Y)
-    barrel1 = Location((0, C.CAM_PCB_T + 4.0, 0)) * Cylinder(
-        radius=C.CAM_LENS_DIA / 2.0, height=5.5, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MAX)
+    ant = Location((C.S3_TOTAL_L / 2.0 - C.S3_ANT_L / 2.0, 0, 0.2)) * Box(
+        C.S3_ANT_L, 18.0, 1.2, align=(Align.CENTER, Align.CENTER, Align.MIN)
     )
-    barrel2 = Location((0, C.CAM_PCB_T + 9.0, 0)) * Cylinder(
-        radius=C.CAM_LENS_DIA / 2.0 - 0.8, height=2.0, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MAX)
+    parts.append(_tag(ant, "S3CAM_WiFi_Antenna", "pcb_dark"))
+
+    # ESP32-S3-WROOM-1 RF Metal Shield (18 × 18 × 3.2 mm)
+    shield = Location((16.5, 0, C.S3_PCB_T)) * Box(18.0, 18.0, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(shield, "S3CAM_WROOM_Shield", "metal_silver"))
+
+    # Dual Type-C ports on -X short edge (spaced ±5.3mm in Y)
+    for sy, pname in ((-5.3, "USB"), (5.3, "COM")):
+        usbc = Location((-C.S3_TOTAL_L / 2.0 + 3.5, sy, C.S3_PCB_T)) * Box(
+            7.2, 8.9, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN)
+        )
+        parts.append(_tag(usbc, f"S3CAM_TypeC_{pname}", "metal_silver"))
+
+    # 24-Pin Camera FPC Socket on front (+Y) edge
+    fpc_sock = Location((-4.0, C.S3_PCB_W / 2.0 - 3.2, C.S3_PCB_T)) * Box(
+        13.5, 5.0, 2.2, align=(Align.CENTER, Align.CENTER, Align.MIN)
     )
-    parts.append(_tag(barrel1, "CSI_Cam_LensBarrel", "black_oxide"))
-    parts.append(_tag(barrel2, "CSI_Cam_LensRim", "metal_silver"))
+    parts.append(_tag(fpc_sock, "S3CAM_FPC24_Socket", "white"))
 
-    # Multi-coated convex blue/dark optical lens glass element!
-    glass = Location((0, C.CAM_PCB_T + 9.8, 0)) * Cylinder(
-        radius=4.6, height=1.2, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MAX)
+    # Pre-soldered 2×22P headers pointing DOWN (-Z) at Y = ±12.7mm (25.4mm pitch!)
+    for sy in (-12.7, 12.7):
+        base = Location((x_pcb_ctr, sy, -2.5)) * Box(55.88, 2.54, 2.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        pins = Location((x_pcb_ctr, sy, -8.5)) * Box(54.5, 0.7, 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        parts.append(_tag(base, "S3CAM_Hdr_Base", "black_oxide"))
+        parts.append(_tag(pins, "S3CAM_Hdr_Pins", "gold"))
+
+    comp = Compound(label="COTS_ESP32_S3_CAM_N16R8", children=parts)
+    return comp.move(Location((C.S3_X_CTR, C.S3_Y_CTR, C.S3_Z_PCB)))
+
+
+# ---------------------------------------------------------------------------
+# 2. OV3660 Short-Ribbon Camera Sensor Head (8.5 × 8.5 × 6.0 mm)
+# ---------------------------------------------------------------------------
+def build_ov3660_camera() -> Compound:
+    parts = []
+    # Square sensor housing (8.5 × 8.5 × 4.0 mm)
+    body = Box(C.CAM_BODY_W, 4.0, C.CAM_BODY_H, align=(Align.CENTER, Align.MIN, Align.CENTER))
+    parts.append(_tag(body, "OV3660_SensorBody", "black_oxide"))
+    # Round lens barrel protruding forward (+Y)
+    barrel = Location((0, 4.0, 0)) * Cylinder(
+        radius=C.CAM_LENS_DIA / 2.0, height=2.2, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MAX)
     )
-    parts.append(_tag(glass, "CSI_Cam_OpticsGlass", "lens_glass"))
+    parts.append(_tag(barrel, "OV3660_LensBarrel", "black_oxide"))
+    # Optical glass element
+    glass = Location((0, 5.6, 0)) * Cylinder(
+        radius=2.6, height=0.8, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MAX)
+    )
+    parts.append(_tag(glass, "OV3660_OpticsGlass", "lens_glass"))
 
-    # Rear 15-pin CSI FFC connector socket
-    sock = Location((0, -1.8, -8.5)) * Box(19.0, 2.5, 4.5, align=(Align.CENTER, Align.MIN, Align.CENTER))
-    parts.append(_tag(sock, "CSI_Cam_15Pin_Socket", "white"))
-
-    comp = Compound(label="COTS_CSI_Camera_OV5647", children=parts)
+    comp = Compound(label="COTS_OV3660_Camera", children=parts)
     return comp.move(Location((0, C.CAM_Y_PCB, C.CAM_Z_CTR)))
 
 
 # ---------------------------------------------------------------------------
-# 3. 2.0-inch ST7789V IPS TFT Display Module (320x240 Landscape)
+# 3. GMT020-02 2.0" IPS SPI TFT Display (62.0 × 37.5 × 3.4 mm)
 # ---------------------------------------------------------------------------
-def build_st7789_2inch_lcd() -> Compound:
+def build_gmt020_lcd() -> Compound:
     parts = []
     with BuildPart() as pcb:
         Box(C.LCD_PCB_W, C.LCD_PCB_T, C.LCD_PCB_H, align=(Align.CENTER, Align.MIN, Align.CENTER))
         for sx in (-1, 1):
             for sz in (-1, 1):
                 with Locations((sx * (C.LCD_PCB_W / 2.0 - 3.0), 0, sz * (C.LCD_PCB_H / 2.0 - 3.0))):
-                    Cylinder(radius=1.35, height=C.LCD_PCB_T + 1.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
-    parts.append(_tag(pcb.part, "LCD_ST7789_PCB", "pcb_red"))
+                    Cylinder(radius=1.25, height=C.LCD_PCB_T + 1.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
+    parts.append(_tag(pcb.part, "GMT020_LCD_PCB", "pcb_green"))
 
-    fpc = Location((C.LCD_GLASS_W / 2.0 + 1.0, C.LCD_PCB_T + 0.5, 0)) * Box(
-        4.5, 1.0, 14.0, align=(Align.CENTER, Align.MIN, Align.CENTER)
+    fpc = Location((C.LCD_GLASS_W / 2.0 + 1.2, C.LCD_PCB_T + 0.4, 0)) * Box(
+        4.2, 0.9, 14.0, align=(Align.CENTER, Align.MIN, Align.CENTER)
     )
-    parts.append(_tag(fpc, "LCD_FPC_Ribbon", "fpc_copper"))
+    parts.append(_tag(fpc, "GMT020_FPC", "fpc_copper"))
 
     glass = Location((0, C.LCD_PCB_T, 0)) * Box(
         C.LCD_GLASS_W, C.LCD_GLASS_T, C.LCD_GLASS_H, align=(Align.CENTER, Align.MIN, Align.CENTER)
     )
-    parts.append(_tag(glass, "LCD_IPS_Glass", "screen_glass"))
+    parts.append(_tag(glass, "GMT020_IPS_Glass", "screen_glass"))
 
-    # Glowing Cyber-Cyan Eyes on Active Area
+    # Glowing Cyber-Cyan Eyes on 40.8 × 30.6 mm Active Area
     y_eye = C.LCD_PCB_T + C.LCD_GLASS_T
     for sgn, ename in ((-1.0, "L"), (1.0, "R")):
         with BuildPart() as eye:
             with Locations((sgn * 10.5, y_eye, 1.0)):
-                Box(13.5, 0.5, 11.0, align=(Align.CENTER, Align.MIN, Align.CENTER))
+                Box(13.5, 0.45, 11.0, align=(Align.CENTER, Align.MIN, Align.CENTER))
             with Locations((sgn * 10.2, y_eye - 0.1, 0.4)):
                 Box(6.2, 2.0, 5.2, align=(Align.CENTER, Align.MIN, Align.CENTER), mode=Mode.SUBTRACT)
         parts.append(_tag(eye.part, f"Display_CyberEye_{ename}", "cyan_glow"))
-        pupil = Location((sgn * 10.2, y_eye, 0.4)) * Box(2.4, 0.55, 2.4, align=(Align.CENTER, Align.MIN, Align.CENTER))
+        pupil = Location((sgn * 10.2, y_eye, 0.4)) * Box(2.4, 0.5, 2.4, align=(Align.CENTER, Align.MIN, Align.CENTER))
         parts.append(_tag(pupil, f"Display_Pupil_{ename}", "cyan_glow"))
 
-    hdr_base = Location((C.LCD_PCB_W / 2.0 - 4.0, -2.5, 0)) * Box(2.54, 2.5, 20.5, align=(Align.CENTER, Align.MIN, Align.CENTER))
-    hdr_pins = Location((C.LCD_PCB_W / 2.0 - 4.0, -6.5, 0)) * Box(0.7, 4.0, 19.5, align=(Align.CENTER, Align.MIN, Align.CENTER))
-    parts.append(_tag(hdr_base, "LCD_SPI_Header_Base", "black_oxide"))
-    parts.append(_tag(hdr_pins, "LCD_SPI_Header_Pins", "gold"))
+    # 8-Pin pre-soldered straight header on +X short edge pointing backward (-Y)
+    hdr_base = Location((C.LCD_PCB_W / 2.0 - 3.5, -2.5, 0)) * Box(2.54, 2.5, 20.5, align=(Align.CENTER, Align.MIN, Align.CENTER))
+    hdr_pins = Location((C.LCD_PCB_W / 2.0 - 3.5, -6.5, 0)) * Box(0.7, 4.0, 19.5, align=(Align.CENTER, Align.MIN, Align.CENTER))
+    parts.append(_tag(hdr_base, "GMT020_SPI_HdrBase", "black_oxide"))
+    parts.append(_tag(hdr_pins, "GMT020_SPI_HdrPins", "gold"))
 
-    comp = Compound(label="COTS_ST7789_2in_LCD", children=parts)
+    comp = Compound(label="COTS_GMT020_2in_LCD", children=parts)
     return comp.move(Location((0, C.LCD_Y_PCB, C.LCD_Z_CTR)))
 
 
 # ---------------------------------------------------------------------------
-# 4. N20 Motors, MG90S Servo, 18650 Battery, DRV8833, MAX98357A, IP5328P, Switch
+# 4. Dual-18650 Parallel Type-C Power Board (85.0 × 44.0 × 23.0 mm)
+# ---------------------------------------------------------------------------
+def build_dual_18650_power_board() -> Compound:
+    """
+    Exact geometry from user's uploaded photos (85.0 × 44.0 × 23.0 mm):
+      - Lower dual-18650 parallel holder (77 × 41 × 21.4 mm) + 2× EVE 18650-2500mAh green cells
+      - Top green/dark power distribution PCB (85.0 × 44.0 × 1.6 mm) at Z = +21.4..+23.0
+      - 3× double-row 2×6P vertical male pin header banks (5V/GND, 3V3/GND, 1V8/GND) on top
+      - Right (+X) short edge: Type-C VIN charging port, OFF/ON slide switch, 4× battery LEDs
+    """
+    parts = []
+    # Dual 18650 holder housing beneath PCB
+    holder = Location((-2.0, 0, 0)) * Box(77.5, 41.0, 21.4, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(holder, "Dual18650_Holder", "black_oxide"))
+
+    # 2× EVE 18650-2500mAh 12C flat-top power cells inside holder
+    for sy, tag in ((-10.2, "A"), (10.2, "B")):
+        cell = Location((-2.0, sy, 10.5)) * Cylinder(radius=9.1, height=65.0, rotation=(0, 90, 0))
+        parts.append(_tag(cell, f"Cell_EVE_18650_{tag}", "battery_green"))
+
+    # Top PCB (85.0 × 44.0 × 1.6 mm)
+    pcb = Location((0, 0, 21.4)) * Box(C.PWR_L, C.PWR_W, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(pcb, "Dual18650_PCB", "pcb_green"))
+
+    # 3× double-row 2×6P vertical pin header banks (5V/GND, 3V3/GND, 1V8/GND)
+    for bx, bname in ((-24.0, "5V"), (-6.0, "3V3"), (12.0, "1V8")):
+        hbase = Location((bx, 0, 23.0)) * Box(15.2, 5.1, 2.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        hpins = Location((bx, 0, 25.5)) * Box(14.5, 3.2, 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        parts.append(_tag(hbase, f"PwrBank_{bname}_Base", "black_oxide"))
+        parts.append(_tag(hpins, f"PwrBank_{bname}_Pins", "gold"))
+
+    # Right (+X) short edge interface: Type-C VIN (Y=+10), ON/OFF Switch (Y=0), 4× LEDs (Y=-11)
+    usbc = Location((C.PWR_L / 2.0 - 3.6, 10.0, 23.0)) * Box(7.4, 9.0, 3.3, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    sw = Location((C.PWR_L / 2.0 - 2.2, 0.0, 23.0)) * Box(5.0, 8.5, 4.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(usbc, "Dual18650_TypeC_VIN", "metal_silver"))
+    parts.append(_tag(sw, "Dual18650_ONOFF_Switch", "black_oxide"))
+    for i in range(4):
+        led = Location((C.PWR_L / 2.0 - 3.0, -7.5 - i * 3.0, 23.0)) * Box(2.0, 1.2, 1.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        parts.append(_tag(led, f"Dual18650_LED_{25*(i+1)}pct", "rgb_green"))
+
+    comp = Compound(label="COTS_Dual18650_PowerBoard", children=parts)
+    return comp.move(Location((C.PWR_X, C.PWR_Y, C.PWR_Z)))
+
+
+# ---------------------------------------------------------------------------
+# 5. PCA9685A 16-Channel I2C PWM Driver (Blue Board, 62.0 × 25.0 mm)
+# ---------------------------------------------------------------------------
+def build_pca9685a() -> Compound:
+    parts = []
+    pcb = Box(C.PCA_L, C.PCA_W, C.PCA_PCB_T, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(pcb, "PCA9685_PCB", "pcb_blue"))
+
+    # 16×3P vertical PWM headers along front (+Y) half
+    hdr_base = Location((0, 4.5, C.PCA_PCB_T)) * Box(46.0, 7.6, 2.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    hdr_pins = Location((0, 4.5, C.PCA_PCB_T + 2.5)) * Box(45.0, 6.2, 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(hdr_base, "PCA9685_PWM_Base", "black_oxide"))
+    parts.append(_tag(hdr_pins, "PCA9685_PWM_Pins", "gold"))
+
+    # Green V+ power screw terminal & 1000uF electrolytic capacitor
+    term = Location((-18.0, -7.5, C.PCA_PCB_T)) * Box(10.0, 7.5, 9.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    cap = Location((14.0, -6.5, C.PCA_PCB_T)) * Cylinder(radius=4.0, height=10.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    parts.append(_tag(term, "PCA9685_PowerTerm", "pcb_green"))
+    parts.append(_tag(cap, "PCA9685_FilterCap", "black_oxide"))
+
+    # 6-Pin right-angle I2C header protruding from +X edge (X = +31.0 .. +36.5)
+    i2c_hdr = Location((C.PCA_L / 2.0 + 2.5, 0.0, C.PCA_PCB_T + 1.5)) * Box(5.5, 15.2, 2.5)
+    parts.append(_tag(i2c_hdr, "PCA9685_I2C_6P", "gold"))
+
+    comp = Compound(label="COTS_PCA9685A_PWM", children=parts)
+    return comp.move(Location((C.PCA_X, C.PCA_Y, C.PCA_Z)))
+
+
+# ---------------------------------------------------------------------------
+# 6. 2× DRV8833 Red Dual H-Bridge Motor Drivers (21.0 × 18.0 mm each)
+# ---------------------------------------------------------------------------
+def build_drv8833(axle: str = "F") -> Compound:
+    y_pos = C.DRV_F_Y if axle == "F" else C.DRV_R_Y
+    x_pos = C.DRV_F_X if axle == "F" else C.DRV_R_X
+    parts = [
+        _tag(Box(C.DRV_W, C.DRV_L, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN)), f"DRV8833_{axle}_PCB", "pcb_red"),
+        _tag(Location((0, 0, 1.6)) * Box(5.0, 6.4, 1.2, align=(Align.CENTER, Align.CENTER, Align.MIN)), f"DRV8833_{axle}_IC", "black_oxide"),
+        _tag(Location((-8.5, 0, 1.6)) * Box(2.5, 15.2, 8.2, align=(Align.CENTER, Align.CENTER, Align.MIN)), f"DRV8833_{axle}_HdrL", "gold"),
+        _tag(Location(( 8.5, 0, 1.6)) * Box(2.5, 15.2, 8.2, align=(Align.CENTER, Align.CENTER, Align.MIN)), f"DRV8833_{axle}_HdrR", "gold"),
+    ]
+    return Compound(label=f"COTS_DRV8833_{axle}", children=parts).move(Location((x_pos, y_pos, C.DRV_Z)))
+
+
+# ---------------------------------------------------------------------------
+# 7. 4× GA12-N20 Pre-Wired Motors & 4× Complete Ø43×18mm D-Shaft Wheels
 # ---------------------------------------------------------------------------
 def build_n20_motor(side: str = "L", axle: str = "F") -> Compound:
-    """GA12-N20 Metal Gear Motor mounted at Front (+26) or Rear (-26) axle, Left or Right."""
     sgn = -1.0 if side == "L" else 1.0
     y_pos = C.Y_AXLE_F if axle == "F" else C.Y_AXLE_R
     tag = f"{axle}{side}"
@@ -322,6 +356,37 @@ def build_n20_motor(side: str = "L", axle: str = "F") -> Compound:
     return Compound(label=f"COTS_N20_Motor_{tag}", children=parts).move(Location((0, y_pos, C.Z_AXLE)))
 
 
+def build_complete_43mm_wheel(side: str = "L", axle: str = "F") -> Compound:
+    """Complete off-the-shelf Ø43×18mm N20 D-shaft rubber tire + bright rim (replaces printed hubs!)."""
+    sgn = -1.0 if side == "L" else 1.0
+    y_pos = C.Y_AXLE_F if axle == "F" else C.Y_AXLE_R
+    tag = f"{axle}{side}"
+    with BuildPart() as tire:
+        Cylinder(radius=C.WHEEL_R - 1.3, height=C.WHEEL_W, rotation=(0, 90, 0))
+        for i in range(18):
+            ang = i * (360.0 / 18.0)
+            rad = math.radians(ang)
+            with Locations(Location((0, (C.WHEEL_R - 1.3) * math.cos(rad), (C.WHEEL_R - 1.3) * math.sin(rad)), (ang, 0, 0))):
+                Box(C.WHEEL_W - 1.2, 2.6, 3.72)
+        Cylinder(radius=14.8, height=C.WHEEL_W + 2.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+    with BuildPart() as rim:
+        Cylinder(radius=14.8, height=C.WHEEL_W - 1.2, rotation=(0, 90, 0))
+        with Locations((sgn * 3.0, 0, 0)):
+            Cylinder(radius=11.8, height=C.WHEEL_W - 5.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+        Cylinder(radius=4.5, height=C.WHEEL_W - 1.0, rotation=(0, 90, 0))
+        Cylinder(radius=1.6, height=C.WHEEL_W + 2.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+    parts = [
+        _tag(tire.part, f"Wheel43_Tire_{tag}", "rubber"),
+        _tag(rim.part, f"Wheel43_Rim_{tag}", "wheel_hub"),
+    ]
+    return Compound(label=f"COTS_Wheel_43mm_{tag}", children=parts).move(
+        Location((sgn * C.X_WHEEL, y_pos, C.Z_AXLE))
+    )
+
+
+# ---------------------------------------------------------------------------
+# 8. MG90S Servo, 3020 Cavity Speaker, MAX98357A Amp (in Head), INMP441 Mic
+# ---------------------------------------------------------------------------
 def build_mg90s_servo() -> Compound:
     parts = []
     y_body_off = -(C.MG90S_L / 2.0 - C.MG90S_SHAFT_OFFSET)
@@ -333,203 +398,146 @@ def build_mg90s_servo() -> Compound:
     return Compound(label="COTS_MG90S_Servo", children=parts).move(Location((0, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z)))
 
 
-def build_18650_battery() -> Compound:
-    parts = []
-    with BuildPart() as holder:
-        Box(C.BAT_HOLDER_L, C.BAT_HOLDER_W, C.BAT_HOLDER_H, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        with Locations((0, 0, 2.0)):
-            Box(C.BAT_HOLDER_L - 4.0, C.BAT_HOLDER_W - 3.0, C.BAT_HOLDER_H, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    parts.append(_tag(holder.part, "Battery_Holder_18650", "black_oxide"))
-    parts.append(_tag(Location((0, 0, 11.2)) * Cylinder(radius=9.2, height=65.2, rotation=(0, 90, 0)), "Cell_18650_3000mAh", "battery_pink"))
-    parts.append(_tag(Location((33.1, 0, 11.2)) * Cylinder(radius=4.0, height=1.5, rotation=(0, 90, 0)), "Battery_PosCap", "metal_silver"))
-    parts.append(_tag(Location((-34.0, 0, 11.2)) * Cylinder(radius=5.0, height=3.0, rotation=(0, 90, 0)), "Battery_NegSpring", "metal_silver"))
-    return Compound(label="COTS_18650_Battery", children=parts).move(Location((0, C.BAT_Y, C.BAT_Z_BOT)))
-
-
-def build_drv8833() -> Compound:
+def build_speaker_3020() -> Compound:
+    """30.0 × 20.0 × 7.0 mm 8Ω 2W rectangular sealed cavity speaker."""
     parts = [
-        _tag(Box(C.DRV_W, C.DRV_L, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN)), "DRV8833_PCB", "pcb_green"),
-        _tag(Location((0, 0, 1.6)) * Box(5.0, 6.4, 1.2, align=(Align.CENTER, Align.CENTER, Align.MIN)), "DRV8833_IC", "black_oxide"),
+        _tag(Box(C.SPK_L, C.SPK_W, C.SPK_H, align=(Align.CENTER, Align.CENTER, Align.MAX)), "Speaker_3020_Box", "black_oxide"),
+        _tag(Location((0, 0, 0.05)) * Box(22.0, 12.0, 0.5, align=(Align.CENTER, Align.CENTER, Align.MAX)), "Speaker_3020_Cone", "titanium"),
     ]
-    return Compound(label="COTS_DRV8833_Driver", children=parts).move(Location((C.DRV_X, C.DRV_Y, C.DRV_Z)))
+    return Compound(label="COTS_Speaker_3020", children=parts).move(Location((0, C.SPK_Y, C.SPK_Z_TOP)))
 
 
 def build_max98357a() -> Compound:
+    """MAX98357A Purple I2S Amp mounted vertically against rear inner head wall (ultra-short speaker wire!)."""
     parts = [
-        _tag(Box(C.AMP_W, C.AMP_L, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN)), "MAX98357A_PCB", "pcb_purple"),
-        _tag(Location((0, 0, 1.6)) * Box(3.5, 3.5, 0.9, align=(Align.CENTER, Align.CENTER, Align.MIN)), "MAX98357A_IC", "black_oxide"),
-        _tag(Location((0, 5.5, 1.6)) * Box(8.0, 5.5, 6.5, align=(Align.CENTER, Align.CENTER, Align.MIN)), "MAX98357A_Terminal", "pcb_green"),
+        _tag(Box(C.AMP_W, 1.6, C.AMP_H, align=(Align.CENTER, Align.MIN, Align.CENTER)), "MAX98357A_PCB", "pcb_purple"),
+        _tag(Location((0, 1.6, 0)) * Box(3.8, 1.0, 3.8, align=(Align.CENTER, Align.MIN, Align.CENTER)), "MAX98357A_IC", "black_oxide"),
+        _tag(Location((0, 1.6, 5.2)) * Box(8.2, 6.5, 5.5, align=(Align.CENTER, Align.MIN, Align.CENTER)), "MAX98357A_Terminal", "pcb_green"),
+        _tag(Location((0, 1.6, -7.2)) * Box(17.5, 6.5, 2.5, align=(Align.CENTER, Align.MIN, Align.CENTER)), "MAX98357A_Pins", "gold"),
     ]
     return Compound(label="COTS_MAX98357A_Amp", children=parts).move(Location((C.AMP_X, C.AMP_Y, C.AMP_Z)))
 
 
-def build_ip5328p_power_3a() -> Compound:
-    parts = [
-        _tag(Box(C.PWR_W, C.PWR_L, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN)), "IP5328P_PCB", "pcb_dark"),
-        _tag(Location((0, -C.PWR_L / 2.0 + 3.5, 1.6)) * Box(9.0, 7.5, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN)), "IP5328P_USBC_3A", "metal_silver"),
-        _tag(Location((0, 5.0, 1.6)) * Box(8.0, 8.0, 4.2, align=(Align.CENTER, Align.CENTER, Align.MIN)), "IP5328P_PowerInductor", "black_oxide"),
-    ]
-    return Compound(label="COTS_IP5328P_5V3A_Power", children=parts).move(Location((C.PWR_X, C.PWR_Y, C.PWR_Z)))
-
-
-def build_power_switch() -> Compound:
-    parts = [
-        _tag(Box(8.6, 4.4, 4.5), "SS12D00G3_Body", "metal_silver"),
-        _tag(Location((-1.5, -3.5, 0)) * Box(2.5, 3.5, 2.5), "SS12D00G3_Knob", "black_oxide"),
-    ]
-    return Compound(label="COTS_Power_Switch", children=parts).move(Location((C.SW_X, C.SW_Y, C.SW_Z)))
-
-
-def build_speaker_28mm() -> Compound:
-    parts = [
-        _tag(Cylinder(radius=C.SPK_DIA / 2.0, height=2.5, align=(Align.CENTER, Align.CENTER, Align.MAX)), "Speaker_Frame", "black_oxide"),
-        _tag(Location((0, 0, -2.5)) * Cylinder(radius=8.5, height=2.5, align=(Align.CENTER, Align.CENTER, Align.MAX)), "Speaker_Magnet", "metal_silver"),
-    ]
-    return Compound(label="COTS_Speaker_28mm", children=parts).move(Location((0, C.SPK_Y, C.SPK_Z_TOP)))
-
-
 def build_inmp441_mic() -> Compound:
     parts = [
-        _tag(Cylinder(radius=7.0, height=1.6), "INMP441_PCB", "pcb_dark"),
-        _tag(Location((0, 0, 1.3)) * Box(4.7, 3.8, 1.0), "INMP441_MEMS", "gold"),
+        _tag(Cylinder(radius=C.MIC_DIA / 2.0, height=C.MIC_T), "INMP441_PCB", "pcb_dark"),
+        _tag(Location((0, 0, -1.2)) * Box(4.7, 3.8, 1.0), "INMP441_MEMS", "gold"),
     ]
-    return Compound(label="COTS_INMP441_Mic", children=parts).move(Location((0, C.MIC_Y, C.MIC_Z)))
-
-
-def build_rubber_tire(side: str = "L", axle: str = "F") -> Compound:
-    """42mm OD x 29.8mm ID x 17mm wide chunky rugged off-road rubber tire for Terra-Rover 4WD."""
-    sgn = -1.0 if side == "L" else 1.0
-    y_pos = C.Y_AXLE_F if axle == "F" else C.Y_AXLE_R
-    tag = f"{axle}{side}"
-    with BuildPart() as tire:
-        Cylinder(radius=C.WHEEL_R - 1.4, height=C.WHEEL_W, rotation=(0, 90, 0))
-        # Chunky staggered off-road tread lugs (exact Ø42.0mm outer envelope -> Z_min = 0.00mm!)
-        for i in range(18):
-            ang = i * (360.0 / 18.0)
-            rad = math.radians(ang)
-            with Locations(Location((0, (C.WHEEL_R - 1.35) * math.cos(rad), (C.WHEEL_R - 1.35) * math.sin(rad)), (ang, 0, 0))):
-                Box(C.WHEEL_W - 1.4, 2.5, 3.8)
-        Cylinder(radius=C.WHEEL_HUB_OD / 2.0 - 0.2, height=C.WHEEL_W + 2.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-        Cylinder(radius=C.WHEEL_R + 1.0, height=2.2, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-        Cylinder(radius=C.WHEEL_R - 2.0, height=2.4, rotation=(0, 90, 0))
-        Cylinder(radius=C.WHEEL_HUB_OD / 2.0 - 0.2, height=C.WHEEL_W + 2.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-    _tag(tire.part, f"Rubber_Tire_42mm_{tag}", "rubber")
-    return Compound(label=f"COTS_Rubber_Tire_{tag}", children=[tire.part]).move(
-        Location((sgn * C.X_WHEEL, y_pos, C.Z_AXLE))
-    )
+    return Compound(label="COTS_INMP441_Mic", children=parts).move(Location((C.MIC_X, C.MIC_Y, C.MIC_Z)))
 
 
 # ---------------------------------------------------------------------------
-# 5. Real 3D MIPI CSI-2 Flat Ribbon Cable + 4WD Color-Coded Harnesses
+# 9. Clean Zero-Soldering 3D Wiring Harness (Only 7 Thin Wires Cross Neck!)
 # ---------------------------------------------------------------------------
 def build_wiring_harness() -> Compound:
     cables = []
 
-    # 1. REAL MIPI CSI-2 FFC FLAT RIBBON CABLE (Pi Zero 2W Front -> Neck -> Visor OV5647)
-    csi_pts = [
-        (C.RPI_X_CTR, C.RPI_Y_CTR + C.RPI_L / 2.0 - 1.0, C.RPI_Z_PCB + 2.5),
-        (2.0, 12.0, 50.0),
-        (4.0, 2.0, 64.0),
-        (3.0, 5.0, 82.0),
-        (0.0, 14.0, 96.0),
-        (0.0, C.CAM_Y_PCB - 2.0, C.CAM_Z_CTR - 8.5),
+    # 1. OV3660 Short ~20mm FPC Ribbon -> ESP32-S3-CAM Front 24P Socket
+    ov_pts = [
+        (-4.0, C.S3_Y_CTR + C.S3_PCB_W / 2.0 - 2.0, C.S3_Z_PCB + 2.5),
+        (-2.0, 21.0, 134.0),
+        (0.0, C.CAM_Y_PCB + 0.5, C.CAM_Z_CTR - 3.5),
     ]
-    cables.append(_make_flat_ribbon(csi_pts, 12.0, 0.55, "Cable_MIPI_CSI2_FFC_Ribbon", "ffc_white"))
+    cables.append(_make_flat_ribbon(ov_pts, 6.5, 0.35, "Cable_OV3660_Short_FPC", "fpc_copper"))
 
-    # 2. SPI0 LCD Ribbon
-    for cname, ckey, dx in (("SPI0_SCLK", "wire_yellow", -1.5), ("SPI0_MOSI", "wire_blue", -0.5), ("SPI0_RST", "wire_green", 0.5), ("SPI0_DC", "wire_orange", 1.5)):
-        pts = [(-14.5, 0.0 + dx * 1.2, 46.5), (-6.0 + dx, 4.0, 52.0), (10.0 + dx * 0.6, 0.0, 64.0), (12.0 + dx * 0.6, 3.0, 74.0), (26.5, 14.5, C.LCD_Z_CTR + dx * 1.8)]
-        cables.append(_make_cable(pts, 0.52, f"Cable_{cname}", ckey))
+    # 2. 7-Wire Flexible Neck DuPont Ribbon (5V_S3, 5V_AMP, 3V3_LCD, GND_S3, GND_MIC, I2C_SDA, I2C_SCL)
+    neck_specs = [
+        ("Neck_5V_S3",  "wire_red",    -2.4),
+        ("Neck_5V_AMP", "wire_orange", -1.6),
+        ("Neck_3V3_BL", "wire_yellow", -0.8),
+        ("Neck_GND_S3", "wire_black",   0.0),
+        ("Neck_GND_LR", "wire_brown",   0.8),
+        ("Neck_I2C_SDA","wire_blue",    1.6),
+        ("Neck_I2C_SCL","wire_green",   2.4),
+    ]
+    for cname, ckey, dx in neck_specs:
+        pts = [
+            (dx * 2.5, -18.0, 50.0),
+            (8.5 + dx * 0.7, -5.0, 68.0),
+            (8.5 + dx * 0.7, -5.0, 92.0),
+            (5.0 + dx * 1.2, -3.0, 112.0),
+            (dx * 3.0, C.S3_Y_CTR - 6.0, C.S3_Z_PCB - 6.0),
+        ]
+        cables.append(_make_cable(pts, 0.45, f"Cable_{cname}", ckey))
 
-    # 3. I2S Mic Bundle -> Chin INMP441
-    for cname, ckey, dx in (("I2S_WS", "wire_purple", -0.7), ("I2S_SD", "wire_white", 0.7)):
-        pts = [(-14.5, -18.0 + dx, 46.5), (-8.0 + dx, 2.0, 52.0), (0.0 + dx, 4.0, 59.0), (dx, C.MIC_Y - 3.0, C.MIC_Z + 1.0)]
-        cables.append(_make_cable(pts, 0.48, f"Cable_{cname}", ckey))
+    # 3. Internal Head Speaker Twisted Pair (MAX98357A -> 3020 Speaker, ~25mm!)
+    for cname, ckey, dx in (("SPK_POS", "wire_red", -1.5), ("SPK_NEG", "wire_black", 1.5)):
+        pts = [
+            (dx, C.AMP_Y + 5.5, C.AMP_Z + 6.5),
+            (dx, -17.0, 130.0),
+            (dx * 2.0, C.SPK_Y - 2.0, C.SPK_Z_TOP - C.SPK_H),
+        ]
+        cables.append(_make_cable(pts, 0.50, f"Cable_{cname}", ckey))
 
-    # 4. Speaker Twisted Pair: Rear MAX98357A -> Neck -> Rear Crown Speaker
-    for cname, ckey, dx in (("SPK_POS", "wire_red", -0.8), ("SPK_NEG", "wire_black", 0.8)):
-        pts = [(dx * 2.0, C.AMP_Y + 5.5, 25.0), (10.0 + dx, -16.0, 38.0), (11.0 + dx, -5.0, 55.0), (8.0 + dx, -8.0, 80.0), (4.0 + dx, -12.0, 102.0), (dx * 2.5, C.SPK_Y, C.SPK_Z_TOP - 4.5)]
-        cables.append(_make_cable(pts, 0.56, f"Cable_{cname}", ckey))
+    # 4. Internal Head LCD SPI Ribbon (S3-CAM -> GMT020-02)
+    for cname, ckey, dz in (("LCD_SCL", "wire_yellow", -2.5), ("LCD_SDA", "wire_blue", 0.0), ("LCD_DC", "wire_green", 2.5)):
+        pts = [
+            (18.0, C.S3_Y_CTR + 12.0, C.S3_Z_PCB - 6.5),
+            (25.0, 14.0, 116.0 + dz),
+            (C.LCD_PCB_W / 2.0 - 3.5, C.LCD_Y_PCB - 4.5, C.LCD_Z_CTR + dz * 1.6),
+        ]
+        cables.append(_make_cable(pts, 0.42, f"Cable_{cname}", ckey))
 
-    # 5. MG90S Servo 3-Pin Ribbon
-    for cname, ckey, dy in (("SERVO_PWM1", "wire_orange", -1.0), ("SERVO_5V", "wire_red", 0.0), ("SERVO_GND", "wire_brown", 1.0)):
-        cables.append(_make_cable([(-2.0, -16.0 + dy, 65.5), (-10.0, -12.0 + dy, 55.0), (-14.5, -10.0 + dy * 1.4, 46.5)], 0.46, f"Cable_{cname}", ckey))
+    # 5. Chassis 4× N20 Factory 2P DuPont Leads -> DRV8833 #1 (Front) & #2 (Rear)
+    cables.append(_make_cable([(-20.0, C.Y_AXLE_F, 22.0), (-14.0, C.Y_AXLE_F, 24.0), (-8.5, C.DRV_F_Y, 26.0)], 0.55, "Cable_MOT_FL", "wire_yellow"))
+    cables.append(_make_cable([( 20.0, C.Y_AXLE_F, 22.0), ( 14.0, C.Y_AXLE_F, 24.0), ( 8.5, C.DRV_F_Y, 26.0)], 0.55, "Cable_MOT_FR", "wire_blue"))
+    cables.append(_make_cable([(-20.0, C.Y_AXLE_R, 22.0), (-14.0, C.Y_AXLE_R, 24.0), (-8.5, C.DRV_R_Y, 26.0)], 0.55, "Cable_MOT_RL", "wire_yellow"))
+    cables.append(_make_cable([( 20.0, C.Y_AXLE_R, 22.0), ( 14.0, C.Y_AXLE_R, 24.0), ( 8.5, C.DRV_R_Y, 26.0)], 0.55, "Cable_MOT_RR", "wire_blue"))
 
-    # 6. 4WD Parallel Left & Right N20 Motor Power Pairs -> Front-Center DRV8833
-    cables.append(_make_cable([(-15.5, C.Y_AXLE_F, 22.0), (-11.0, C.Y_AXLE_F, 22.0), (-6.0, C.DRV_Y, 22.0)], 0.60, "Cable_MOT_FL", "wire_yellow"))
-    cables.append(_make_cable([( 15.5, C.Y_AXLE_F, 22.0), ( 11.0, C.Y_AXLE_F, 22.0), ( 6.0, C.DRV_Y, 22.0)], 0.60, "Cable_MOT_FR", "wire_blue"))
-    cables.append(_make_cable([(-15.5, C.Y_AXLE_R, 22.0), (-14.0, 0.0, 38.5), (-6.0, C.DRV_Y - 5.0, 22.5)], 0.60, "Cable_MOT_RL", "wire_yellow"))
-    cables.append(_make_cable([( 15.5, C.Y_AXLE_R, 22.0), ( 14.0, 0.0, 38.5), ( 6.0, C.DRV_Y - 5.0, 22.5)], 0.60, "Cable_MOT_RR", "wire_blue"))
+    # 6. PCA9685A -> MG90S Servo 3-Pin Lead
+    for cname, ckey, dy in (("SERVO_PWM", "wire_orange", -0.8), ("SERVO_5V", "wire_red", 0.0), ("SERVO_GND", "wire_brown", 0.8)):
+        pts = [
+            (-18.0, C.PCA_Y + 4.5 + dy, C.PCA_Z + 8.0),
+            (-10.0, -18.0 + dy, 58.0),
+            (-10.0, -14.0 + dy, 82.0),
+        ]
+        cables.append(_make_cable(pts, 0.44, f"Cable_{cname}", ckey))
 
-    # 7. 5V/3A Main Power Bus: Center 18650 (Y=0) -> Switch -> IP5328P -> Pi Zero 2W
-    cables.append(_make_cable([(34.0, C.BAT_Y - 4.0, 29.5), (35.0, -16.0, 39.0), (C.PWR_X + 3.0, -24.0, C.PWR_Z + 2.0)], 0.90, "Cable_BAT_POS_20AWG", "wire_red"))
-    cables.append(_make_cable([(-34.0, C.BAT_Y - 4.0, 29.5), (-34.0, -24.0, 39.5), (C.SW_X, C.SW_Y + 3.0, C.SW_Z)], 0.90, "Cable_BAT_SW_20AWG", "wire_black"))
-    cables.append(_make_cable([(C.PWR_X - 5.0, -22.0, C.PWR_Z + 2.0), (14.0, -22.0, 46.5), (-14.5, -26.0, 46.5)], 0.82, "Cable_5V3A_BUS_RED", "wire_red"))
-    cables.append(_make_cable([(C.PWR_X - 5.0, -26.0, C.PWR_Z + 2.0), (14.0, -26.0, 45.5), (-14.5, -29.0, 46.5)], 0.82, "Cable_GND_BUS_BLK", "wire_black"))
-
-    return Compound(label="COTS_Wiring_and_CSI_FFC", children=cables)
+    return Compound(label="COTS_Wiring_Harness", children=cables)
 
 
 # ---------------------------------------------------------------------------
-# 6. Internal Captive Metal Hex Nuts & Bolts (ZERO Exterior Screws / Inserts!)
+# 10. Unified M3 Captive Metal Hex Nuts & Bolts (ONLY M3 in Entire Robot!)
 # ---------------------------------------------------------------------------
-def build_hex_nut(across_flats: float, thickness: float, bore_dia: float, label: str):
-    """Standard DIN 934 stainless hex nut (slides into captive pockets with zero soldering iron!)."""
-    with BuildPart() as nut:
-        with BuildSketch(Plane.XY):
-            RegularPolygon(radius=across_flats / math.sqrt(3.0), side_count=6)
-        extrude(amount=thickness)
-        Cylinder(radius=bore_dia / 2.0, height=thickness + 1.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    return _tag(nut.part, label, "metal_silver")
-
-
 def build_fastener_kit() -> Compound:
     items = []
-    # Coaxial Right Neck Pivot: 1x M3x10 bolt + 1x Captive DIN 934 M3 Hex Nut inside A02_Top_Hood!
-    items.append(build_din912_screw(3.0, 10.0, "M3x10_NeckPivot_R").move(Location((31.5, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, 90, 0))))
+    # 1. Right Coaxial Neck Pivot: 1× M3×10 bolt + 1× Captive DIN 934 M3 Hex Nut inside A02!
+    items.append(build_din912_screw(3.0, 10.0, "M3x10_NeckPivot_R").move(Location((34.5, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, 90, 0))))
     items.append(build_hex_nut(5.5, 2.4, 3.0, "Nut_M3_NeckPivot_R").move(Location((17.8, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z), (0, 90, 0))))
-    # Raspberry Pi Zero 2WH: 4x M2.5x6 bolts + 4x Captive M2.5 Hex Nuts in A01 standoffs!
-    idx = 0
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            idx += 1
-            px = C.RPI_X_CTR + sx * (C.RPI_HOLE_X / 2.0)
-            py = C.RPI_Y_CTR + sy * (C.RPI_HOLE_Y / 2.0)
-            items.append(build_din912_screw(2.5, 6.0, f"M25x6_RPi_{idx}").move(Location((px, py, C.RPI_Z_PCB + C.RPI_PCB_T))))
-            items.append(build_hex_nut(5.0, 2.0, 2.5, f"Nut_M25_RPi_{idx}").move(Location((px, py, C.RPI_Z_PCB - 4.7))))
-    # N20 Motor Clamps (A03_F/R): 8x M2.5x10 bolts + 8x Captive M2.5 Hex Nuts in A01 saddles!
-    bx_clamp = C.CHASSIS_W / 2.0 - 12.0
+
+    # 2. N20 Motor Clamps (A03_F/R): 8× M3×10 bolts + 8× Captive M3 Hex Nuts in A01 saddles!
+    bx_clamp = C.CHASSIS_W / 2.0 - 13.0
     idx = 0
     for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
         for sgn in (-1.0, 1.0):
-            for dy_b in (-7.2, 7.2):
+            for dy_b in (-9.5, 9.5):
                 idx += 1
-                items.append(build_din912_screw(2.5, 9.0, f"M25x9_Clamp_{idx}").move(Location((sgn * bx_clamp, y_ax + dy_b, C.Z_AXLE + C.N20_H / 2.0 + 2.7))))
-                items.append(build_hex_nut(5.0, 2.0, 2.5, f"Nut_M25_Clamp_{idx}").move(Location((sgn * bx_clamp, y_ax + dy_b, C.CHASSIS_Z_FLOOR + 3.1))))
-    return Compound(label="COTS_Fasteners_CaptiveNut_Kit", children=items)
+                items.append(build_din912_screw(3.0, 10.0, f"M3x10_Clamp_{idx}").move(Location((sgn * bx_clamp, y_ax + dy_b, C.Z_AXLE + C.N20_H / 2.0 + 3.0))))
+                items.append(build_hex_nut(5.5, 2.4, 3.0, f"Nut_M3_Clamp_{idx}").move(Location((sgn * bx_clamp, y_ax + dy_b, C.CHASSIS_Z_FLOOR + 2.8))))
+    return Compound(label="COTS_Fasteners_M3_Only_Kit", children=items)
 
 
 def build_all_cots() -> dict:
     return {
-        "cots_rpi_zero2w": load_or_build("rpi_zero_2w", build_rpi_zero_2w),
-        "cots_csi_camera": load_or_build("csi_camera_ov5647", build_csi_camera_ov5647),
-        "cots_st7789_lcd": load_or_build("st7789_2inch_lcd", build_st7789_2inch_lcd),
+        "cots_esp32_s3_cam": load_or_build("esp32_s3_cam", build_esp32_s3_cam),
+        "cots_ov3660_cam": load_or_build("ov3660_cam", build_ov3660_camera),
+        "cots_gmt020_lcd": load_or_build("gmt020_lcd", build_gmt020_lcd),
+        "cots_dual18650_pwr": load_or_build("dual_18650_power", build_dual_18650_power_board),
+        "cots_pca9685a": load_or_build("pca9685a_pwm", build_pca9685a),
+        "cots_drv8833_F": load_or_build("drv8833_F", lambda: build_drv8833("F")),
+        "cots_drv8833_R": load_or_build("drv8833_R", lambda: build_drv8833("R")),
         "cots_n20_FL": load_or_build("n20_motor_FL", lambda: build_n20_motor("L", "F")),
         "cots_n20_FR": load_or_build("n20_motor_FR", lambda: build_n20_motor("R", "F")),
         "cots_n20_RL": load_or_build("n20_motor_RL", lambda: build_n20_motor("L", "R")),
         "cots_n20_RR": load_or_build("n20_motor_RR", lambda: build_n20_motor("R", "R")),
         "cots_mg90s_servo": load_or_build("mg90s_servo", build_mg90s_servo),
-        "cots_18650_battery": load_or_build("battery_18650", build_18650_battery),
-        "cots_drv8833": load_or_build("drv8833_driver", build_drv8833),
+        "cots_speaker_3020": load_or_build("speaker_3020", build_speaker_3020),
         "cots_max98357a": load_or_build("max98357a_amp", build_max98357a),
-        "cots_ip5328p_power": load_or_build("ip5328p_power_3a", build_ip5328p_power_3a),
-        "cots_power_switch": load_or_build("power_switch", build_power_switch),
-        "cots_speaker_28mm": load_or_build("speaker_28mm", build_speaker_28mm),
         "cots_inmp441_mic": load_or_build("inmp441_mic", build_inmp441_mic),
-        "cots_tire_FL": load_or_build("rubber_tire_FL", lambda: build_rubber_tire("L", "F")),
-        "cots_tire_FR": load_or_build("rubber_tire_FR", lambda: build_rubber_tire("R", "F")),
-        "cots_tire_RL": load_or_build("rubber_tire_RL", lambda: build_rubber_tire("L", "R")),
-        "cots_tire_RR": load_or_build("rubber_tire_RR", lambda: build_rubber_tire("R", "R")),
+        "cots_wheel_FL": load_or_build("wheel_43mm_FL", lambda: build_complete_43mm_wheel("L", "F")),
+        "cots_wheel_FR": load_or_build("wheel_43mm_FR", lambda: build_complete_43mm_wheel("R", "F")),
+        "cots_wheel_RL": load_or_build("wheel_43mm_RL", lambda: build_complete_43mm_wheel("L", "R")),
+        "cots_wheel_RR": load_or_build("wheel_43mm_RR", lambda: build_complete_43mm_wheel("R", "R")),
         "cots_wiring": build_wiring_harness(),
         "cots_fasteners": build_fastener_kit(),
     }

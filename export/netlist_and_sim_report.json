@@ -1,29 +1,24 @@
 {
-  "platform": "KRON-01V4 (4WD Clamshell Rounded Vision Edition — RPi Zero 2W + OV5647 CSI + 4× N20)",
+  "platform": "KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition — Dual-18650 + PCA9685A + 2× DRV8833)",
   "netlist_audit": {
-    "total_connections": 44,
-    "bcm_gpios_used": 15,
-    "free_buses": [
-      "I2C1 (GPIO2/3)",
-      "UART0 (GPIO14/15)",
-      "GPIO4/7/9/16/17/26/27"
-    ],
+    "total_connections": 46,
+    "s3_gpios_used": 13,
+    "neck_wires": 7,
+    "pca9685_free_channels": "CH9..CH15 (7 spare PWM channels)",
     "gpio_map": {
-      "GPIO5": "MOT_L_FWD",
-      "GPIO6": "MOT_L_REV",
-      "GPIO8": "SPI0_CE0",
-      "GPIO10": "SPI0_MOSI",
-      "GPIO11": "SPI0_SCLK",
-      "GPIO12": "LCD_PWM0",
-      "GPIO13": "HEAD_PWM1",
-      "GPIO18": "I2S_BCLK* + I2S_BCLK*",
-      "GPIO19": "I2S_LRCLK* + I2S_LRCLK*",
-      "GPIO20": "I2S_PCM_DIN",
-      "GPIO21": "I2S_PCM_OUT",
-      "GPIO22": "MOT_R_FWD",
-      "GPIO23": "MOT_R_REV",
-      "GPIO24": "LCD_RST",
-      "GPIO25": "LCD_DC"
+      "GPIO1": "I2C_SDA",
+      "GPIO2": "I2C_SCL",
+      "GPIO3": "I2S0_BCLK",
+      "GPIO14": "LCD_RST",
+      "GPIO21": "SPI_SCLK",
+      "GPIO38": "I2S1_SD_IN",
+      "GPIO39": "I2S1_SCK",
+      "GPIO40": "I2S1_WS",
+      "GPIO41": "LCD_DC",
+      "GPIO42": "LCD_CS",
+      "GPIO43": "I2S0_LRC",
+      "GPIO44": "I2S0_DOUT",
+      "GPIO47": "SPI_MOSI"
     },
     "errors": [],
     "status": "PASS"
@@ -31,472 +26,486 @@
   "netlist": [
     {
       "id": "W01",
-      "bus": "POWER",
-      "from": "18650_3000mAh.B+",
-      "to": "SW_SS12D00G3.COM",
-      "signal": "VBAT_RAW",
-      "volt": "3.7V",
-      "color": "红 20AWG"
+      "bus": "POWER_NECK",
+      "from": "Dual18650.5V_Pin1",
+      "to": "S3CAM.5V",
+      "signal": "S3_5V",
+      "volt": "5.0V",
+      "color": "红 (穿颈1)"
     },
     {
       "id": "W02",
-      "bus": "POWER",
-      "from": "SW_SS12D00G3.ON",
-      "to": "IP5328P_3A.BAT+",
-      "signal": "VBAT_SW",
-      "volt": "3.7V",
-      "color": "红 20AWG"
+      "bus": "POWER_NECK",
+      "from": "Dual18650.GND_Pin1",
+      "to": "S3CAM.GND_1",
+      "signal": "S3_GND",
+      "volt": "0V",
+      "color": "黑 (穿颈2)"
     },
     {
       "id": "W03",
-      "bus": "POWER",
-      "from": "18650_3000mAh.B-",
-      "to": "IP5328P_3A.BAT-",
-      "signal": "GND_BAT",
-      "volt": "0V",
-      "color": "黑 20AWG"
+      "bus": "POWER_NECK",
+      "from": "Dual18650.5V_Pin2",
+      "to": "MAX98357A.VIN",
+      "signal": "AMP_5V",
+      "volt": "5.0V",
+      "color": "橙 (穿颈3)"
     },
     {
       "id": "W04",
-      "bus": "POWER",
-      "from": "IP5328P_3A.OUT_5V+",
-      "to": "RPi_Zero2W.Pin2(5V)",
-      "signal": "5V_3A_RAIL",
-      "volt": "5.0V",
-      "color": "红 20AWG"
+      "bus": "POWER_NECK",
+      "from": "Dual18650.3V3_Pin1",
+      "to": "GMT020_LCD.BLK",
+      "signal": "LCD_BLK_3V3",
+      "volt": "3.3V",
+      "color": "黄 (穿颈4)"
     },
     {
       "id": "W05",
-      "bus": "POWER",
-      "from": "IP5328P_3A.OUT_GND",
-      "to": "RPi_Zero2W.Pin6(GND)",
-      "signal": "GND_BUS",
+      "bus": "POWER_NECK",
+      "from": "Dual18650.GND_Pin2",
+      "to": "INMP441.L/R",
+      "signal": "MIC_LEFT_GND",
       "volt": "0V",
-      "color": "黑 20AWG"
+      "color": "棕 (穿颈5)"
     },
     {
       "id": "W06",
-      "bus": "CSI_CAM",
-      "from": "RPi_Zero2W.CSI2_22P",
-      "to": "OV5647_CAM.CSI_15P",
-      "signal": "MIPI_CSI2_2L",
-      "volt": "1.2V/3.3V",
-      "color": "白扁平排线 15cm"
+      "bus": "POWER_CH",
+      "from": "Dual18650.3V3_Pin2",
+      "to": "PCA9685A.VCC",
+      "signal": "PCA_LOGIC_3V3",
+      "volt": "3.3V",
+      "color": "黄"
     },
     {
       "id": "W07",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.Pin1(3V3)",
-      "to": "ST7789_LCD.VCC",
-      "signal": "LCD_3V3",
-      "volt": "3.3V",
+      "bus": "POWER_CH",
+      "from": "Dual18650.5V_Pin3",
+      "to": "PCA9685A.V+",
+      "signal": "SERVO_5V",
+      "volt": "5.0V",
       "color": "红"
     },
     {
       "id": "W08",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.Pin9(GND)",
-      "to": "ST7789_LCD.GND",
-      "signal": "LCD_GND",
+      "bus": "POWER_CH",
+      "from": "Dual18650.GND_Pin3",
+      "to": "PCA9685A.GND",
+      "signal": "PCA_GND",
       "volt": "0V",
       "color": "黑"
     },
     {
       "id": "W09",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.GPIO11(P23)",
-      "to": "ST7789_LCD.SCL",
-      "signal": "SPI0_SCLK",
-      "volt": "3.3V",
-      "color": "黄",
-      "gpio": 11
+      "bus": "POWER_CH",
+      "from": "Dual18650.5V_Pin4",
+      "to": "DRV8833_F.VCC",
+      "signal": "MOT_F_5V",
+      "volt": "5.0V",
+      "color": "红"
     },
     {
       "id": "W10",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.GPIO10(P19)",
-      "to": "ST7789_LCD.SDA",
-      "signal": "SPI0_MOSI",
-      "volt": "3.3V",
-      "color": "蓝",
-      "gpio": 10
+      "bus": "POWER_CH",
+      "from": "Dual18650.GND_Pin4",
+      "to": "DRV8833_F.GND",
+      "signal": "MOT_F_GND",
+      "volt": "0V",
+      "color": "黑"
     },
     {
       "id": "W11",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.GPIO24(P18)",
-      "to": "ST7789_LCD.RES",
-      "signal": "LCD_RST",
-      "volt": "3.3V",
-      "color": "绿",
-      "gpio": 24
+      "bus": "POWER_CH",
+      "from": "Dual18650.5V_Pin5",
+      "to": "DRV8833_R.VCC",
+      "signal": "MOT_R_5V",
+      "volt": "5.0V",
+      "color": "红"
     },
     {
       "id": "W12",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.GPIO25(P22)",
-      "to": "ST7789_LCD.DC",
-      "signal": "LCD_DC",
-      "volt": "3.3V",
-      "color": "橙",
-      "gpio": 25
+      "bus": "POWER_CH",
+      "from": "Dual18650.GND_Pin5",
+      "to": "DRV8833_R.GND",
+      "signal": "MOT_R_GND",
+      "volt": "0V",
+      "color": "黑"
     },
     {
       "id": "W13",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.GPIO8(P24)",
-      "to": "ST7789_LCD.CS",
-      "signal": "SPI0_CE0",
+      "bus": "I2C_NECK",
+      "from": "S3CAM.GPIO1",
+      "to": "PCA9685A.SDA",
+      "signal": "I2C_SDA",
       "volt": "3.3V",
-      "color": "白",
-      "gpio": 8
+      "color": "蓝 (穿颈6)",
+      "gpio": 1
     },
     {
       "id": "W14",
-      "bus": "SPI_LCD",
-      "from": "RPi_Zero2W.GPIO12(P32)",
-      "to": "ST7789_LCD.BLK",
-      "signal": "LCD_PWM0",
+      "bus": "I2C_NECK",
+      "from": "S3CAM.GPIO2",
+      "to": "PCA9685A.SCL",
+      "signal": "I2C_SCL",
       "volt": "3.3V",
-      "color": "灰",
-      "gpio": 12
+      "color": "绿 (穿颈7)",
+      "gpio": 2
     },
     {
       "id": "W15",
-      "bus": "I2S_MIC",
-      "from": "RPi_Zero2W.Pin17(3V3)",
+      "bus": "CAM_FPC",
+      "from": "S3CAM.FPC_24P",
+      "to": "OV3660_CAM.FPC",
+      "signal": "OV3660_DVP_8B",
+      "volt": "2.8V",
+      "color": "铜色短排线"
+    },
+    {
+      "id": "W16",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.3V3_1",
+      "to": "GMT020_LCD.VCC",
+      "signal": "LCD_3V3",
+      "volt": "3.3V",
+      "color": "红"
+    },
+    {
+      "id": "W17",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.GND_2",
+      "to": "GMT020_LCD.GND",
+      "signal": "LCD_GND",
+      "volt": "0V",
+      "color": "黑"
+    },
+    {
+      "id": "W18",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.GPIO21",
+      "to": "GMT020_LCD.SCL",
+      "signal": "SPI_SCLK",
+      "volt": "3.3V",
+      "color": "黄",
+      "gpio": 21
+    },
+    {
+      "id": "W19",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.GPIO47",
+      "to": "GMT020_LCD.SDA",
+      "signal": "SPI_MOSI",
+      "volt": "3.3V",
+      "color": "蓝",
+      "gpio": 47
+    },
+    {
+      "id": "W20",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.GPIO14",
+      "to": "GMT020_LCD.RES",
+      "signal": "LCD_RST",
+      "volt": "3.3V",
+      "color": "绿",
+      "gpio": 14
+    },
+    {
+      "id": "W21",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.GPIO41",
+      "to": "GMT020_LCD.DC",
+      "signal": "LCD_DC",
+      "volt": "3.3V",
+      "color": "橙",
+      "gpio": 41
+    },
+    {
+      "id": "W22",
+      "bus": "SPI_LCD",
+      "from": "S3CAM.GPIO42",
+      "to": "GMT020_LCD.CS",
+      "signal": "LCD_CS",
+      "volt": "3.3V",
+      "color": "白",
+      "gpio": 42
+    },
+    {
+      "id": "W23",
+      "bus": "I2S1_MIC",
+      "from": "S3CAM.3V3_2",
       "to": "INMP441.VDD",
       "signal": "MIC_3V3",
       "volt": "3.3V",
       "color": "红"
     },
     {
-      "id": "W16",
-      "bus": "I2S_MIC",
-      "from": "RPi_Zero2W.Pin14(GND)",
+      "id": "W24",
+      "bus": "I2S1_MIC",
+      "from": "S3CAM.GND_3",
       "to": "INMP441.GND",
       "signal": "MIC_GND",
       "volt": "0V",
       "color": "黑"
     },
     {
-      "id": "W17",
-      "bus": "I2S_MIC",
-      "from": "INMP441.GND",
-      "to": "INMP441.L/R",
-      "signal": "LEFT_CH",
-      "volt": "0V",
-      "color": "黑(短接)"
-    },
-    {
-      "id": "W18",
-      "bus": "I2S_MIC",
-      "from": "RPi_Zero2W.GPIO18(P12)",
+      "id": "W25",
+      "bus": "I2S1_MIC",
+      "from": "S3CAM.GPIO39",
       "to": "INMP441.SCK",
-      "signal": "I2S_BCLK*",
+      "signal": "I2S1_SCK",
       "volt": "3.3V",
       "color": "白",
-      "gpio": 18
+      "gpio": 39
     },
     {
-      "id": "W19",
-      "bus": "I2S_MIC",
-      "from": "RPi_Zero2W.GPIO19(P35)",
+      "id": "W26",
+      "bus": "I2S1_MIC",
+      "from": "S3CAM.GPIO40",
       "to": "INMP441.WS",
-      "signal": "I2S_LRCLK*",
+      "signal": "I2S1_WS",
       "volt": "3.3V",
       "color": "紫",
-      "gpio": 19
+      "gpio": 40
     },
     {
-      "id": "W20",
-      "bus": "I2S_MIC",
-      "from": "RPi_Zero2W.GPIO20(P38)",
+      "id": "W27",
+      "bus": "I2S1_MIC",
+      "from": "S3CAM.GPIO38",
       "to": "INMP441.SD",
-      "signal": "I2S_PCM_DIN",
+      "signal": "I2S1_SD_IN",
       "volt": "3.3V",
       "color": "青",
-      "gpio": 20
+      "gpio": 38
     },
     {
-      "id": "W21",
-      "bus": "I2S_AMP",
-      "from": "IP5328P_3A.OUT_5V+",
-      "to": "MAX98357A.VIN",
-      "signal": "AMP_5V",
-      "volt": "5.0V",
-      "color": "红"
-    },
-    {
-      "id": "W22",
-      "bus": "I2S_AMP",
-      "from": "IP5328P_3A.OUT_GND",
+      "id": "W28",
+      "bus": "I2S0_AMP",
+      "from": "S3CAM.GND_4",
       "to": "MAX98357A.GND",
       "signal": "AMP_GND",
       "volt": "0V",
       "color": "黑"
     },
     {
-      "id": "W23",
-      "bus": "I2S_AMP",
-      "from": "RPi_Zero2W.GPIO18(P12)",
+      "id": "W29",
+      "bus": "I2S0_AMP",
+      "from": "S3CAM.GPIO3",
       "to": "MAX98357A.BCLK",
-      "signal": "I2S_BCLK*",
+      "signal": "I2S0_BCLK",
       "volt": "3.3V",
       "color": "蓝",
-      "gpio": 18
-    },
-    {
-      "id": "W24",
-      "bus": "I2S_AMP",
-      "from": "RPi_Zero2W.GPIO19(P35)",
-      "to": "MAX98357A.LRC",
-      "signal": "I2S_LRCLK*",
-      "volt": "3.3V",
-      "color": "绿",
-      "gpio": 19
-    },
-    {
-      "id": "W25",
-      "bus": "I2S_AMP",
-      "from": "RPi_Zero2W.GPIO21(P40)",
-      "to": "MAX98357A.DIN",
-      "signal": "I2S_PCM_OUT",
-      "volt": "3.3V",
-      "color": "黄",
-      "gpio": 21
-    },
-    {
-      "id": "W26",
-      "bus": "I2S_AMP",
-      "from": "MAX98357A.SPK+",
-      "to": "SPEAKER_28MM.+",
-      "signal": "SPK_OUT+",
-      "volt": "BTL",
-      "color": "红"
-    },
-    {
-      "id": "W27",
-      "bus": "I2S_AMP",
-      "from": "MAX98357A.SPK-",
-      "to": "SPEAKER_28MM.-",
-      "signal": "SPK_OUT-",
-      "volt": "BTL",
-      "color": "黑"
-    },
-    {
-      "id": "W28",
-      "bus": "MOTOR",
-      "from": "IP5328P_3A.OUT_5V+",
-      "to": "DRV8833.VCC",
-      "signal": "MOT_5V",
-      "volt": "5.0V",
-      "color": "红"
-    },
-    {
-      "id": "W29",
-      "bus": "MOTOR",
-      "from": "IP5328P_3A.OUT_GND",
-      "to": "DRV8833.GND",
-      "signal": "MOT_GND",
-      "volt": "0V",
-      "color": "黑"
+      "gpio": 3
     },
     {
       "id": "W30",
-      "bus": "MOTOR",
-      "from": "RPi_Zero2W.GPIO5(P29)",
-      "to": "DRV8833.IN1",
-      "signal": "MOT_L_FWD",
+      "bus": "I2S0_AMP",
+      "from": "S3CAM.GPIO43",
+      "to": "MAX98357A.LRC",
+      "signal": "I2S0_LRC",
       "volt": "3.3V",
-      "color": "黄",
-      "gpio": 5
+      "color": "绿",
+      "gpio": 43
     },
     {
       "id": "W31",
-      "bus": "MOTOR",
-      "from": "RPi_Zero2W.GPIO6(P31)",
-      "to": "DRV8833.IN2",
-      "signal": "MOT_L_REV",
+      "bus": "I2S0_AMP",
+      "from": "S3CAM.GPIO44",
+      "to": "MAX98357A.DIN",
+      "signal": "I2S0_DOUT",
       "volt": "3.3V",
-      "color": "橙",
-      "gpio": 6
+      "color": "黄",
+      "gpio": 44
     },
     {
       "id": "W32",
-      "bus": "MOTOR",
-      "from": "RPi_Zero2W.GPIO22(P15)",
-      "to": "DRV8833.IN3",
-      "signal": "MOT_R_FWD",
-      "volt": "3.3V",
-      "color": "蓝",
-      "gpio": 22
+      "bus": "I2S0_AMP",
+      "from": "MAX98357A.SPK+",
+      "to": "SPEAKER_3020.+",
+      "signal": "SPK_BTL+",
+      "volt": "BTL",
+      "color": "红 (螺丝端子)"
     },
     {
       "id": "W33",
-      "bus": "MOTOR",
-      "from": "RPi_Zero2W.GPIO23(P16)",
-      "to": "DRV8833.IN4",
-      "signal": "MOT_R_REV",
-      "volt": "3.3V",
-      "color": "紫",
-      "gpio": 23
+      "bus": "I2S0_AMP",
+      "from": "MAX98357A.SPK-",
+      "to": "SPEAKER_3020.-",
+      "signal": "SPK_BTL-",
+      "volt": "BTL",
+      "color": "黑 (螺丝端子)"
     },
     {
       "id": "W34",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT1",
-      "to": "N20_FL.+",
-      "signal": "N20_FL+",
-      "volt": "5V PWM",
-      "color": "黄"
+      "bus": "SERVO",
+      "from": "PCA9685A.CH0_3P",
+      "to": "MG90S.3P_Plug",
+      "signal": "HEAD_TILT_PWM",
+      "volt": "5V/50Hz",
+      "color": "原装3P直插"
     },
     {
       "id": "W35",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT2",
-      "to": "N20_FL.-",
-      "signal": "N20_FL-",
-      "volt": "5V PWM",
-      "color": "黑"
-    },
-    {
-      "id": "W36",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT1",
-      "to": "N20_RL.+(并联)",
-      "signal": "N20_RL+",
-      "volt": "5V PWM",
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH1_PWM",
+      "to": "DRV8833_F.IN1",
+      "signal": "FL_FWD",
+      "volt": "3.3V",
       "color": "黄"
     },
     {
+      "id": "W36",
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH2_PWM",
+      "to": "DRV8833_F.IN2",
+      "signal": "FL_REV",
+      "volt": "3.3V",
+      "color": "橙"
+    },
+    {
       "id": "W37",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT2",
-      "to": "N20_RL.-(并联)",
-      "signal": "N20_RL-",
-      "volt": "5V PWM",
-      "color": "黑"
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH3_PWM",
+      "to": "DRV8833_F.IN3",
+      "signal": "FR_FWD",
+      "volt": "3.3V",
+      "color": "蓝"
     },
     {
       "id": "W38",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT3",
-      "to": "N20_FR.+",
-      "signal": "N20_FR+",
-      "volt": "5V PWM",
-      "color": "蓝"
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH4_PWM",
+      "to": "DRV8833_F.IN4",
+      "signal": "FR_REV",
+      "volt": "3.3V",
+      "color": "紫"
     },
     {
       "id": "W39",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT4",
-      "to": "N20_FR.-",
-      "signal": "N20_FR-",
-      "volt": "5V PWM",
-      "color": "黑"
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH5_PWM",
+      "to": "DRV8833_R.IN1",
+      "signal": "RL_FWD",
+      "volt": "3.3V",
+      "color": "黄"
     },
     {
       "id": "W40",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT3",
-      "to": "N20_RR.+(并联)",
-      "signal": "N20_RR+",
-      "volt": "5V PWM",
-      "color": "蓝"
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH6_PWM",
+      "to": "DRV8833_R.IN2",
+      "signal": "RL_REV",
+      "volt": "3.3V",
+      "color": "橙"
     },
     {
       "id": "W41",
-      "bus": "MOTOR",
-      "from": "DRV8833.OUT4",
-      "to": "N20_RR.-(并联)",
-      "signal": "N20_RR-",
-      "volt": "5V PWM",
-      "color": "黑"
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH7_PWM",
+      "to": "DRV8833_R.IN3",
+      "signal": "RR_FWD",
+      "volt": "3.3V",
+      "color": "蓝"
     },
     {
       "id": "W42",
-      "bus": "SERVO",
-      "from": "IP5328P_3A.OUT_5V+",
-      "to": "MG90S.VCC(红)",
-      "signal": "SERVO_5V",
-      "volt": "5.0V",
-      "color": "红"
+      "bus": "MOTOR_CTL",
+      "from": "PCA9685A.CH8_PWM",
+      "to": "DRV8833_R.IN4",
+      "signal": "RR_REV",
+      "volt": "3.3V",
+      "color": "紫"
     },
     {
       "id": "W43",
-      "bus": "SERVO",
-      "from": "IP5328P_3A.OUT_GND",
-      "to": "MG90S.GND(棕)",
-      "signal": "SERVO_GND",
-      "volt": "0V",
-      "color": "棕"
+      "bus": "MOTOR_PWR",
+      "from": "DRV8833_F.OUT1_OUT2",
+      "to": "N20_FL.2P_Plug",
+      "signal": "N20_FL_DRIVE",
+      "volt": "5V PWM",
+      "color": "原装2P直插"
     },
     {
       "id": "W44",
-      "bus": "SERVO",
-      "from": "RPi_Zero2W.GPIO13(P33)",
-      "to": "MG90S.SIG(橙)",
-      "signal": "HEAD_PWM1",
-      "volt": "50Hz",
-      "color": "橙",
-      "gpio": 13
+      "bus": "MOTOR_PWR",
+      "from": "DRV8833_F.OUT3_OUT4",
+      "to": "N20_FR.2P_Plug",
+      "signal": "N20_FR_DRIVE",
+      "volt": "5V PWM",
+      "color": "原装2P直插"
+    },
+    {
+      "id": "W45",
+      "bus": "MOTOR_PWR",
+      "from": "DRV8833_R.OUT1_OUT2",
+      "to": "N20_RL.2P_Plug",
+      "signal": "N20_RL_DRIVE",
+      "volt": "5V PWM",
+      "color": "原装2P直插"
+    },
+    {
+      "id": "W46",
+      "bus": "MOTOR_PWR",
+      "from": "DRV8833_R.OUT3_OUT4",
+      "to": "N20_RR.2P_Plug",
+      "signal": "N20_RR_DRIVE",
+      "volt": "5V PWM",
+      "color": "原装2P直插"
     }
   ],
   "power_simulation": {
-    "linux_idle": {
-      "i_5v_mA": 302,
-      "i_bat_mA": 458.5,
-      "power_W": 1.7,
-      "ip5328p_3A_load_pct": 10.1,
+    "wifi_standby": {
+      "i_5v_mA": 179,
+      "i_bat_mA": 274.9,
+      "power_W": 1.02,
+      "board_3A_load_pct": 6.0,
       "drv8833_per_ch_mA": 0.0,
-      "runtime_hours": 5.89,
+      "runtime_hours": 16.37,
       "brownout_safe": true
     },
-    "cv_face_track": {
-      "i_5v_mA": 1147,
-      "i_bat_mA": 1741.6,
-      "power_W": 6.44,
-      "ip5328p_3A_load_pct": 38.2,
-      "drv8833_per_ch_mA": 140.0,
-      "runtime_hours": 1.55,
-      "brownout_safe": true
-    },
-    "ai_voice_vision": {
-      "i_5v_mA": 1152,
-      "i_bat_mA": 1749.2,
-      "power_W": 6.47,
-      "ip5328p_3A_load_pct": 38.4,
+    "ai_voice_chat": {
+      "i_5v_mA": 567,
+      "i_bat_mA": 870.7,
+      "power_W": 3.22,
+      "board_3A_load_pct": 18.9,
       "drv8833_per_ch_mA": 0.0,
-      "runtime_hours": 1.54,
+      "runtime_hours": 5.17,
       "brownout_safe": true
     },
-    "peak_4wd_yolo": {
-      "i_5v_mA": 2337,
-      "i_bat_mA": 3548.4,
-      "power_W": 13.13,
-      "ip5328p_3A_load_pct": 77.9,
-      "drv8833_per_ch_mA": 420.0,
-      "runtime_hours": 0.76,
+    "vision_patrol": {
+      "i_5v_mA": 842,
+      "i_bat_mA": 1293.0,
+      "power_W": 4.78,
+      "board_3A_load_pct": 28.1,
+      "drv8833_per_ch_mA": 80.0,
+      "runtime_hours": 3.48,
       "brownout_safe": true
     },
-    "realistic_mixed_runtime_h": 2.45
+    "peak_4wd_vision": {
+      "i_5v_mA": 1837,
+      "i_bat_mA": 2820.9,
+      "power_W": 10.44,
+      "board_3A_load_pct": 61.2,
+      "drv8833_per_ch_mA": 210.0,
+      "runtime_hours": 1.6,
+      "brownout_safe": true
+    },
+    "realistic_mixed_runtime_h": 6.35
   },
   "kinematics_stability": {
-    "drivetrain": "4WD Skid-Steer (4× GA12-N20 + 4× Ø42mm Off-Road Wheels)",
-    "total_mass_g": 431.5,
-    "max_linear_speed_cm_s": 26.4,
+    "drivetrain": "4WD Skid-Steer (4× GA12-N20 + 4× Complete Ø43×18mm Rubber Wheels)",
+    "total_mass_g": 536.5,
+    "max_linear_speed_cm_s": 27.0,
     "max_continuous_slope_deg": 81.9,
-    "cg_y_mm": 0.37,
-    "cg_z_mm": 45.98,
+    "cg_y_mm": 0.02,
+    "cg_z_mm": 54.06,
     "support_polygon_y_mm": [
-      -30.0,
-      30.0
+      -38.0,
+      38.0
     ],
-    "rear_tip_margin_mm": 30.37,
-    "front_tip_margin_mm": 29.63,
-    "static_stability": "PASS (50/50 dead-center CG inside 60mm 4WD wheelbase!)",
-    "head_servo_torque_required_kgcm": 0.227,
-    "mg90s_torque_safety_factor": 7.9
+    "rear_tip_margin_mm": 38.02,
+    "front_tip_margin_mm": 37.98,
+    "static_stability": "PASS (50/50 dead-center Dual-18650 CG inside 76mm 4WD wheelbase!)",
+    "head_servo_torque_required_kgcm": 0.29,
+    "mg90s_torque_safety_factor": 6.2
   }
 }

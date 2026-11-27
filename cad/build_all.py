@@ -1,14 +1,15 @@
 """
-KRON-01V4 (4WD Rounded Vision Edition) — Master CAD Assembly Builder, Verifier, Exporter & Renderer
-====================================================================================================
-Builds the complete KRON-01V4 4WD AI Companion Robot from parametric B-Rep solids
-(Clamshell Easy-Assembly Rounded Chassis + 4x Ø40mm Wheels + RPi Zero 2W + OV5647 CSI Camera),
+KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition, v2.0.0) — Master CAD Build Pipeline
+=========================================================================================
+Builds the complete KRON-01V6 4WD AI Companion Robot from parametric B-Rep solids,
 runs automated COTS clearance & mass checks, exports STEP / STL / 3MF deliverables
-grouped by single-color FDM print plates, and renders crisp multi-view engineering figures.
+across 2 single-color plates (Gunmetal Black + Pearl White) + 14 JLC3DP-ready centered STLs,
+and renders crisp multi-view engineering verification sheets.
 """
 
 import json
 import math
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -36,58 +37,48 @@ REPO_ROOT = ROOT.parent
 EXPORT_DIR = REPO_ROOT / "export"
 DOCS_IMG_DIR = REPO_ROOT / "docs" / "images"
 
-# Explode direction vectors (dx, dy, dz) in mm — showcases Terra-Rover Clamshell Open-Hood Assembly!
 EXPLODE_VECTORS = {
     "A01_chassis_tub":    (0, 0, 0),
-    "A02_top_hood":       (0, 0, 26),
-    "A10_hood_lock_key":  (0, -14, 42),
+    "A02_top_hood":       (0, 0, 28),
+    "A10_hood_lock_key":  (0, -14, 44),
     "A03_motor_clamp_F":  (0, 10, 12),
     "A03_motor_clamp_R":  (0, -10, 12),
-    "B01_hood_wing_L":    (-16, 8, 34),
-    "B01_hood_wing_R":    (16, 8, 34),
+    "B01_hood_wing_L":    (-16, 8, 36),
+    "B01_hood_wing_R":    (16, 8, 36),
     "B02_side_fairing_L": (-24, 0, 8),
     "B03_side_fairing_R": (24, 0, 8),
-    "A04_wheel_hub_FL":   (-30, 10, 0),
-    "A04_wheel_hub_FR":   (30, 10, 0),
-    "A04_wheel_hub_RL":   (-30, -10, 0),
-    "A04_wheel_hub_RR":   (30, -10, 0),
-    "C03_wheel_rim_FL":   (-42, 10, 0),
-    "C03_wheel_rim_FR":   (42, 10, 0),
-    "C03_wheel_rim_RL":   (-42, -10, 0),
-    "C03_wheel_rim_RR":   (42, -10, 0),
-    "A06_head_core":      (0, 0, 42),
-    "A07_top_grille":     (0, 0, 70),
-    "A08_visor_mask":     (0, 28, 48),
-    "A09_ear_hub_L":      (-24, 0, 48),
-    "A09_ear_hub_R":      (24, 0, 48),
-    "B04_head_shell":     (0, -12, 56),
+    "A06_head_core":      (0, 0, 44),
+    "A07_top_grille":     (0, 0, 74),
+    "A08_visor_mask":     (0, 28, 50),
+    "A09_ear_hub_L":      (-24, 0, 50),
+    "A09_ear_hub_R":      (24, 0, 50),
+    "B04_head_shell":     (0, -12, 58),
     # COTS hardware explode vectors
-    "cots_rpi_zero2w":    (0, -6, 14),
-    "cots_csi_camera":    (0, 22, 54),
-    "cots_st7789_lcd":    (0, 14, 44),
+    "cots_esp32_s3_cam":  (0, 0, 52),
+    "cots_ov3660_cam":    (0, 22, 56),
+    "cots_gmt020_lcd":    (0, 14, 46),
+    "cots_dual18650_pwr": (0, 0, 6),
+    "cots_pca9685a":      (0, -12, 16),
+    "cots_drv8833_F":     (0, 10, 4),
+    "cots_drv8833_R":     (0, -10, 4),
     "cots_n20_FL":        (-12, 6, -4),
     "cots_n20_FR":        (12, 6, -4),
     "cots_n20_RL":        (-12, -6, -4),
     "cots_n20_RR":        (12, -6, -4),
-    "cots_mg90s_servo":   (-12, 0, 28),
-    "cots_18650_battery": (0, 0, 6),
-    "cots_drv8833":       (0, 10, 4),
-    "cots_max98357a":     (0, -10, 4),
-    "cots_ip5328p_power": (14, -12, 12),
-    "cots_power_switch":  (-14, -18, 10),
-    "cots_speaker_28mm":  (0, -6, 64),
-    "cots_inmp441_mic":   (0, 14, 36),
-    "cots_tire_FL":       (-36, 10, 0),
-    "cots_tire_FR":       (36, 10, 0),
-    "cots_tire_RL":       (-36, -10, 0),
-    "cots_tire_RR":       (36, -10, 0),
+    "cots_mg90s_servo":   (-12, 0, 30),
+    "cots_speaker_3020":  (0, -6, 66),
+    "cots_max98357a":     (0, -14, 48),
+    "cots_inmp441_mic":   (0, 14, 38),
+    "cots_wheel_FL":      (-32, 10, 0),
+    "cots_wheel_FR":      (32, 10, 0),
+    "cots_wheel_RL":      (-32, -10, 0),
+    "cots_wheel_RR":      (32, -10, 0),
     "cots_wiring":        (0, 0, 0),
     "cots_fasteners":     (0, 0, 0),
 }
 
 
 def shape_to_trimesh(shape, tolerance: float = 0.25) -> trimesh.Trimesh:
-    """Tessellate a build123d Shape/Part/Compound into a single Trimesh."""
     tmp_stl = ROOT / "_tmp_mesh.stl"
     export_stl(shape, str(tmp_stl), tolerance=tolerance, angular_tolerance=0.25)
     mesh = trimesh.load(str(tmp_stl), force="mesh")
@@ -98,7 +89,6 @@ def shape_to_trimesh(shape, tolerance: float = 0.25) -> trimesh.Trimesh:
 def extract_colored_submeshes(
     name: str, shape, category: str, tolerance: float = 0.55, parent_loc: Location | None = None
 ):
-    """Extract sub-meshes with exact global transforms & per-body colors for WebGL & Matplotlib."""
     if parent_loc is None:
         parent_loc = Location()
     submeshes = []
@@ -132,34 +122,36 @@ def extract_colored_submeshes(
 
 
 def check_cots_clearances(cots_dict: dict):
-    """Run automated AABB clearance checks across all critical KRON-01V4 4WD COTS hardware pairs."""
+    """Run automated AABB clearance checks across all critical KRON-01V6 COTS hardware pairs."""
     critical_pairs = [
-        ("cots_rpi_zero2w", "cots_18650_battery"),
-        ("cots_rpi_zero2w", "cots_n20_FL"),
-        ("cots_rpi_zero2w", "cots_n20_FR"),
-        ("cots_rpi_zero2w", "cots_n20_RL"),
-        ("cots_rpi_zero2w", "cots_n20_RR"),
-        ("cots_rpi_zero2w", "cots_mg90s_servo"),
-        ("cots_rpi_zero2w", "cots_drv8833"),
-        ("cots_rpi_zero2w", "cots_max98357a"),
-        ("cots_rpi_zero2w", "cots_ip5328p_power"),
-        ("cots_rpi_zero2w", "cots_power_switch"),
-        ("cots_18650_battery", "cots_n20_FL"),
-        ("cots_18650_battery", "cots_n20_FR"),
-        ("cots_18650_battery", "cots_n20_RL"),
-        ("cots_18650_battery", "cots_n20_RR"),
-        ("cots_18650_battery", "cots_drv8833"),
-        ("cots_18650_battery", "cots_max98357a"),
-        ("cots_drv8833", "cots_n20_FL"),
-        ("cots_drv8833", "cots_n20_FR"),
-        ("cots_max98357a", "cots_n20_RL"),
-        ("cots_max98357a", "cots_n20_RR"),
-        ("cots_csi_camera", "cots_st7789_lcd"),
-        ("cots_csi_camera", "cots_speaker_28mm"),
-        ("cots_csi_camera", "cots_mg90s_servo"),
-        ("cots_st7789_lcd", "cots_speaker_28mm"),
-        ("cots_st7789_lcd", "cots_inmp441_mic"),
-        ("cots_st7789_lcd", "cots_mg90s_servo"),
+        # Chassis hardware pairs
+        ("cots_dual18650_pwr", "cots_pca9685a"),
+        ("cots_dual18650_pwr", "cots_drv8833_F"),
+        ("cots_dual18650_pwr", "cots_drv8833_R"),
+        ("cots_dual18650_pwr", "cots_n20_FL"),
+        ("cots_dual18650_pwr", "cots_n20_FR"),
+        ("cots_dual18650_pwr", "cots_n20_RL"),
+        ("cots_dual18650_pwr", "cots_n20_RR"),
+        ("cots_pca9685a", "cots_drv8833_R"),
+        ("cots_pca9685a", "cots_n20_RL"),
+        ("cots_pca9685a", "cots_n20_RR"),
+        ("cots_pca9685a", "cots_mg90s_servo"),
+        ("cots_drv8833_F", "cots_n20_FL"),
+        ("cots_drv8833_F", "cots_n20_FR"),
+        ("cots_drv8833_R", "cots_n20_RL"),
+        ("cots_drv8833_R", "cots_n20_RR"),
+        # Brain-Head hardware pairs
+        ("cots_esp32_s3_cam", "cots_gmt020_lcd"),
+        ("cots_esp32_s3_cam", "cots_ov3660_cam"),
+        ("cots_esp32_s3_cam", "cots_speaker_3020"),
+        ("cots_esp32_s3_cam", "cots_max98357a"),
+        ("cots_esp32_s3_cam", "cots_inmp441_mic"),
+        ("cots_esp32_s3_cam", "cots_mg90s_servo"),
+        ("cots_gmt020_lcd", "cots_ov3660_cam"),
+        ("cots_gmt020_lcd", "cots_inmp441_mic"),
+        ("cots_gmt020_lcd", "cots_mg90s_servo"),
+        ("cots_max98357a", "cots_speaker_3020"),
+        ("cots_max98357a", "cots_mg90s_servo"),
     ]
     report = []
     all_clear = True
@@ -182,13 +174,13 @@ def check_cots_clearances(cots_dict: dict):
 
 
 def render_engineering_views(all_submeshes: list, out_path: Path, dims_str: str):
-    """Render a crisp 2x2 shaded CAD engineering sheet from front-hero, x-ray, rear I/O, and clamshell exploded views."""
+    """Render a crisp 2x2 shaded CAD engineering sheet."""
     fig = plt.figure(figsize=(16, 12), facecolor="#0d1117")
     views = [
-        ("1. FRONT 3/4 HERO — 4WD ROUNDED CLOSED SHELL", 18, 52, False, 0.0),
-        ("2. X-RAY INTERNAL 4x N20 + RPi ZERO 2W + 18650", 20, 42, True, 0.0),
-        ("3. REAR 3/4 CLOSED HULL (SD + 5V/3A TYPE-C + SW)", 18, -132, False, 0.0),
-        ("4. CLAMSHELL EXPLODED VIEW (LIFT-OFF TOP LID)", 22, 50, False, 0.85),
+        ("1. FRONT 3/4 HERO — 2-TONE 4WD TERRA-ROVER v2.0", 18, 48, False, 0.0),
+        ("2. X-RAY INTERNAL: S3-CAM HEAD + DUAL-18650 + PCA9685", 20, 40, True, 0.0),
+        ("3. RIGHT-REAR 3/4 (WAIST TYPE-C / ON-OFF / 4x LEDs)", 18, -42, False, 0.0),
+        ("4. CLAMSHELL EXPLODED VIEW (14 UNIQUE JLC3DP STLs)", 22, 50, False, 0.82),
     ]
     light_dir = np.array([0.45, 0.65, 0.61])
     light_dir = light_dir / np.linalg.norm(light_dir)
@@ -240,10 +232,10 @@ def render_engineering_views(all_submeshes: list, out_path: Path, dims_str: str)
         )
         ax.add_collection3d(poly)
 
-        lim = 104 if explode > 0 else 78
+        lim = 110 if explode > 0 else 84
         ax.set_xlim(-lim, lim)
         ax.set_ylim(-lim, lim)
-        ax.set_zlim(-10 if explode > 0 else 0, 210 if explode > 0 else 155)
+        ax.set_zlim(-10 if explode > 0 else 0, 225 if explode > 0 else 166)
         ax.set_box_aspect([1, 1, 0.95])
         ax.view_init(elev=elev, azim=azim)
         ax.tick_params(colors="#6e7681", labelsize=8)
@@ -255,7 +247,7 @@ def render_engineering_views(all_submeshes: list, out_path: Path, dims_str: str)
         ax.set_zlabel("Z Up (mm)", color="#8b949e", fontsize=8)
 
     fig.suptitle(
-        f"KRON-01V5 Terra-Rover 4WD Edition (Sculpted Astronaut Visor + Clamshell Open-Hood + 4× N20) — {dims_str}",
+        f"KRON-01V6 Terra-Rover 4WD (ESP32-S3-CAM N16R8 + Dual-18650 + PCA9685 + 43mm Wheels) — {dims_str}",
         color="#ffffff",
         fontsize=13,
         fontweight="bold",
@@ -267,7 +259,6 @@ def render_engineering_views(all_submeshes: list, out_path: Path, dims_str: str)
 
 
 def export_webgl_json(all_submeshes: list, out_path: Path):
-    """Export compact smooth-shaded CAD mesh bundle with lid/head/wheel tags for 60fps WebGL digital twin."""
     items = []
     for sm in all_submeshes:
         mesh = sm["mesh"]
@@ -275,7 +266,6 @@ def export_webgl_json(all_submeshes: list, out_path: Path):
         faces = mesh.faces
         part = sm["part"]
         label = sm["label"]
-        # Keep hero curved shells smooth & high-res; keep tiny internal fasteners light
         max_faces = 1400 if part in ("B04_head_shell", "A08_visor_mask", "A02_top_hood", "A01_chassis_tub") else (700 if sm["category"].startswith("plate_") else 320)
         if len(faces) > max_faces:
             grid = 0.65 if len(faces) < 3500 else 1.15
@@ -289,13 +279,11 @@ def export_webgl_json(all_submeshes: list, out_path: Path):
 
         is_head = (
             part.startswith(("A06", "A07", "A08", "A09", "B04"))
-            or part in ("cots_st7789_lcd", "cots_csi_camera", "cots_speaker_28mm", "cots_inmp441_mic")
-            or ("EarPivot" in label)
+            or part in ("cots_esp32_s3_cam", "cots_gmt020_lcd", "cots_ov3660_cam", "cots_speaker_3020", "cots_max98357a", "cots_inmp441_mic")
         )
         is_lid = (
             is_head
             or part in ("A02_top_hood", "A10_hood_lock_key", "B01_hood_wing_L", "B01_hood_wing_R", "cots_mg90s_servo")
-            or ("TopHood" in label and "M3x8" in label)
         )
         wh = ""
         for tag in ("FL", "FR", "RL", "RR"):
@@ -304,7 +292,7 @@ def export_webgl_json(all_submeshes: list, out_path: Path):
                 break
         is_shell = sm["category"].startswith("plate_") and (not wh)
         is_gloss = part == "A08_visor_mask" or "Glass" in label or "Lens" in label
-        is_eye = "Eye" in label or "Lens_Glass" in label
+        is_eye = "Eye" in label or "OpticsGlass" in label
 
         ex, ey, ez = EXPLODE_VECTORS.get(part, (0, 0, 0))
         items.append({
@@ -327,40 +315,45 @@ def export_webgl_json(all_submeshes: list, out_path: Path):
 
 
 def main():
-    print("=" * 74)
-    print("  KRON-01V4 4WD Rounded Vision Edition — Industrial CAD Build Pipeline")
-    print("=" * 74)
+    print("=" * 78)
+    print("  KRON-01V6 (ESP32-S3-CAM N16R8 v2.0.0) — Industrial CAD Build Pipeline")
+    print("=" * 78)
+
+    # Remove obsolete Plate C directory from v1.x builds (43mm wheels are now purchased complete!)
+    old_plate_c = EXPORT_DIR / "stl_plate_C_orange"
+    if old_plate_c.exists():
+        shutil.rmtree(old_plate_c)
 
     for d in [
         EXPORT_DIR / "full_assembly",
         EXPORT_DIR / "cots_step",
         EXPORT_DIR / "stl_plate_A_charcoal",
         EXPORT_DIR / "stl_plate_B_white",
-        EXPORT_DIR / "stl_plate_C_orange",
+        EXPORT_DIR / "jlc3dp_ready",
         ROOT / "external_step",
     ]:
         d.mkdir(parents=True, exist_ok=True)
 
-    # Clear stale plate files from prior 2WD builds
+    # Clear stale files from prior builds
     for old_dir in (
         EXPORT_DIR / "cots_step",
         EXPORT_DIR / "stl_plate_A_charcoal",
         EXPORT_DIR / "stl_plate_B_white",
-        EXPORT_DIR / "stl_plate_C_orange",
+        EXPORT_DIR / "jlc3dp_ready",
     ):
         for f in old_dir.iterdir():
             if f.is_file():
                 f.unlink()
 
     # 1. Build Real COTS Hardware
-    print("[1/6] Building datasheet-accurate 4WD COTS hardware library...")
+    print("[1/6] Building datasheet-accurate v2.0.0 COTS hardware library...")
     cots = build_all_cots()
     for key, comp in cots.items():
         export_step(comp, str(EXPORT_DIR / "cots_step" / f"{key}.step"))
     print(f"      -> Built & exported {len(cots)} COTS hardware STEP assemblies.")
 
-    # 2. Build 3D-Printable FDM Chassis & Head Parts
-    print("[2/6] Building 3D-printable FDM Clamshell 4WD split-color parts...")
+    # 2. Build 3D-Printable 2-Color Split Chassis & Brain-Head Parts
+    print("[2/6] Building tolerance-forgiving 2-color printable parts (15 parts / 14 JLC3DP STLs)...")
     printed = {}
     printed.update(build_all_chassis_parts())
     printed.update(build_all_head_parts())
@@ -368,7 +361,6 @@ def main():
     plate_dirs = {
         "plate_A_charcoal": EXPORT_DIR / "stl_plate_A_charcoal",
         "plate_B_white": EXPORT_DIR / "stl_plate_B_white",
-        "plate_C_orange": EXPORT_DIR / "stl_plate_C_orange",
     }
 
     plate_stats = {k: {"count": 0, "vol_cm3": 0.0, "est_mass_g": 0.0} for k in plate_dirs}
@@ -401,33 +393,31 @@ def main():
             "est_mass_g": round(est_mass_g, 1),
         })
 
-    print(f"      -> Built & exported {len(printed)} printable STL + STEP parts across 3 color plates.")
+    print(f"      -> Built & exported {len(printed)} printable STL + STEP parts across 2 color plates.")
 
-    # 2b. Export JLC3DP-Ready Single-Body Centered STLs (17 unique STLs -> 23 physical parts)
+    # 2b. Export JLC3DP-Ready Single-Body Centered STLs (14 unique STLs -> 15 physical parts!)
     jlc_dir = EXPORT_DIR / "jlc3dp_ready"
-    jlc_dir.mkdir(parents=True, exist_ok=True)
     jlc_spec = [
-        ("A01_chassis_tub",    "01_黑_A01_底盘下盆_x1.stl",       1, "黑色树脂 / 尼龙PA12"),
-        ("A02_top_hood",       "02_黑_A02_掀盖顶罩_x1.stl",       1, "黑色树脂 / 尼龙PA12"),
-        ("A03_motor_clamp_F",  "03_黑_A03_电机压板_x2.stl",       2, "黑色树脂 / 尼龙PA12"),
-        ("A04_wheel_hub_FL",   "04_黑_A04_左轮毂_x2.stl",        2, "黑色树脂 / 尼龙PA12"),
-        ("A04_wheel_hub_FR",   "05_黑_A04_右轮毂_x2.stl",        2, "黑色树脂 / 尼龙PA12"),
-        ("A06_head_core",      "06_黑_A06_头盔内胆_x1.stl",       1, "黑色树脂 / 尼龙PA12"),
-        ("A07_top_grille",     "07_黑_A07_顶置喇叭格栅_x1.stl",    1, "黑色树脂 / 尼龙PA12"),
-        ("A08_visor_mask",     "08_黑亮_A08_曲面黑面罩_x1.stl",    1, "高光黑树脂 / 喷亮黑漆"),
-        ("A09_ear_hub_L",      "09_黑_A09_左耳罩_x1.stl",        1, "黑色树脂 / 尼龙PA12"),
-        ("A09_ear_hub_R",      "10_黑_A09_右耳罩_x1.stl",        1, "黑色树脂 / 尼龙PA12"),
-        ("B01_hood_wing_L",    "11_白_B01_左引擎盖白翼_x1.stl",    1, "9000R / 6060 白色树脂"),
-        ("B01_hood_wing_R",    "12_白_B01_右引擎盖白翼_x1.stl",    1, "9000R / 6060 白色树脂"),
-        ("B02_side_fairing_L", "13_白_B02_左侧白护甲_x1.stl",     1, "9000R / 6060 白色树脂"),
-        ("B03_side_fairing_R", "14_白_B03_右侧白护甲_x1.stl",     1, "9000R / 6060 白色树脂"),
-        ("B04_head_shell",     "15_白_B04_宇航白头盔壳_x1.stl",    1, "9000R / 6060 白色树脂"),
-        ("C03_wheel_rim_FL",   "16_金橙_C03_轮毂细圈_x4.stl",     4, "白色树脂自己喷金/橙漆 或 橙色PLA"),
-        ("A10_hood_lock_key",  "17_黑_A10_顶盖燕尾锁销_x1.stl",    1, "黑色树脂 / 尼龙PA12"),
+        ("A01_chassis_tub",    "01_黑_A01_底盘下盆_x1.stl",         1, "黑色树脂 / 尼龙PA12"),
+        ("A02_top_hood",       "02_黑_A02_掀盖顶罩_x1.stl",         1, "黑色树脂 / 尼龙PA12"),
+        ("A03_motor_clamp_F",  "03_黑_A03_M3电机压板_x2.stl",       2, "黑色树脂 / 尼龙PA12"),
+        ("A06_head_core",      "04_黑_A06_头盔内胆_x1.stl",         1, "黑色树脂 / 尼龙PA12"),
+        ("A07_top_grille",     "05_黑_A07_3020喇叭格栅_x1.stl",     1, "黑色树脂 / 尼龙PA12"),
+        ("A08_visor_mask",     "06_黑亮_A08_曲面黑面罩_x1.stl",      1, "高光黑树脂 / 喷亮黑漆"),
+        ("A09_ear_hub_L",      "07_黑_A09_左耳罩_x1.stl",           1, "黑色树脂 / 尼龙PA12"),
+        ("A09_ear_hub_R",      "08_黑_A09_右耳罩_x1.stl",           1, "黑色树脂 / 尼龙PA12"),
+        ("A10_hood_lock_key",  "09_黑_A10_顶盖燕尾锁销_x1.stl",      1, "黑色树脂 / 尼龙PA12"),
+        ("B01_hood_wing_L",    "10_白_B01_左引擎盖白翼_x1.stl",      1, "9000R / 6060 白色树脂"),
+        ("B01_hood_wing_R",    "11_白_B01_右引擎盖白翼_x1.stl",      1, "9000R / 6060 白色树脂"),
+        ("B02_side_fairing_L", "12_白_B02_左侧白护甲_x1.stl",       1, "9000R / 6060 白色树脂"),
+        ("B03_side_fairing_R", "13_白_B03_右侧白护甲_电源窗_x1.stl", 1, "9000R / 6060 白色树脂"),
+        ("B04_head_shell",     "14_白_B04_宇航白头盔壳_x1.stl",      1, "9000R / 6060 白色树脂"),
     ]
     manifest_lines = [
-        "嘉立创 3D 打印（JLC3DP）一键下单核对清单（共 17 个独立 STL，总计 23 个实物零件）",
-        "=" * 78,
+        "嘉立创 3D 打印（JLC3DP）一键下单核对清单 — KRON-01V6 v2.0.0（ESP32-S3-CAM 零焊接版）",
+        "共 14 个独立 STL，总计 15 个实物零件（已去除 8 个轮毂/轮圈件，直装 43×18mm 成品橡胶轮！）",
+        "公差说明：全部 PCB 槽位预留 +0.7~0.8mm/边，榫卯预留 0.28~0.35mm SLA 间隙，全机统一 M3 螺丝螺母。",
+        "=" * 84,
     ]
     total_jlc_vol = 0.0
     for key, fname, qty, mat in jlc_spec:
@@ -443,24 +433,24 @@ def main():
         vol_cm3 = float(m.volume) / 1000.0
         total_jlc_vol += vol_cm3 * qty
         manifest_lines.append(
-            f"{fname:28s} | 数量={qty} | {sx:5.1f}×{sy:5.1f}×{sz:5.1f}mm | 单件={vol_cm3:5.1f}cm³ | 推荐材料: {mat}"
+            f"{fname:32s} | 数量={qty} | {sx:5.1f}×{sy:5.1f}×{sz:5.1f}mm | 单件={vol_cm3:5.1f}cm³ | 推荐材料: {mat}"
         )
-    manifest_lines.append("=" * 78)
+    manifest_lines.append("=" * 84)
     manifest_lines.append(
-        f"总打印体积（仅外壳，不含电子件）: {total_jlc_vol:.1f} cm³（全部 17 个 STL 均为单体水密流形，可直接上传嘉立创无需拆分！）"
+        f"总打印体积（仅外壳，不含电子件）: {total_jlc_vol:.1f} cm³（全部 14 个 STL 均为单体水密流形，可直接上传嘉立创！）"
     )
     (jlc_dir / "嘉立创下单数量与材料对照表.txt").write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
-    print(f"      -> Exported 17 JLC3DP-ready centered single-body STLs to {jlc_dir}")
+    print(f"      -> Exported 14 JLC3DP-ready centered single-body STLs to {jlc_dir}")
 
-    # 3. Export Full Colored Assemblies (STEP & 3MF!)
+    # 3. Export Full Colored Assemblies (STEP & 3MF)
     print("[3/6] Exporting Master Assemblies (STEP + 3MF)...")
-    printed_comp = Compound(label="KRON01V4_Printed_Shells", children=[p for _, p in printed.values()])
-    cots_comp = Compound(label="KRON01V4_COTS_Hardware", children=list(cots.values()))
+    printed_comp = Compound(label="KRON01V6_Printed_Shells", children=[p for _, p in printed.values()])
+    cots_comp = Compound(label="KRON01V6_COTS_Hardware", children=list(cots.values()))
 
     export_step(printed_comp, str(EXPORT_DIR / "full_assembly" / "KRON01_Printed_Shells.step"))
     export_step(cots_comp, str(EXPORT_DIR / "full_assembly" / "KRON01_COTS_Hardware.step"))
 
-    full_comp = Compound(label="KRON01V4_Full_Assembly", children=[printed_comp, cots_comp])
+    full_comp = Compound(label="KRON01V6_Full_Assembly", children=[printed_comp, cots_comp])
     export_step(full_comp, str(EXPORT_DIR / "full_assembly" / "KRON01_Full_Assembly.step"))
 
     mesher = Mesher()
@@ -493,18 +483,18 @@ def main():
     render_engineering_views(all_submeshes, views_png, dims_str)
     print(f"      -> Saved CAD verification views to {views_png}")
 
-    # Dedicated Real Hardware + 4WD + RPi Zero 2W + OV5647 CSI Camera + 3D Wiring Sheet
+    # Dedicated Real Hardware + S3-CAM Head + Dual-18650 + PCA9685 + 2x DRV8833 Wiring Sheet
     hw_only = [sm for sm in all_submeshes if sm["category"] in ("cots", "wiring") or sm["part"] == "A08_visor_mask"]
     fig = plt.figure(figsize=(16, 7.5), facecolor="#0d1117")
     light_dir = np.array([0.45, 0.65, 0.61])
     light_dir = light_dir / np.linalg.norm(light_dir)
     hw_views = [
-        ("A. 4WD DRIVETRAIN + FOREHEAD OV5647 CSI CAM + 2.0\" ST7789 (FRONT 3/4)", 20, 48),
-        ("B. RASPBERRY PI ZERO 2W + CENTER 18650 (50/50 CG) + 4x N20 WIRING (TOP-REAR 3/4)", 36, -138),
+        ("A. BRAIN HEAD (S3-CAM + OV3660 + GMT020 + 3020 SPK + AMP) & 43mm 4WD", 20, 48),
+        ("B. CHASSIS (DUAL-18650 + PCA9685 + 2x DRV8833 + 7-WIRE NECK RIBBON)", 34, -134),
     ]
     for idx, (title, elev, azim) in enumerate(hw_views, start=1):
         ax = fig.add_subplot(1, 2, idx, projection="3d", facecolor="#131820")
-        ax.set_title(title, color="#e6edf3", fontsize=11, fontweight="bold", pad=10)
+        ax.set_title(title, color="#e6edf3", fontsize=10.8, fontweight="bold", pad=10)
         for sm in hw_only:
             verts = sm["mesh"].vertices
             faces = sm["mesh"].faces
@@ -520,8 +510,8 @@ def main():
             fcolors[:, 2] = np.clip(b * intensity, 0, 1)
             fcolors[:, 3] = 0.98
             ax.add_collection3d(Poly3DCollection(tris, facecolors=fcolors, edgecolors=(0, 0, 0, 0.08), linewidths=0.15))
-        ax.set_xlim(-64, 64); ax.set_ylim(-56, 56); ax.set_zlim(0, 138)
-        ax.set_box_aspect([1.0, 0.90, 1.06])
+        ax.set_xlim(-70, 70); ax.set_ylim(-64, 64); ax.set_zlim(0, 155)
+        ax.set_box_aspect([1.0, 0.92, 1.08])
         ax.view_init(elev=elev, azim=azim)
         ax.tick_params(colors="#6e7681", labelsize=8)
         for p in (ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane):
@@ -530,8 +520,8 @@ def main():
         ax.set_ylabel("Y Front (mm)", color="#8b949e", fontsize=8)
         ax.set_zlabel("Z Up (mm)", color="#8b949e", fontsize=8)
     fig.suptitle(
-        "KRON-01V4 4WD Real Hardware (4× N20 + Center 18650 + RPi Zero 2W + OV5647 CSI Cam + MIPI FFC Ribbon)",
-        color="#ffffff", fontsize=13, fontweight="bold", y=0.98,
+        "KRON-01V6 Real Hardware Layout (ESP32-S3-CAM N16R8 + OV3660 + GMT020 + Dual-18650 + PCA9685A + 2× DRV8833)",
+        color="#ffffff", fontsize=12.5, fontweight="bold", y=0.98,
     )
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     internals_png = DOCS_IMG_DIR / "kron01_internals_wiring.png"
@@ -546,7 +536,7 @@ def main():
     print(f"      -> Exported viewer_meshes.json ({js_bytes / 1024:.1f} KB, {len(all_submeshes)} colored bodies)")
 
     summary = {
-        "edition": "KRON-01V4 (4WD Clamshell Rounded Vision Edition)",
+        "edition": "KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition, v2.0.0)",
         "overall_mm": {
             "width_X": round(bb_full.size.X, 1),
             "length_Y": round(bb_full.size.Y, 1),
@@ -554,6 +544,9 @@ def main():
             "ground_Z_min": round(bb_full.min.Z, 2),
         },
         "plates": {k: {kk: round(vv, 1) if isinstance(vv, float) else vv for kk, vv in v.items()} for k, v in plate_stats.items()},
+        "jlc3dp_unique_stls": len(jlc_spec),
+        "jlc3dp_physical_parts": sum(q for _, _, q, _ in jlc_spec),
+        "jlc3dp_total_vol_cm3": round(total_jlc_vol, 1),
         "total_filament_g": round(sum(v["est_mass_g"] for v in plate_stats.values()), 1),
         "all_cots_clear": all_clear,
         "clearances": clearance_report,
@@ -562,6 +555,7 @@ def main():
     (EXPORT_DIR / "build_summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
     print("\n=== BUILD COMPLETE ===")
     print(json.dumps(summary["plates"], indent=2))
+    print(f"JLC3DP Total Shell Volume: {total_jlc_vol:.1f} cm³ across {len(jlc_spec)} unique STLs ({summary['jlc3dp_physical_parts']} parts)")
     print(f"Total Estimated PLA Filament: {summary['total_filament_g']} g (~¥{summary['total_filament_g'] * 0.06:.1f} filament cost)")
 
 

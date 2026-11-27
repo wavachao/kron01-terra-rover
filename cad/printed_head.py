@@ -1,23 +1,22 @@
 """
-KRON-01V5 (Terra-Rover Edition) — Mortise-and-Tenon Bayonet Astronaut Visor Helmet Parts
+KRON-01V6 (ESP32-S3-CAM N16R8 Edition, v2.0.0) — Tolerance-Forgiving Brain Helmet Parts
 ========================================================================================
-Zero-soldering, zero-heat-set-insert, zero-exterior-screw 5-part wide astronaut helmet:
-  - B04_head_shell  : Conformal-hollowed pearl-white helmet dome (3.5–4.5mm uniform wall, ZERO top
-                      cracks!), wide bottom slip-in opening (70.6×54.4mm) so A06_head_core slides right in,
-                      flat side ear pads w/ vertical bayonet keyholes, and stepped open crown speaker recess!
-  - A06_head_core   : Tapered-crown structural inner frame w/ side-wall bayonet twist-lock receivers +
-                      internal rotation stops, front tapered visor mortise sockets, M2 clear bores +
-                      rear M2 hex nut sockets for ST7789 LCD & OV5647 camera (ZERO resin cracking!),
-                      28mm speaker retention ring, and widened MG90S horn pocket!
-  - A08_visor_mask  : Curved pitch-black full-face visor nested cleanly inside B04's front aperture
-                      with 0.30mm perimeter clearance, >=2.2mm continuous brow/bridge/chin bars,
-                      and twin tapered rear wedge tenons (zero screws, 2-second front pull-off!).
-  - A07_top_grille  : Rear-crown speaker acoustic grille seated cleanly on B04's stepped shelf!
-  - A09_ear_hub_L/R : Camera-lens style 90° Bayonet Twist-Lock Ear Hubs (insert vertically, twist 90°
-                      horizontal to lock B04_Head_Shell + A06_Head_Core coaxially — ZERO screws!).
+Zero-soldering, unified M3, zero-exterior-screw wide astronaut helmet (94×76×67mm)
+housing the entire AI brain + camera + display + audio stack (only 7 wires cross the neck!):
+  - B04_head_shell  : Conformal-hollowed pearl-white helmet dome (94×76×67mm), wide bottom
+                      slip-in opening, vertical bayonet ear keyholes, rear-crown 3020 speaker shelf.
+  - A06_head_core   : Structural gunmetal inner frame w/ forgiving ±0.7–0.8mm PCB pockets (ZERO rigid
+                      M2 screw holes!): GMT020-02 2.0" LCD cradle, horizontal ESP32-S3-CAM N16R8
+                      dual-ledge bay (clears 2×22P headers!), rear-crown 3020 speaker pocket,
+                      vertical MAX98357A rear U-channel, chin INMP441 mic recess, 90° bayonet ear
+                      receivers, front tapered visor mortises, MG90S horn pocket & M3 right pivot!
+  - A08_visor_mask  : Glossy curved pitch-black full-face visor w/ oversized 42.8×32.6mm LCD window
+                      (+1.0mm/side margin for LCD alignment variance!), Ø8.8mm OV3660 lens aperture
+                      + 10.0×10.0mm forgiving rear pocket, and twin tapered rear wedge tenons.
+  - A07_top_grille  : Rear-crown 3020 speaker acoustic grille seated cleanly on B04's stepped shelf.
+  - A09_ear_hub_L/R : Tool-free 90° camera-lens bayonet twist-lock ear hubs (0.35mm SLA clearance!).
 """
 
-import math
 from build123d import (
     Align,
     Box,
@@ -32,12 +31,14 @@ from build123d import (
     Plane,
     Rectangle,
     RectangleRounded,
-    RegularPolygon,
     add,
     extrude,
     loft,
 )
 import config as C
+
+Y_EAR = C.HEAD_Y_CTR - 1.0      # -3.0 mm
+Z_EAR = C.HEAD_Z_CTR - 5.5      # 115.0 mm (cleanly below S3-CAM pins at Z=120.0!)
 
 
 def _col(name: str) -> Color:
@@ -53,14 +54,13 @@ def _tag(shape, label: str, color_key: str):
 
 def _build_visor_wedge(sgn: float, y_tip: float, y_base: float, clearance: float = 0.0) -> Part:
     """
-    Build one tapered wedge tenon (clearance=0) or matching mortise slot (clearance>0)
-    for A08_Visor_Mask <-> A06_Head_Core at X = sgn * 30.3, Z = HEAD_Z_CTR - 2.0.
-    Tapers narrower toward -Y so pressing A08 straight in seats snugly with zero rattle!
+    Tapered wedge tenon (clearance=0) or matching mortise slot (clearance>0)
+    for A08_Visor_Mask <-> A06_Head_Core at X = sgn * 33.4, Z = 115.0 (outside 62mm LCD!).
     """
     c = clearance
-    cx = sgn * 30.1
-    cz = C.HEAD_Z_CTR - 2.0
-    y0, y1 = 20.1, 23.2
+    cx = sgn * 34.0
+    cz = Z_EAR
+    y0, y1 = 23.0, 26.2
 
     def _lerp(v0: float, v1: float, y: float) -> float:
         t = (y - y0) / (y1 - y0)
@@ -70,340 +70,300 @@ def _build_visor_wedge(sgn: float, y_tip: float, y_base: float, clearance: float
     plane_base = Plane(origin=(cx, y_base, cz), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
     with BuildPart() as bp:
         with BuildSketch(plane_tip):
-            Rectangle(_lerp(3.0, 3.4, y_tip) + 2.0 * c, _lerp(8.8, 9.4, y_tip) + 2.0 * c)
+            Rectangle(_lerp(2.8, 3.2, y_tip) + 2.0 * c, _lerp(8.6, 9.2, y_tip) + 2.0 * c)
         with BuildSketch(plane_base):
-            Rectangle(_lerp(3.0, 3.4, y_base) + 2.0 * c, _lerp(8.8, 9.4, y_base) + 2.0 * c)
+            Rectangle(_lerp(2.8, 3.2, y_base) + 2.0 * c, _lerp(8.6, 9.2, y_base) + 2.0 * c)
         loft(ruled=True)
     return bp.part
 
 
 # ---------------------------------------------------------------------------
-# A06: Gunmetal Structural Inner Core (Bayonet Ear Locks + M2 Hex Nut Seats!)
+# A06: Gunmetal Structural Inner Core (Forgiving Pockets for All 6 Head Modules!)
 # ---------------------------------------------------------------------------
 def build_head_core() -> Part:
-    core_w, core_d = 67.4, 47.0   # X: ±33.7, Y: -25.5..+21.5
+    core_w, core_d = 75.6, 53.0   # X: ±37.8 (inner ±34.8 = 69.6mm!), Y: -28.5..+24.5
     yc = C.HEAD_Y_CTR             # -2.0
-    z_bot = C.HEAD_Z_BOT + 4.0
-    z_mid = C.HEAD_Z_TOP - 15.5
-    z_top = C.HEAD_Z_TOP - 9.0
-    y_ear = C.HEAD_Y_CTR - 1.0
-    z_ear = C.HEAD_Z_CTR - 1.0
-    m2_hex_r = C.NUT_M2_AF / math.sqrt(3.0)  # circumradius for DIN 934 M2 hex nut pocket
+    z_bot = C.HEAD_Z_BOT + 4.0    # 91.0
+    z_mid = C.HEAD_Z_TOP - 15.0   # 139.0
+    z_top = C.HEAD_Z_TOP - 8.5    # 145.5
 
     with BuildPart() as core:
-        # Tapered upper crown prevents any corner rub against B04's curved inner dome!
+        # Tapered upper crown clears B04's curved inner dome cleanly!
         with BuildSketch(Plane.XY.offset(z_bot)):
             with Locations((0, yc)):
-                RectangleRounded(core_w, core_d, radius=5.5)
+                RectangleRounded(core_w, core_d, radius=3.0)
         with BuildSketch(Plane.XY.offset(z_mid)):
             with Locations((0, yc)):
-                RectangleRounded(core_w, core_d, radius=5.5)
+                RectangleRounded(core_w, core_d, radius=3.0)
         with BuildSketch(Plane.XY.offset(z_top)):
             with Locations((0, yc - 0.5)):
-                RectangleRounded(56.0, 41.0, radius=8.0)
+                RectangleRounded(62.0, 46.0, radius=7.5)
         loft(ruled=True)
 
-        # Hollow main electronics bay (width 61.8mm clears 61.12mm LCD PCB; open cleanly to front & bottom!)
-        with Locations((0, 0.5, z_bot - 2.0)):
-            Box(61.8, 46.5, (z_top - z_bot) - 1.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+        # 1. Hollow main electronics bay (inner width 69.6mm -> fits 64mm S3-CAM & 62mm LCD w/ generous margin!)
+        with Locations((0, 0.8, z_bot - 2.0)):
+            Box(69.6, 52.0, (z_top - z_bot) - 1.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Open rear electronics bay below speaker (keeps 2.8mm rear wall at Y=-25.5..-22.7)
-        with Locations((0, -10.5, z_bot + 2.5)):
-            Box(61.8, 24.4, (z_top - z_bot) - 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+        # Open rear bay below speaker (keeps 3.0mm rear wall at Y=-28.5..-25.5)
+        with Locations((0, -12.0, z_bot + 2.5)):
+            Box(69.6, 27.0, (z_top - z_bot) - 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Bottom neck swing clearance (X=-27.2..+25.5 clears MG90S_GearDome & A02 upper yoke cleanly!)
+        # 2. Bottom neck swing clearance (clears MG90S_GearDome & A02 upper yoke across full -20°..+22° pitch!)
         with Locations((-0.85, -8.1, C.HEAD_Z_BOT - 2.0)):
-            Box(52.7, 38.4, 15.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-        # Rear-lower neck pitch-up swing arch (0.00mm³ collision at full +22° tilt-up!)
-        with Locations((0, -23.0, C.HEAD_Z_BOT - 2.0)):
-            Box(51.0, 12.0, 24.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+            Box(52.7, 38.4, 18.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+        with Locations((0, -23.5, C.HEAD_Z_BOT - 2.0)):
+            Box(52.0, 17.0, 24.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Front chin clearance under LCD (clears INMP441 chin microphone!)
-        with Locations((0, 17.5, C.HEAD_Z_BOT - 2.0)):
+        # 3. Front Chin Recess for INMP441 MEMS Mic (Ø14mm at Y=18.0, Z=90.8 -> 0.7mm/side clearance!)
+        with Locations((0, C.MIC_Y, C.HEAD_Z_BOT - 2.0)):
             Box(30.0, 18.0, 9.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Side Pivot Yoke Arms + MG90S Servo Horn & Spline Clearance Pocket
+        # 4. Side Pivot Yoke Arms + MG90S Horn Pocket (L) & Unified M3 Pivot Bore (R)
         for sgn in (-1.0, 1.0):
-            with Locations((sgn * 30.6, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z + 3.5)):
-                Box(6.2, 19.0, 19.0)
-            with Locations((sgn * 30.6, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z)):
-                Cylinder(radius=C.M3_CLEAR_DIA / 2.0, height=12.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-        # Left yoke MG90S horn & spline pocket
-        with Locations((-28.7, 3.0, C.HEAD_PIVOT_Z)):
-            Box(5.4, 17.0, 6.4, mode=Mode.SUBTRACT)
+            with Locations((sgn * 32.6, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z + 3.5)):
+                Box(10.0, 19.0, 19.0)
+            with Locations((sgn * 32.6, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z)):
+                Cylinder(radius=C.M3_CLEAR_DIA / 2.0, height=16.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+        # Left yoke MG90S horn & spline pocket (X=-31.5..-26.0 -> clears spline & horn cleanly!)
+        with Locations((-28.8, 3.0, C.HEAD_PIVOT_Z)):
+            Box(5.8, 17.5, 6.8, mode=Mode.SUBTRACT)
 
-        # 4× ST7789 2.0" LCD Standoffs: M2 Clear Through-Bores + Rear M2 Hex Nut Pockets (ZERO resin cracking!)
-        for sx in (-1, 1):
-            for sz in (-1, 1):
-                bx = sx * (C.LCD_PCB_W / 2.0 - 3.0)
-                bz = C.LCD_Z_CTR + sz * (C.LCD_PCB_H / 2.0 - 3.0)
-                # Horizontal rib fusing each standoff solidly into A06 inner side walls (|X|=30.9..32.6)
-                with Locations((sx * 29.7, C.LCD_Y_PCB - 2.55, bz)):
-                    Box(5.8, 4.5, 6.0)
-                with Locations((bx, C.LCD_Y_PCB - 2.55, bz)):
-                    Cylinder(radius=3.1, height=4.5, rotation=(90, 0, 0))
-                with Locations((bx, C.LCD_Y_PCB - 2.2, bz)):
-                    Cylinder(radius=C.M2_CLEAR_DIA / 2.0, height=6.5, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
-                # Rear-accessible hexagonal M2 captive nut seat (Y=13.0..14.8 -> drop M2 nut right in from behind!)
-                nut_plane = Plane(origin=(bx, C.LCD_Y_PCB - 4.85, bz), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
-                with BuildSketch(nut_plane):
-                    RegularPolygon(radius=m2_hex_r, side_count=6)
-                extrude(amount=1.9, mode=Mode.SUBTRACT)
+        # 5. Forgiving GMT020-02 2.0" LCD Perimeter Cradle (63.4 × 38.9 mm = +0.7mm/side, ZERO M2 screws!)
+        #    Fused cleanly into side walls |X|=34.8..36.2!
+        for sgn in (-1.0, 1.0):
+            # Side guide rail (|X|=31.7..36.2 -> 63.4mm inner width for 62.0mm LCD PCB!)
+            with Locations((sgn * 33.95, C.LCD_Y_PCB + 0.3, C.LCD_Z_CTR)):
+                Box(4.5, 4.6, C.LCD_PCB_H + 3.0)
+            # Front retaining corner tabs overlapping LCD PCB corners by 2.0mm (Y=23.3..24.4)
+            for sz in (-1.0, 1.0):
+                with Locations((sgn * 32.6, C.LCD_Y_PCB + 2.35, C.LCD_Z_CTR + sz * (C.LCD_PCB_H / 2.0 - 2.0))):
+                    Box(7.2, 1.5, 4.5)
+            # Bottom LCD corner support ledges fused directly into side guide rail (|X|=22.0..35.8)
+            with Locations((sgn * 28.9, C.LCD_Y_PCB + 0.8, C.LCD_Z_CTR - C.LCD_PCB_H / 2.0 - 1.7)):
+                Box(13.8, 4.0, 2.0)
 
-        # Upper-Visor OV5647 Camera Mount Bridge (Y=21.75..24.25 -> 0.25mm clear of LCD glass 21.5 & CAM PCB 24.5!)
-        with Locations((0, 23.0, C.CAM_Z_CTR + 1.0)):
-            Box(28.0, 2.5, 16.0)
-        # Top gusset into A06 upper roof
-        with Locations((0, 20.3, z_top - 2.0)):
-            Box(28.0, 7.9, 4.0)
-        # Central camera lens relief bore
-        with Locations((0, 23.0, C.CAM_Z_CTR)):
-            Cylinder(radius=8.0, height=12.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
-        # Clean relief notch for rear 15-pin CSI FFC connector
-        with Locations((0, 23.2, C.CAM_Z_CTR - 8.5)):
-            Box(20.0, 4.8, 5.8, mode=Mode.SUBTRACT)
-        # 4× M2 Camera Mounting Clear Bores + Rear M2 Hex Nut Pockets (21.0 × 12.5mm)
-        for sx in (-1, 1):
-            for sz in (-1, 1):
-                cx = sx * (C.CAM_HOLE_X / 2.0)
-                cz = C.CAM_Z_CTR + sz * (C.CAM_HOLE_Z / 2.0)
-                with Locations((cx, 22.8, cz)):
-                    Cylinder(radius=C.M2_CLEAR_DIA / 2.0, height=7.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
-                cam_nut_plane = Plane(origin=(cx, 21.7, cz), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
-                with BuildSketch(cam_nut_plane):
-                    RegularPolygon(radius=m2_hex_r, side_count=6)
-                extrude(amount=1.6, mode=Mode.SUBTRACT)
+        # 6. Forgiving Horizontal ESP32-S3-CAM N16R8 Dual-Ledge Cradle (65.6 × 29.4 mm, clears 2×22P headers!)
+        #    Two side shelves sit strictly between the two pin rows (Y=-9..+9) under the flat PCB belly!
+        for sgn in (-1.0, 1.0):
+            # Support shelf fused solidly into side wall (|X|=27.5..36.2, Z=126.1..128.2 -> 0.3mm under PCB!)
+            with Locations((sgn * 31.85, C.S3_Y_CTR, C.S3_Z_PCB - 2.4)):
+                Box(8.7, 18.0, 2.1, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            # Gentle upper side-wall guide stops (|X|=32.8..36.2 -> 65.6mm clear length for 64.04mm S3-CAM!)
+            with Locations((sgn * 34.5, C.S3_Y_CTR, C.S3_Z_PCB - 0.3)):
+                Box(3.4, 22.0, 4.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            # Front/rear forgiving Y-stop tabs fused into side wall (|X|=29.0..36.2 -> 29.4mm clear width!)
+            for sy in (-1.0, 1.0):
+                with Locations((sgn * 32.6, C.S3_Y_CTR + sy * (C.S3_PCB_W / 2.0 + 1.65), C.S3_Z_PCB - 0.3)):
+                    Box(7.2, 1.8, 3.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
-        # Rear-Crown 28mm Speaker Retention Ring
-        spk_bot = C.SPK_Z_TOP - C.SPK_H
-        with Locations((0, C.SPK_Y, spk_bot - 1.8)):
-            Cylinder(radius=C.SPK_DIA / 2.0 + 2.5, height=5.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        # 7. Rear-Crown 3020 Cavity Speaker Forgiving Pocket (31.4 × 21.4 mm = +0.7mm/side!)
+        spk_bot = C.SPK_Z_TOP - C.SPK_H  # 141.0 mm
+        with Locations((0, C.SPK_Y, spk_bot - 2.2)):
+            Box(C.SPK_L + 5.4, C.SPK_W + 5.4, 6.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
         with Locations((0, C.SPK_Y, spk_bot - 0.3)):
-            Cylinder(radius=C.SPK_DIA / 2.0 + 0.35, height=5.5, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-        with Locations((0, C.SPK_Y, spk_bot - 2.5)):
-            Cylinder(radius=10.5, height=4.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+            Box(C.SPK_L + 1.4, C.SPK_W + 1.4, 6.8, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+        # Bottom acoustic/wire pass-through window straight down toward MAX98357A
+        with Locations((0, C.SPK_Y, spk_bot - 3.0)):
+            Box(18.0, 10.0, 4.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Dual Side Camera-Lens Bayonet Twist-Lock Receivers (flush inside |X|=33.7 -> 0.000mm³ B04 slip-in!)
+        # 8. Vertical MAX98357A Rear Inner Wall U-Channel (20.6mm wide = +0.8mm/side, fused above 109.5mm arch!)
+        with Locations((C.AMP_X, -24.0, C.AMP_Z - C.AMP_H / 2.0 - 2.2)):
+            Box(C.AMP_W + 5.2, 6.2, 1.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
         for sgn in (-1.0, 1.0):
-            # Vertical bayonet keyhole slot (R=4.5mm shaft bore + ±Z vertical lug pass-through slot!)
-            with Locations((sgn * 32.3, y_ear, z_ear)):
-                Cylinder(radius=4.5, height=10.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-                Box(10.0, 4.2, 14.8, mode=Mode.SUBTRACT)
-            # Twin internal positive rotation stop ribs (|X|=28.1..31.1) stopping 90° clockwise twist cleanly!
-            with Locations((sgn * 29.6, y_ear + 5.5, z_ear + 3.4)):
-                Box(3.0, 2.6, 2.6)
-            with Locations((sgn * 29.6, y_ear - 5.5, z_ear - 3.4)):
-                Box(3.0, 2.6, 2.6)
+            with Locations((C.AMP_X + sgn * (C.AMP_W / 2.0 + 1.8), -23.9, C.AMP_Z - 1.0)):
+                Box(2.0, 6.0, C.AMP_H - 1.5)
 
-            # Dual Front Tapered Visor Mortise Blocks (|X|=27.7..32.5, Y=19.6..22.0 -> 0.000mm³ LCD & B04 slip-in!)
-            with Locations((sgn * 30.1, 20.8, C.HEAD_Z_CTR - 2.0)):
-                Box(4.8, 2.4, 12.0)
-            add(_build_visor_wedge(sgn, y_tip=19.8, y_base=23.2, clearance=0.18), mode=Mode.SUBTRACT)
+        # 9. Dual Side Camera-Lens Bayonet Twist-Lock Receivers (0.35mm generous SLA clearance!)
+        for sgn in (-1.0, 1.0):
+            with Locations((sgn * 36.2, Y_EAR, Z_EAR)):
+                Cylinder(radius=4.55, height=10.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+                Box(10.0, 4.4, 15.0, mode=Mode.SUBTRACT)
+            # Twin internal positive rotation stops fused cleanly into |X|=34.8..36.0 inner wall!
+            with Locations((sgn * 33.8, Y_EAR + 5.6, Z_EAR + 3.5)):
+                Box(4.0, 2.6, 2.6)
+            with Locations((sgn * 33.8, Y_EAR - 5.6, Z_EAR - 3.5)):
+                Box(4.0, 2.6, 2.6)
+
+            # Dual Front Tapered Visor Mortise Blocks fused cleanly into side walls (|X|=31.8..36.4 -> clears +0.8mm LCD!)
+            with Locations((sgn * 34.1, 22.8, Z_EAR)):
+                Box(4.6, 3.2, 12.0)
+            add(_build_visor_wedge(sgn, y_tip=22.6, y_base=26.2, clearance=0.24), mode=Mode.SUBTRACT)
 
     return _tag(core.part, "A06_Head_Core", "charcoal")
 
 
 # ---------------------------------------------------------------------------
-# B04: Sculpted Conformal-Hollow Wide Astronaut Helmet Shell (Bayonet Ears!)
+# B04: Sculpted Conformal-Hollow Wide Astronaut Helmet Shell (94×76×67mm)
 # ---------------------------------------------------------------------------
 def _build_helmet_outer_dome() -> Part:
     yc = C.HEAD_Y_CTR
     with BuildPart() as dome_bp:
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT)):
             with Locations((0, yc)):
-                RectangleRounded(76.6, 60.4, radius=12.5)
+                RectangleRounded(82.6, 66.4, radius=13.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 12.0)):
             with Locations((0, yc)):
-                RectangleRounded(86.0, 68.0, radius=20.0)
-        with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 50.0)):
+                RectangleRounded(92.0, 75.0, radius=21.0)
+        with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 53.0)):
             with Locations((0, yc)):
-                RectangleRounded(88.0, 68.0, radius=21.0)
+                RectangleRounded(94.0, 76.0, radius=22.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 6.0)):
             with Locations((0, yc - 0.8)):
-                RectangleRounded(78.0, 61.0, radius=18.0)
+                RectangleRounded(83.0, 67.0, radius=18.5)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP)):
             with Locations((0, yc - 2.0)):
-                RectangleRounded(56.0, 44.0, radius=14.0)
+                RectangleRounded(60.0, 48.0, radius=14.5)
         loft(ruled=False)
     return dome_bp.part
 
 
 def build_head_shell() -> Part:
-    """
-    Wide sleek astronaut helmet with conformal 3.5-4.5mm dome wall, 70.6×54.4mm vertical slip-in
-    opening, and vertical bayonet keyhole ear mounts receiving A09_Ear_Hub_L/R with ZERO screws!
-    """
     yc = C.HEAD_Y_CTR
-    y_ear = C.HEAD_Y_CTR - 1.0
-    z_ear = C.HEAD_Z_CTR - 1.0
     outer_dome = _build_helmet_outer_dome()
 
     with BuildPart() as inner_bp:
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT - 0.5)):
             with Locations((0, yc)):
-                RectangleRounded(70.6, 54.4, radius=9.5)
+                RectangleRounded(77.6, 61.0, radius=10.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 12.0)):
             with Locations((0, yc)):
-                RectangleRounded(75.0, 60.0, radius=15.0)
-        with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 50.0)):
+                RectangleRounded(81.0, 66.0, radius=16.0)
+        with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 53.0)):
             with Locations((0, yc)):
-                RectangleRounded(75.0, 60.0, radius=17.5)
+                RectangleRounded(81.0, 66.0, radius=18.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 6.5)):
             with Locations((0, yc - 0.8)):
-                RectangleRounded(66.0, 52.0, radius=14.5)
+                RectangleRounded(71.0, 57.0, radius=15.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 3.5)):
             with Locations((0, yc - 2.0)):
-                RectangleRounded(48.0, 36.0, radius=11.0)
+                RectangleRounded(52.0, 40.0, radius=11.0)
         loft(ruled=False)
 
-    visor_zc = C.HEAD_Z_CTR - 2.5
+    visor_zc = C.HEAD_Z_CTR - 1.5
 
     with BuildPart() as shell:
         add(outer_dome)
         add(inner_bp.part, mode=Mode.SUBTRACT)
 
-        # Clean Front Visor Aperture (68.0 × 53.2mm -> receives A08 with 0.30mm gap!)
-        with BuildSketch(Plane.XZ.offset(-16.0)):
+        # Clean Front Visor Aperture (72.0 × 56.8 mm -> receives A08 with 0.30mm gap!)
+        with BuildSketch(Plane.XZ.offset(-18.0)):
             with Locations((0, visor_zc)):
-                RectangleRounded(68.0, 53.2, radius=13.5)
+                RectangleRounded(72.0, 56.8, radius=14.0)
         extrude(amount=-30.0, mode=Mode.SUBTRACT)
 
-        # Subtle internal brow relief for top edge of OV5647 camera PCB
-        with Locations((0, C.CAM_Y_PCB + 0.8, C.CAM_Z_CTR)):
-            Box(26.0, 2.4, 24.8, mode=Mode.SUBTRACT)
-
-        # Rear-Crown Speaker Full Through-Hole + Top Stepped Seating Shelf for A07_Top_Grille
+        # Rear-Crown 3020 Speaker Through-Hole + Top Stepped Seating Shelf for A07_Top_Grille
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 6.5)):
             with Locations((0, C.SPK_Y)):
-                RectangleRounded(22.0, 18.0, radius=4.5)
+                RectangleRounded(28.0, 18.0, radius=4.5)
         extrude(amount=8.0, mode=Mode.SUBTRACT)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 2.3)):
             with Locations((0, C.SPK_Y)):
-                RectangleRounded(26.2, 22.2, radius=6.0)
+                RectangleRounded(32.4, 22.4, radius=6.0)
         extrude(amount=4.0, mode=Mode.SUBTRACT)
 
-        # Flat Circular Side Ear Pads at |X|=42.0 + Vertical Bayonet Keyhole Apertures (ZERO screws!)
+        # Flat Circular Side Ear Pads at |X|=45.0 + Vertical Bayonet Keyhole Apertures
         for sgn in (-1.0, 1.0):
-            with Locations((sgn * 47.0, y_ear, z_ear)):
+            with Locations((sgn * 50.0, Y_EAR, Z_EAR)):
                 Cylinder(radius=12.6, height=10.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-            with Locations((sgn * 40.0, y_ear, z_ear)):
-                Cylinder(radius=4.5, height=14.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
-                Box(14.0, 4.2, 14.8, mode=Mode.SUBTRACT)
+            with Locations((sgn * 43.0, Y_EAR, Z_EAR)):
+                Cylinder(radius=4.55, height=14.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+                Box(14.0, 4.4, 15.0, mode=Mode.SUBTRACT)
 
     return _tag(shell.part, "B04_Head_Shell", "white")
 
 
 # ---------------------------------------------------------------------------
-# A08: Flush Curved Pitch-Black Visor Mask (Zero-Screw Tapered Wedge Tenons!)
+# A08: Flush Curved Pitch-Black Visor Mask (Oversized LCD Window + OV3660 Pocket!)
 # ---------------------------------------------------------------------------
 def build_visor_mask() -> Part:
-    """
-    Curved pitch-black full-face visor clipped 0.30mm inside B04's front aperture with
-    twin tapered rear wedge tenons that press snugly into A06's front mortise sockets (ZERO screws!).
-    """
     outer_dome = _build_helmet_outer_dome()
     yc = C.HEAD_Y_CTR
-    visor_zc = C.HEAD_Z_CTR - 2.5
+    visor_zc = C.HEAD_Z_CTR - 1.5
 
     with BuildPart() as visor_inner_bp:
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT - 1.0)):
             with Locations((0, yc)):
-                RectangleRounded(70.0, 54.0, radius=13.5)
+                RectangleRounded(76.0, 60.0, radius=14.0)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 12.0)):
             with Locations((0, yc)):
-                RectangleRounded(79.6, 61.6, radius=17.0)
-        with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 50.0)):
+                RectangleRounded(85.2, 68.2, radius=17.5)
+        with BuildSketch(Plane.XY.offset(C.HEAD_Z_BOT + 53.0)):
             with Locations((0, yc)):
-                RectangleRounded(81.6, 61.6, radius=18.0)
+                RectangleRounded(87.2, 69.2, radius=18.5)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 6.0)):
             with Locations((0, yc - 0.8)):
-                RectangleRounded(71.6, 54.6, radius=15.0)
+                RectangleRounded(76.2, 60.2, radius=15.5)
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP + 1.0)):
             with Locations((0, yc - 2.0)):
-                RectangleRounded(50.0, 38.0, radius=11.5)
+                RectangleRounded(53.0, 41.0, radius=11.5)
         loft(ruled=False)
 
     with BuildPart() as clip_bp:
-        with BuildSketch(Plane.XZ.offset(-21.5)):
+        with BuildSketch(Plane.XZ.offset(-23.5)):
             with Locations((0, visor_zc)):
-                RectangleRounded(67.4, 52.6, radius=13.2)
-        extrude(amount=-20.0)
+                RectangleRounded(71.4, 56.2, radius=13.7)
+        extrude(amount=-22.0)
 
     with BuildPart() as visor:
         add(outer_dome)
         add(visor_inner_bp.part, mode=Mode.SUBTRACT)
         add(clip_bp.part, mode=Mode.INTERSECT)
 
-        # Twin Rear Tapered Wedge Tenons (press straight in along -Y into A06 mortise sockets -> ZERO screws!)
+        # Twin Rear Tapered Wedge Tenons (0.24mm SLA clearance inside A06 mortise sockets!)
         for sgn in (-1.0, 1.0):
-            # Solid stem bridging visor back surface to wedge base (Y=23.0..30.6)
-            with Locations((sgn * 30.1, 26.8, C.HEAD_Z_CTR - 2.0)):
-                Box(3.4, 7.6, 9.4)
-            # Precision tapered wedge tongue (Y=20.1..23.2 -> 0.18mm clearance inside A06 mortise!)
-            add(_build_visor_wedge(sgn, y_tip=20.1, y_base=23.2, clearance=0.0))
+            with Locations((sgn * 34.0, 30.0, Z_EAR)):
+                Box(3.2, 8.0, 9.2)
+            add(_build_visor_wedge(sgn, y_tip=23.0, y_base=26.2, clearance=0.0))
 
-        # OV5647 Camera Lens Through-Bore (Ø14.6mm) + Clean Rear-Only M12 Square Base & PCB Pocket
-        with Locations((0, 31.0, C.CAM_Z_CTR)):
-            Cylinder(radius=7.3, height=16.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
-        with Locations((0, 26.8, C.CAM_Z_CTR)):
-            Box(15.2, 7.0, 15.2, mode=Mode.SUBTRACT)
-        with Locations((0, C.CAM_Y_PCB + 0.8, C.CAM_Z_CTR)):
-            Box(25.8, 2.2, 24.6, mode=Mode.SUBTRACT)
+        # OV3660 Short-Ribbon Camera Lens Aperture (Ø8.8mm) + Forgiving 10.0×10.0mm Rear Pocket (+0.75mm/side!)
+        with Locations((0, 34.0, C.CAM_Z_CTR)):
+            Cylinder(radius=4.4, height=16.0, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
+        with Locations((0, C.CAM_Y_PCB + 2.0, C.CAM_Z_CTR)):
+            Box(10.0, 6.2, 10.0, mode=Mode.SUBTRACT)
 
-        # 2.0" ST7789 LCD Active Display Window (42.5 × 29.6mm)
-        with BuildSketch(Plane.XZ.offset(-20.0)):
+        # Oversized 2.0" GMT020-02 Active Display Window (42.8 × 32.6 mm -> +1.0mm margin/side absorbs LCD variance!)
+        with BuildSketch(Plane.XZ.offset(-22.0)):
             with Locations((0, C.LCD_Z_CTR)):
-                RectangleRounded(42.5, 29.6, radius=5.0)
-        extrude(amount=-22.0, mode=Mode.SUBTRACT)
+                RectangleRounded(42.8, 32.6, radius=5.0)
+        extrude(amount=-24.0, mode=Mode.SUBTRACT)
 
     return _tag(visor.part, "A08_Visor_Mask", "visor_black")
 
 
 # ---------------------------------------------------------------------------
-# A07: Discreet Rear-Crown Speaker Acoustic Grille (Seated on B04 Shelf!)
+# A07: Discreet Rear-Crown 3020 Speaker Acoustic Grille (Seated on B04 Shelf!)
 # ---------------------------------------------------------------------------
 def build_top_grille() -> Part:
-    """Sits cleanly on B04's stepped speaker shelf (0.30mm perimeter clearance, clears speaker by 3.85mm!)."""
     with BuildPart() as grille:
         with BuildSketch(Plane.XY.offset(C.HEAD_Z_TOP - 2.15)):
             with Locations((0, C.SPK_Y)):
-                RectangleRounded(25.6, 21.6, radius=5.7)
+                RectangleRounded(31.8, 21.8, radius=5.7)
         extrude(amount=2.15)
         for iy in range(-3, 4):
             with Locations((0, C.SPK_Y + iy * 2.6, C.HEAD_Z_TOP - 1.1)):
-                Box(17.0, 1.3, 4.0, mode=Mode.SUBTRACT)
+                Box(22.0, 1.3, 4.0, mode=Mode.SUBTRACT)
     return _tag(grille.part, "A07_Top_Grille", "charcoal")
 
 
 # ---------------------------------------------------------------------------
-# A09_L / A09_R: Camera-Lens 90° Bayonet Twist-Lock Ear Hubs (ZERO Screws!)
+# A09_L / A09_R: Camera-Lens 90° Bayonet Twist-Lock Ear Hubs (0.35mm SLA Fit!)
 # ---------------------------------------------------------------------------
 def build_ear_pod(side: str = "L") -> Part:
-    """
-    Tool-free 90° Bayonet Twist-Lock Ear Hub (modeled in LOCKED horizontal orientation):
-      - Insert vertically (bar along ±Z) through B04 & A06 keyholes
-      - Twist 90° so the tactile grip bar sits horizontal (±Y) -> inner bayonet lugs lock solidly
-        behind A06's |X|=30.9 inner wall against positive rotation stops!
-    """
     sgn = -1.0 if side == "L" else 1.0
-    x_ctr = sgn * 45.25  # Outer dial |X|=42.25..48.25 (0.25mm clear of B04 pad at 42.0!)
-    y_ear = C.HEAD_Y_CTR - 1.0
-    z_ear = C.HEAD_Z_CTR - 1.0
+    x_ctr = sgn * 48.3  # Outer dial |X|=45.3..51.3 (0.30mm clear of B04 pad at 45.0!)
 
     with BuildPart() as pod:
-        # Outer circular gunmetal ear dial
-        with Locations((x_ctr, y_ear, z_ear)):
+        with Locations((x_ctr, Y_EAR, Z_EAR)):
             Cylinder(radius=12.0, height=6.0, rotation=(0, 90, 0))
-        with Locations((x_ctr + sgn * 2.5, y_ear, z_ear)):
+        with Locations((x_ctr + sgn * 2.5, Y_EAR, Z_EAR)):
             Cylinder(radius=8.8, height=2.0, rotation=(0, 90, 0))
-        # Raised horizontal cyber-dial twist-grip bar (indicates LOCKED orientation + effortless thumb twist!)
-        with Locations((x_ctr + sgn * 3.6, y_ear, z_ear)):
+        with Locations((x_ctr + sgn * 3.6, Y_EAR, Z_EAR)):
             Box(1.8, 15.0, 3.4)
-        # Concentric bayonet locking shaft passing coaxially through B04 (37.5..42) & A06 (30.9..33.7)
-        with Locations((sgn * 35.2, y_ear, z_ear)):
-            Cylinder(radius=4.2, height=14.6, rotation=(0, 90, 0))  # |X| = 27.9..42.5
-        # Dual opposing inner bayonet locking lugs (|X|=27.9..30.5 -> 0.40mm clear behind A06 inner wall 30.9!)
-        with Locations((sgn * 29.2, y_ear, z_ear)):
+        # Concentric bayonet shaft (R=4.2mm inside R=4.55mm keyhole -> 0.35mm generous SLA fit!)
+        with Locations((sgn * 38.6, Y_EAR, Z_EAR)):
+            Cylinder(radius=4.2, height=13.6, rotation=(0, 90, 0))  # |X| = 31.8..45.4
+        # Dual opposing inner bayonet locking lugs (|X|=31.8..34.4 -> 0.40mm clear behind A06 inner wall 34.8!)
+        with Locations((sgn * 33.1, Y_EAR, Z_EAR)):
             Box(2.6, 14.0, 3.6)
 
     return _tag(pod.part, f"A09_Ear_Hub_{side}", "charcoal")

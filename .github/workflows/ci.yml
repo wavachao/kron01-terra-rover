@@ -41,7 +41,7 @@ jobs:
       - name: Run electrical netlist, power & kinematics simulation
         run: python cad/simulate_system.py
 
-      - name: Run DFM watertight & single-body STL audit (40 STLs)
+      - name: Run DFM watertight & single-body STL audit (29 STLs)
         run: python cad/dfm_audit.py
 
       - name: Dry-run manufacturing release packaging & checksum verification
@@ -57,7 +57,7 @@ jobs:
         with:
           name: kron01-manufacturing-preview
           path: |
-            dist/jlc3dp_ready_17_stl.zip
+            dist/jlc3dp_ready_14_stl.zip
             dist/KRON01_Printed_Assembly.3mf
             dist/SHA256SUMS.txt
           retention-days: 7

@@ -79,13 +79,13 @@ jobs:
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: "KRON-01V5 Terra-Rover ${{ steps.meta.outputs.tag }}"
+          name: "KRON-01V6 Terra-Rover ${{ steps.meta.outputs.tag }}"
           body_path: release-notes.md
           prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            release-assets/jlc3dp_ready_17_stl.zip
+            release-assets/jlc3dp_ready_14_stl.zip
             release-assets/kron01-terra-rover-${{ steps.meta.outputs.tag }}-fdm-plates-stl.zip
             release-assets/KRON01_Printed_Assembly.3mf
             release-assets/kron01-terra-rover-${{ steps.meta.outputs.tag }}-cad-step.zip

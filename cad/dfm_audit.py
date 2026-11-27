@@ -1,15 +1,15 @@
 """
-KRON-01V5 Automated 3D-Printing DFM & Zero-Collision Assembly Audit
-===================================================================
-Checks every single exported STL across Plates A, B, C & JLC3DP-Ready for:
+KRON-01V6 (v2.0.0) Automated 3D-Printing DFM & Zero-Collision Assembly Audit
+=============================================================================
+Checks every single exported STL across Plates A, B & JLC3DP-Ready (29 STLs) for:
   1. Watertightness (manifold solid ready for JLC3DP SLA / Bambu Studio / OrcaSlicer)
   2. Single connected shell (Shells == 1 -> ZERO floating bodies & ZERO trapped resin cavities!)
-  3. Positive non-degenerate volume & build-plate fit (<= 180 x 180 x 180 mm)
+  3. Positive non-degenerate volume & build-plate fit (<= 180 × 180 × 180 mm)
   4. Optional `--full` B-Rep assembly audit:
-     - 0.00 mm³ Printed <-> Printed collisions across all 22 parts
+     - 0.00 mm³ Printed <-> Printed collisions across all 15 parts
      - 0.00 mm³ Printed <-> COTS hardware collisions
      - 26/26 COTS <-> COTS clearance pairs PASS
-     - Full -20°..+22° head pitch rotation clearance against hood & white wings!
+     - Full -20°..+22° head pitch rotation clearance against hood, A10 lock key & white wings!
 """
 
 import argparse
@@ -17,12 +17,12 @@ from pathlib import Path
 import trimesh
 
 EXPORT = Path(__file__).resolve().parent.parent / "export"
-PLATES = ["stl_plate_A_charcoal", "stl_plate_B_white", "stl_plate_C_orange", "jlc3dp_ready"]
+PLATES = ["stl_plate_A_charcoal", "stl_plate_B_white", "jlc3dp_ready"]
 
 
 def run_stl_audit() -> bool:
     print("=" * 94)
-    print("  KRON-01V5 AUTOMATED 3D-PRINTING DFM AUDIT (WATERTIGHT + SINGLE-BODY + BED FIT)")
+    print("  KRON-01V6 AUTOMATED 3D-PRINTING DFM AUDIT (WATERTIGHT + SINGLE-BODY + BED FIT)")
     print("=" * 94)
     total = 0
     passed = 0
@@ -43,12 +43,12 @@ def run_stl_audit() -> bool:
                 passed += 1
             status = "PASS" if ok else "FAIL"
             print(
-                f"[{status:4s}] {pl + '/' + stl.name:50s} | {sx:5.1f}×{sy:5.1f}×{sz:5.1f} mm | "
+                f"[{status:4s}] {pl + '/' + stl.name:52s} | {sx:5.1f}×{sy:5.1f}×{sz:5.1f} mm | "
                 f"Vol={vol:5.1f} cm³ | WT={str(wt):5s} | Shells={shells} | A1m={fits_a1m}"
             )
     print("-" * 94)
     print(f"STL DFM SUMMARY: {passed}/{total} STL files PASSED watertight single-body manifold & A1-mini bed check!")
-    return passed == total
+    return passed == total and total > 0
 
 
 def run_brep_collision_audit() -> bool:
@@ -62,7 +62,7 @@ def run_brep_collision_audit() -> bool:
     from build_all import check_cots_clearances
 
     print("\n" + "=" * 94)
-    print("  KRON-01V5 FULL B-REP ZERO-COLLISION & HEAD PITCH CLEARANCE AUDIT")
+    print("  KRON-01V6 FULL B-REP ZERO-COLLISION & HEAD PITCH CLEARANCE AUDIT")
     print("=" * 94)
     printed = {}
     printed.update(build_all_chassis_parts())
@@ -108,8 +108,8 @@ def run_brep_collision_audit() -> bool:
                 ok = False
     print(f"[{'PASS' if pc_bad == 0 else 'FAIL'}] Printed <-> COTS hardware intersections: {pc_bad}")
 
-    cots_ok, _ = check_cots_clearances(cots)
-    print(f"[{'PASS' if cots_ok else 'FAIL'}] COTS <-> COTS 26 critical clearance pairs")
+    cots_ok, cots_rep = check_cots_clearances(cots)
+    print(f"[{'PASS' if cots_ok else 'FAIL'}] COTS <-> COTS {len(cots_rep)} critical clearance pairs")
     if not cots_ok:
         ok = False
 
