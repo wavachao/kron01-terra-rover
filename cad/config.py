@@ -137,48 +137,48 @@ LCD_GLASS_T = 2.0
 LCD_AA_W = 40.8
 LCD_AA_H = 30.6
 LCD_Z_CTR = 112.75           # PCB Z: 94.0..131.5 (clears chin mic below & OV3660 lens above!)
-LCD_Y_PCB = 21.5             # PCB Y: 21.5..23.1, Glass Y: 23.1..25.1, Eyes Y: 25.1..25.6
+LCD_Y_PCB = 22.0             # PCB Y: 22.0..23.6, Glass Y: 23.6..25.6, Eyes Y: 25.6..26.1
 
 # 6. OV3660 Short-Ribbon Camera Sensor (8.5 × 8.5 × 6.0 mm lens head, ~20mm FPC to S3-CAM)
 CAM_BODY_W = 8.5
 CAM_BODY_H = 8.5
 CAM_BODY_L = 6.0
 CAM_LENS_DIA = 7.4
-CAM_Y_PCB = 26.8             # Rear of OV3660 module at 26.8 -> front glass at 32.8 (flush w/ visor!)
+CAM_Y_PCB = 29.5             # Rear of OV3660 at 29.5 -> front glass at 35.9 (flush inside Y=36.0 visor!)
 CAM_Z_CTR = 138.25           # Z: 134.0..142.5 -> 2.5mm clear above LCD PCB (131.5)!
 
 # 7. SF-ESP32-S3-CAM WROOM V1.0.0 (58.0×27.94mm PCB + 6.04mm antenna + 1.80mm protruding Type-C = 65.84mm!)
-#    Mounted VERTICALLY facing +Y (front camera FPC faces OV3660 just 13.9mm away; 2×22P pins face -Y!)
+#    Mounted VERTICALLY facing +Y (front camera FPC faces OV3660 ~19mm away; 2×22P pins face -Y!)
 S3_PCB_L = 58.0
 S3_ANT_L = 6.04
 S3_USBC_PROTRUDE = 1.80
 S3_TOTAL_L = S3_PCB_L + S3_ANT_L + S3_USBC_PROTRUDE  # 65.84 mm true end-to-end length!
-S3_PCB_W = 27.94             # Vertical height (along Z: 112.5 .. 140.44 mm)
+S3_PCB_W = 27.94             # Vertical height (along Z: 110.03 .. 137.97 mm)
 S3_PCB_T = 1.6
-S3_X_CTR = 0.0               # X = -32.92 .. +32.92 (inside 69.6mm open bay -> +1.88mm/side clearance!)
-S3_Y_PCB = 10.0              # PCB Y: 10.0..11.6, front shield/USB-C to 14.8 (< LCD pins 15.0!), pins back to 1.5!
-S3_Z_CTR = 126.5             # Z: 112.5..140.5 (13.5mm above neck 99.0; clears 3020 speaker Y=-23..-3!)
+S3_X_CTR = 0.0               # X = -32.92 .. +32.92 (inside 70.0mm open bay -> +2.08mm/side clearance!)
+S3_Y_PCB = 6.5               # PCB Y: 6.5..8.1, front shield to 11.3 (4.2mm clear of LCD pins 15.5!), pins back to -2.0!
+S3_Z_CTR = 124.0             # Z: 110.0..138.0 (11mm above neck 99.0; 1.0mm clear below A06 solid deck 139.0!)
 
 # 8. 3020 Cavity Speaker (30.0 × 20.0 × 7.0 mm, 8Ω 2W) — Rear Crown under A07 Grille
 SPK_L = 30.0                 # Along X
 SPK_W = 20.0                 # Along Y
 SPK_H = 7.0                  # Along Z
-SPK_Y = -13.0                # Y: -23.0..-3.0 -> centered cleanly inside B04 crown!
-SPK_Z_TOP = HEAD_Z_TOP - 6.0 # 148.0 mm (Z = 141.0..148.0 -> 7.0mm clear above S3-CAM top 134.0!)
+SPK_Y = -13.0                # Y: -23.0..-3.0 -> centered cleanly inside B04 flat crown plateau!
+SPK_Z_TOP = HEAD_Z_TOP - 6.0 # 148.0 mm (Z = 141.0..148.0 -> clear below B04 inner ceiling 150.2!)
 
 # 9. MAX98357A Purple I2S Class-D Amp (19.0 × 18.0 mm) — Vertical Rear Inner Wall of Head!
 AMP_W = 19.0                 # Along X
 AMP_H = 18.0                 # Along Z
 AMP_X = 0.0
-AMP_Y = -23.5                # PCB back at -23.5, green terminal reaches -15.4 (1.43mm clear of S3-CAM -13.97!)
-AMP_Z = 121.0                # Z: 112.0..130.0 (fuses solidly above 109.5mm pitch-up arch & 11mm below speaker!)
+AMP_Y = -23.5                # PCB back at -23.5, green terminal reaches -15.4 (13.4mm clear of S3-CAM pins -2.0!)
+AMP_Z = 121.0                # Z: 112.0..130.0 (fuses solidly above pitch-up arch & 11mm below speaker!)
 
-# 10. INMP441 I2S MEMS Microphone (Ø14.0 mm × 1.6 mm circular PCB) — Front Chin Cavity!
+# 10. INMP441 I2S MEMS Microphone (Ø14.0 mm × 1.6 mm circular PCB) — Front Chin Cradle!
 MIC_DIA = 14.0
 MIC_T = 1.6
 MIC_X = 0.0
-MIC_Y = 18.0                 # Y: +11.0..+25.0 -> clear in front of neck (+10.0) & inside chin!
-MIC_Z = 90.8                 # Z: 90.0..92.6 -> 1.4mm clear below LCD PCB (94.0) & inside B04 (>87.0)!
+MIC_Y = 21.2                 # Y: +14.2..+28.2 -> clears A02 neck across full -20°..+22° pitch & inside B04 (30.0)!
+MIC_Z = 91.4                 # PCB Z: 90.6..92.2 (rests cleanly above Z=90.0 chin shelf, MEMS in Ø7.6mm port!)
 
 # ---------------------------------------------------------------------------
 # Refined Two-Tone Terra-Rover Consumer Product CMF Palette (RGBA 0..1)

@@ -1,11 +1,13 @@
 """
-KRON-01V6 (v2.0.0) Automated 3D-Printing DFM & Zero-Collision Assembly Audit
-=============================================================================
+KRON-01V6 (v2.1.0) Automated 3D-Printing DFM, STL Parser Safety & Zero-Collision Audit
+======================================================================================
 Checks every single exported STL across Plates A, B & JLC3DP-Ready (29 STLs) for:
-  1. Watertightness (manifold solid ready for JLC3DP SLA / Bambu Studio / OrcaSlicer)
-  2. Single connected shell (Shells == 1 -> ZERO floating bodies & ZERO trapped resin cavities!)
-  3. Positive non-degenerate volume & build-plate fit (<= 180 × 180 × 180 mm)
-  4. Optional `--full` B-Rep assembly audit:
+  1. Strict Binary STL compliance (non-null, non-'solid' 80-byte ASCII header, exact 84+50*N bytes)
+  2. Watertight manifold solid (is_watertight, is_winding_consistent, is_volume, Shells == 1)
+  3. 0.01 mm vertex-weld robustness (0 degenerate triangles -> prevents JLC3DP/slicer parse errors!)
+  4. Positive non-degenerate volume & build-plate fit (<= 180 × 180 × 180 mm)
+  5. Optional `--full` B-Rep assembly audit:
+     - OpenCASCADE BRepCheck_Analyzer validity on all 15 parts
      - 0.00 mm³ Printed <-> Printed collisions across all 15 parts
      - 0.00 mm³ Printed <-> COTS hardware collisions
      - 26/26 COTS <-> COTS clearance pairs PASS
@@ -13,17 +15,42 @@ Checks every single exported STL across Plates A, B & JLC3DP-Ready (29 STLs) for
 """
 
 import argparse
+import struct
 from pathlib import Path
+import numpy as np
 import trimesh
 
 EXPORT = Path(__file__).resolve().parent.parent / "export"
 PLATES = ["stl_plate_A_charcoal", "stl_plate_B_white", "jlc3dp_ready"]
 
 
+def _check_binary_stl_header(stl: Path) -> bool:
+    raw = stl.read_bytes()
+    if len(raw) < 84:
+        return False
+    hdr = raw[:80]
+    tri_cnt = struct.unpack_from("<I", raw, 80)[0]
+    if len(raw) != 84 + tri_cnt * 50:
+        return False
+    # Reject all-null headers (trimesh default) or headers starting with 'solid' (ASCII misdetection!)
+    if len(hdr.strip(b"\x00 ")) == 0:
+        return False
+    if hdr.lstrip().lower().startswith(b"solid"):
+        return False
+    return True
+
+
+def _count_weld_degenerates(mesh: trimesh.Trimesh, tol_mm: float = 0.01) -> int:
+    v = np.round(mesh.vertices / tol_mm) * tol_mm
+    _, inv = np.unique(v, axis=0, return_inverse=True)
+    f = inv[mesh.faces]
+    return int(((f[:, 0] == f[:, 1]) | (f[:, 1] == f[:, 2]) | (f[:, 0] == f[:, 2])).sum())
+
+
 def run_stl_audit() -> bool:
-    print("=" * 94)
-    print("  KRON-01V6 AUTOMATED 3D-PRINTING DFM AUDIT (WATERTIGHT + SINGLE-BODY + BED FIT)")
-    print("=" * 94)
+    print("=" * 106)
+    print("  KRON-01V6 AUTOMATED 3D-PRINTING DFM & STL PARSER AUDIT (HEADER + WATERTIGHT + WELD + BED FIT)")
+    print("=" * 106)
     total = 0
     passed = 0
     for pl in PLATES:
@@ -32,22 +59,24 @@ def run_stl_audit() -> bool:
             continue
         for stl in sorted(pdir.glob("*.stl")):
             total += 1
+            hdr_ok = _check_binary_stl_header(stl)
             m = trimesh.load(str(stl), force="mesh")
-            wt = bool(m.is_watertight)
+            wt = bool(m.is_watertight) and bool(m.is_winding_consistent) and bool(m.is_volume)
             shells = len(m.split(only_watertight=False))
+            deg01 = _count_weld_degenerates(m, tol_mm=0.01)
             vol = float(m.volume) / 1000.0
             sx, sy, sz = m.extents
             fits_a1m = (sx <= 180.0 and sy <= 180.0 and sz <= 180.0)
-            ok = wt and shells == 1 and vol > 0.05 and fits_a1m
+            ok = hdr_ok and wt and shells == 1 and deg01 == 0 and vol > 0.05 and fits_a1m
             if ok:
                 passed += 1
             status = "PASS" if ok else "FAIL"
             print(
                 f"[{status:4s}] {pl + '/' + stl.name:52s} | {sx:5.1f}×{sy:5.1f}×{sz:5.1f} mm | "
-                f"Vol={vol:5.1f} cm³ | WT={str(wt):5s} | Shells={shells} | A1m={fits_a1m}"
+                f"Vol={vol:5.1f} cm³ | Hdr={str(hdr_ok):5s} | WT={str(wt):5s} | Sh={shells} | Deg01={deg01}"
             )
-    print("-" * 94)
-    print(f"STL DFM SUMMARY: {passed}/{total} STL files PASSED watertight single-body manifold & A1-mini bed check!")
+    print("-" * 106)
+    print(f"STL DFM SUMMARY: {passed}/{total} STL files PASSED strict binary header, watertight manifold, 0.01mm weld & bed check!")
     return passed == total and total > 0
 
 
@@ -55,15 +84,16 @@ def run_brep_collision_audit() -> bool:
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import config as C
+    from OCP.BRepCheck import BRepCheck_Analyzer
     from build123d import Axis
     from printed_chassis import build_all_chassis_parts
     from printed_head import build_all_head_parts
     from cots_hardware import build_all_cots
     from build_all import check_cots_clearances
 
-    print("\n" + "=" * 94)
-    print("  KRON-01V6 FULL B-REP ZERO-COLLISION & HEAD PITCH CLEARANCE AUDIT")
-    print("=" * 94)
+    print("\n" + "=" * 106)
+    print("  KRON-01V6 FULL B-REP VALIDITY, ZERO-COLLISION & HEAD PITCH CLEARANCE AUDIT")
+    print("=" * 106)
     printed = {}
     printed.update(build_all_chassis_parts())
     printed.update(build_all_head_parts())
@@ -81,8 +111,9 @@ def run_brep_collision_audit() -> bool:
 
     ok = True
     for name, (_, p) in printed.items():
-        if len(p.solids()) != 1 or len(p.shells()) != 1:
-            print(f"[FAIL] Topology: {name} solids={len(p.solids())} shells={len(p.shells())}")
+        brep_ok = BRepCheck_Analyzer(p.wrapped).IsValid()
+        if len(p.solids()) != 1 or len(p.shells()) != 1 or not brep_ok:
+            print(f"[FAIL] Topology: {name} solids={len(p.solids())} shells={len(p.shells())} brep_valid={brep_ok}")
             ok = False
 
     pnames = list(printed.keys())

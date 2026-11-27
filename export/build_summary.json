@@ -1,27 +1,27 @@
 {
-  "edition": "KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition, v2.0.0)",
+  "edition": "KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition, v2.1.0)",
   "overall_mm": {
     "width_X": 133.0,
-    "length_Y": 125.8,
+    "length_Y": 124.7,
     "height_Z": 154.0,
     "ground_Z_min": 0.0
   },
   "plates": {
     "plate_A_charcoal": {
       "count": 10,
-      "vol_cm3": 247.4,
-      "est_mass_g": 190.2
+      "vol_cm3": 276.6,
+      "est_mass_g": 212.7
     },
     "plate_B_white": {
       "count": 5,
-      "vol_cm3": 96.3,
-      "est_mass_g": 74.1
+      "vol_cm3": 124.7,
+      "est_mass_g": 95.9
     }
   },
   "jlc3dp_unique_stls": 14,
   "jlc3dp_physical_parts": 15,
-  "jlc3dp_total_vol_cm3": 343.1,
-  "total_filament_g": 264.3,
+  "jlc3dp_total_vol_cm3": 401.3,
+  "total_filament_g": 308.5,
   "all_cots_clear": true,
   "clearances": [
     {
@@ -101,47 +101,47 @@
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_gmt020_lcd",
-      "min_gap_mm": 0.2,
+      "min_gap_mm": 4.2,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_ov3660_cam",
-      "min_gap_mm": 12.0,
+      "min_gap_mm": 18.2,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_speaker_3020",
-      "min_gap_mm": 4.53,
+      "min_gap_mm": 3.19,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_max98357a",
-      "min_gap_mm": 16.9,
+      "min_gap_mm": 13.4,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_inmp441_mic",
-      "min_gap_mm": 20.93,
+      "min_gap_mm": 18.06,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_mg90s_servo",
-      "min_gap_mm": 13.98,
+      "min_gap_mm": 11.48,
       "status": "PASS"
     },
     {
       "pair": "cots_gmt020_lcd <-> cots_ov3660_cam",
-      "min_gap_mm": 2.77,
+      "min_gap_mm": 4.22,
       "status": "PASS"
     },
     {
       "pair": "cots_gmt020_lcd <-> cots_inmp441_mic",
-      "min_gap_mm": 2.4,
+      "min_gap_mm": 1.8,
       "status": "PASS"
     },
     {
       "pair": "cots_gmt020_lcd <-> cots_mg90s_servo",
-      "min_gap_mm": 4.0,
+      "min_gap_mm": 4.5,
       "status": "PASS"
     },
     {
@@ -161,22 +161,22 @@
       "plate": "plate_A_charcoal",
       "size_mm": [
         98.0,
-        124.3,
+        123.2,
         53.2
       ],
-      "vol_cm3": 121.34,
-      "est_mass_g": 93.3
+      "vol_cm3": 126.69,
+      "est_mass_g": 97.4
     },
     {
       "name": "A02_top_hood",
       "plate": "plate_A_charcoal",
       "size_mm": [
         101.4,
-        115.4,
+        120.0,
         48.2
       ],
-      "vol_cm3": 61.72,
-      "est_mass_g": 47.4
+      "vol_cm3": 74.32,
+      "est_mass_g": 57.1
     },
     {
       "name": "A10_hood_lock_key",
@@ -184,9 +184,9 @@
       "size_mm": [
         16.0,
         7.6,
-        17.2
+        17.4
       ],
-      "vol_cm3": 0.77,
+      "vol_cm3": 0.82,
       "est_mass_g": 0.6
     },
     {
@@ -217,10 +217,10 @@
       "size_mm": [
         15.5,
         28.0,
-        4.6
+        4.9
       ],
-      "vol_cm3": 0.91,
-      "est_mass_g": 0.7
+      "vol_cm3": 1.1,
+      "est_mass_g": 0.8
     },
     {
       "name": "B01_hood_wing_R",
@@ -228,10 +228,10 @@
       "size_mm": [
         15.5,
         28.0,
-        4.6
+        4.9
       ],
-      "vol_cm3": 0.91,
-      "est_mass_g": 0.7
+      "vol_cm3": 1.1,
+      "est_mass_g": 0.8
     },
     {
       "name": "B02_side_fairing_L",
@@ -241,8 +241,8 @@
         48.0,
         29.0
       ],
-      "vol_cm3": 4.02,
-      "est_mass_g": 3.1
+      "vol_cm3": 4.41,
+      "est_mass_g": 3.4
     },
     {
       "name": "B03_side_fairing_R",
@@ -252,19 +252,19 @@
         48.0,
         29.0
       ],
-      "vol_cm3": 2.93,
-      "est_mass_g": 2.3
+      "vol_cm3": 3.34,
+      "est_mass_g": 2.6
     },
     {
       "name": "A06_head_core",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        75.6,
-        53.1,
-        59.0
+        77.0,
+        55.0,
+        57.5
       ],
-      "vol_cm3": 40.13,
-      "est_mass_g": 30.9
+      "vol_cm3": 51.74,
+      "est_mass_g": 39.8
     },
     {
       "name": "A07_top_grille",
@@ -282,44 +282,44 @@
       "plate": "plate_A_charcoal",
       "size_mm": [
         71.4,
-        16.9,
-        56.2
+        15.2,
+        51.7
       ],
-      "vol_cm3": 8.77,
-      "est_mass_g": 6.7
+      "vol_cm3": 8.41,
+      "est_mass_g": 6.5
     },
     {
       "name": "A09_ear_hub_L",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        21.0,
+        20.9,
         24.0,
         24.0
       ],
-      "vol_cm3": 3.69,
+      "vol_cm3": 3.68,
       "est_mass_g": 2.8
     },
     {
       "name": "A09_ear_hub_R",
       "plate": "plate_A_charcoal",
       "size_mm": [
-        21.0,
+        20.9,
         24.0,
         24.0
       ],
-      "vol_cm3": 3.69,
+      "vol_cm3": 3.68,
       "est_mass_g": 2.8
     },
     {
       "name": "B04_head_shell",
       "plate": "plate_B_white",
       "size_mm": [
-        101.8,
-        80.2,
+        94.0,
+        76.0,
         67.0
       ],
-      "vol_cm3": 87.57,
-      "est_mass_g": 67.3
+      "vol_cm3": 114.74,
+      "est_mass_g": 88.2
     }
   ]
 }

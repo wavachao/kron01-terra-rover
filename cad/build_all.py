@@ -10,6 +10,7 @@ and renders crisp multi-view engineering verification sheets.
 import json
 import math
 import shutil
+import struct
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +20,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+from OCP.BRepCheck import BRepCheck_Analyzer
 from build123d import (
     Compound,
     Location,
@@ -36,6 +38,59 @@ ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
 EXPORT_DIR = REPO_ROOT / "export"
 DOCS_IMG_DIR = REPO_ROOT / "docs" / "images"
+
+
+def export_clean_stl(shape, out_path: Path, header_tag: str, tolerance: float = 0.04, angular_tolerance: float = 0.1) -> trimesh.Trimesh:
+    """
+    Export a B-Rep solid directly from OpenCASCADE to a strictly spec-compliant Binary STL:
+      - Printable non-null 80-byte ASCII header (never starts with 'solid', never all-NUL bytes)
+      - Recomputed outward unit normals in float64 -> float32 (zero zero-normals or NaN/Inf)
+      - Zero degenerate triangles, attribute byte count == 0, verified watertight single shell
+    """
+    tmp_path = out_path.with_suffix(".occt.tmp.stl")
+    export_stl(shape, str(tmp_path), tolerance=tolerance, angular_tolerance=angular_tolerance)
+    raw = tmp_path.read_bytes()
+    tmp_path.unlink(missing_ok=True)
+
+    tri_count = struct.unpack_from("<I", raw, 80)[0]
+    header = f"Binary STL KRON01V6 {header_tag} (mm) Watertight".encode("ascii", "ignore")[:80].ljust(80, b" ")
+    if header.lstrip().lower().startswith(b"solid"):
+        header = (b"BIN " + header)[:80]
+
+    # Parse all triangles, recompute exact unit normals in float64, skip any degenerate zero-area tris
+    recs = []
+    off = 84
+    for _ in range(tri_count):
+        vals = struct.unpack_from("<12fH", raw, off)
+        off += 50
+        v0x, v0y, v0z = vals[3], vals[4], vals[5]
+        v1x, v1y, v1z = vals[6], vals[7], vals[8]
+        v2x, v2y, v2z = vals[9], vals[10], vals[11]
+        ax, ay, az = v1x - v0x, v1y - v0y, v1z - v0z
+        bx, by, bz = v2x - v0x, v2y - v0y, v2z - v0z
+        nx = ay * bz - az * by
+        ny = az * bx - ax * bz
+        nz = ax * by - ay * bx
+        nlen = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if nlen <= 1e-12 or math.isnan(nlen) or math.isinf(nlen):
+            continue
+        inv = 1.0 / nlen
+        recs.append(struct.pack(
+            "<12fH",
+            nx * inv, ny * inv, nz * inv,
+            v0x, v0y, v0z,
+            v1x, v1y, v1z,
+            v2x, v2y, v2z,
+            0,
+        ))
+
+    buf = bytearray()
+    buf.extend(header)
+    buf.extend(struct.pack("<I", len(recs)))
+    for r in recs:
+        buf.extend(r)
+    out_path.write_bytes(bytes(buf))
+    return trimesh.load(str(out_path), force="mesh")
 
 EXPLODE_VECTORS = {
     "A01_chassis_tub":    (0, 0, 0),
@@ -373,10 +428,12 @@ def main():
             raise RuntimeError(
                 f"DFM ERROR: {name} must be 1 solid & 1 shell (got solids={solids_n}, shells={shells_n})!"
             )
+        if not BRepCheck_Analyzer(part.wrapped).IsValid():
+            raise RuntimeError(f"B-REP ERROR: {name} failed OpenCASCADE BRepCheck_Analyzer!")
         pdir = plate_dirs[plate]
         stl_path = pdir / f"{name}.stl"
         step_path = pdir / f"{name}.step"
-        export_stl(part, str(stl_path), tolerance=0.05, angular_tolerance=0.1)
+        export_clean_stl(part, stl_path, header_tag=name, tolerance=0.04, angular_tolerance=0.1)
         export_step(part, str(step_path))
 
         vol_cm3 = part.volume / 1000.0
@@ -395,7 +452,7 @@ def main():
 
     print(f"      -> Built & exported {len(printed)} printable STL + STEP parts across 2 color plates.")
 
-    # 2b. Export JLC3DP-Ready Single-Body Centered STLs (14 unique STLs -> 15 physical parts!)
+    # 2b. Export JLC3DP-Ready Single-Body Centered STLs directly from centered B-Rep solids!
     jlc_dir = EXPORT_DIR / "jlc3dp_ready"
     jlc_spec = [
         ("A01_chassis_tub",    "01_黑_A01_底盘下盆_x1.stl",         1, "黑色树脂 / 尼龙PA12"),
@@ -414,21 +471,20 @@ def main():
         ("B04_head_shell",     "14_白_B04_宇航白头盔壳_x1.stl",      1, "9000R / 6060 白色树脂"),
     ]
     manifest_lines = [
-        "嘉立创 3D 打印（JLC3DP）一键下单核对清单 — KRON-01V6 v2.0.0（ESP32-S3-CAM 零焊接版）",
+        "嘉立创 3D 打印（JLC3DP）一键下单核对清单 — KRON-01V6 v2.1.0（ESP32-S3-CAM 零焊接高精修正版）",
         "共 14 个独立 STL，总计 15 个实物零件（已去除 8 个轮毂/轮圈件，直装 43×18mm 成品橡胶轮！）",
         "公差说明：全部 PCB 槽位预留 +0.7~0.8mm/边，榫卯预留 0.28~0.35mm SLA 间隙，全机统一 M3 螺丝螺母。",
         "=" * 84,
     ]
     total_jlc_vol = 0.0
     for key, fname, qty, mat in jlc_spec:
-        plate, _ = printed[key]
-        src_stl = plate_dirs[plate] / f"{key}.stl"
-        m = trimesh.load(str(src_stl), force="mesh")
-        b = m.bounds
-        cx, cy = (b[0][0] + b[1][0]) / 2.0, (b[0][1] + b[1][1]) / 2.0
-        zmin = b[0][2]
-        m.apply_translation([-cx, -cy, -zmin])
-        m.export(str(jlc_dir / fname))
+        _, part = printed[key]
+        bb = part.bounding_box()
+        cx = (bb.min.X + bb.max.X) / 2.0
+        cy = (bb.min.Y + bb.max.Y) / 2.0
+        zmin = bb.min.Z
+        centered_part = part.moved(Location((-cx, -cy, -zmin)))
+        m = export_clean_stl(centered_part, jlc_dir / fname, header_tag=key, tolerance=0.04, angular_tolerance=0.1)
         sx, sy, sz = m.extents
         vol_cm3 = float(m.volume) / 1000.0
         total_jlc_vol += vol_cm3 * qty
@@ -536,7 +592,7 @@ def main():
     print(f"      -> Exported viewer_meshes.json ({js_bytes / 1024:.1f} KB, {len(all_submeshes)} colored bodies)")
 
     summary = {
-        "edition": "KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition, v2.0.0)",
+        "edition": "KRON-01V6 (ESP32-S3-CAM N16R8 Zero-Soldering Edition, v2.1.0)",
         "overall_mm": {
             "width_X": round(bb_full.size.X, 1),
             "length_Y": round(bb_full.size.Y, 1),

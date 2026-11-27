@@ -101,9 +101,9 @@ def build_chassis_tub() -> Part:
 
     with BuildPart() as outer_bp:
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_BOT)):
-            with Locations((0, yc - 1.0)):
-                RectangleRounded(w - 6.0, l - 8.0, radius=11.0)
-        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_BOT + 7.5)):
+            with Locations((0, yc - 0.5)):
+                RectangleRounded(w - 4.0, l - 4.0, radius=10.0)
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_BOT + 4.0)):
             with Locations((0, yc)):
                 RectangleRounded(w, l, radius=11.0)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z)):
@@ -114,9 +114,9 @@ def build_chassis_tub() -> Part:
     with BuildPart() as tub:
         add(outer_bp.part)
 
-        # Sloped aerodynamic front nose trim (stays outside front inner wall Y=+55 -> >=2.5mm solid wall!)
-        with Locations(Location((0, 75.0, C.CHASSIS_SPLIT_Z + 2.0), (-32, 0, 0))):
-            Box(w + 10.0, 32.0, 22.0, mode=Mode.SUBTRACT)
+        # Sloped aerodynamic front nose bevel (matched seamlessly to A02 front bevel -> >=3.0mm solid wall!)
+        with Locations(Location((0, 77.5, C.CHASSIS_SPLIT_Z + 5.0), (-32, 0, 0))):
+            Box(w + 10.0, 30.0, 20.0, mode=Mode.SUBTRACT)
 
         # Protective dropped skid pads under 4× N20 motors
         for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
@@ -132,7 +132,7 @@ def build_chassis_tub() -> Part:
 
         # External Vertical Sliding Dovetail Rails for B02 (L: full) & B03 (R: upper rail above power bay!)
         # Left (-X): Z = 38.0..63.0
-        with BuildSketch(Plane.YZ.offset(-(w / 2.0 - 0.2))):
+        with BuildSketch(Plane.YZ.offset(-(w / 2.0 - 0.5))):
             with Locations((0.0, 50.5)):
                 Rectangle(12.0, 25.0)
         with BuildSketch(Plane.YZ.offset(-(w / 2.0 + 2.0))):
@@ -141,7 +141,7 @@ def build_chassis_tub() -> Part:
         loft(ruled=True)
 
         # Right (+X): Upper vertical dovetail rail at Z = 50.0..63.0 (100% clear above waist Type-C/Switch/LED window!)
-        with BuildSketch(Plane.YZ.offset(w / 2.0 - 0.2)):
+        with BuildSketch(Plane.YZ.offset(w / 2.0 - 0.5)):
             with Locations((0.0, 56.5)):
                 Rectangle(12.0, 13.0)
         with BuildSketch(Plane.YZ.offset(w / 2.0 + 2.0)):
@@ -149,24 +149,30 @@ def build_chassis_tub() -> Part:
                 Rectangle(15.2, 13.0)
         loft(ruled=True)
 
-        # Angled Front Off-Road Skid Plate + Clean Exterior Recessed Grille & Headlight Bezels
-        with Locations(Location((0, 61.2, 22.0), (28, 0, 0))):
-            Box(30.0, 3.6, 15.0)
+        # Clean Integrated Front Off-Road Skid Bumper + Recessed Grille & Headlight Bezels
+        with Locations(Location((0, 60.5, 22.0), (24, 0, 0))):
+            Box(30.0, 4.0, 14.0)
         with Locations((0, 62.0, 36.5)):
-            Box(28.0, 5.0, 8.0, mode=Mode.SUBTRACT)
+            Box(28.0, 4.4, 8.0, mode=Mode.SUBTRACT)
         for sx in (-1, 1):
             with Locations((sx * 24.5, 62.0, 37.5)):
-                Box(11.0, 5.0, 6.2, mode=Mode.SUBTRACT)
+                Box(11.0, 4.4, 6.2, mode=Mode.SUBTRACT)
 
-        # 2. Hollow interior cavity (inner width 89.0mm, inner length 110.0mm: Y = -55..+55)
+        # 2. Hollow interior cavity with matching lower corner bevel (guarantees >=2.5mm solid wall at all 4 bottom corners!)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_FLOOR)):
             with Locations((0, 0.0)):
-                RectangleRounded(w - 2 * wall, l - 10.0, radius=7.5)
-        extrude(amount=h + 4.0, mode=Mode.SUBTRACT)
+                RectangleRounded(w - 2 * wall - 3.6, l - 13.6, radius=8.5)
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_FLOOR + 3.5)):
+            with Locations((0, 0.0)):
+                RectangleRounded(w - 2 * wall, l - 10.0, radius=8.5)
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z + 4.0)):
+            with Locations((0, 0.0)):
+                RectangleRounded(w - 2 * wall, l - 10.0, radius=8.5)
+        loft(ruled=True, mode=Mode.SUBTRACT)
 
-        # Front Nose Interlock Catch Ledge (fused solidly into front inner wall Y=49.5..55.5)
-        with Locations((0, 52.5, C.CHASSIS_SPLIT_Z - 10.1)):
-            Box(28.0, 6.0, 3.2)
+        # Front Nose Interlock Catch Ledge (fused solidly into front inner wall Y=49.5..56.0)
+        with Locations((0, 52.75, C.CHASSIS_SPLIT_Z - 10.1)):
+            Box(28.0, 6.5, 3.2)
 
         # 3. 4× Reinforced Side-Wall Slide-Lock Catch Blocks + Vertical End-Stop Ribs (clears Dual-18650 & PCA9685A!)
         for sgn in (-1.0, 1.0):
@@ -178,9 +184,9 @@ def build_chassis_tub() -> Part:
                 with Locations((sgn * (x_in - 2.0), y_rail + 5.8, C.CHASSIS_SPLIT_Z - 12.0)):
                     Box(6.0, 3.8, 11.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
-        # 4. Rear Reinforced Dovetail Lock Mortise Block (X=-10..+10, Y=-56.0..-49.3, Z=59.0..66.0)
-        with Locations((0.0, -52.65, C.CHASSIS_SPLIT_Z - 7.0)):
-            Box(20.0, 6.7, 7.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        # 4. Rear Reinforced Dovetail Lock Mortise Block (X=-10..+10, Y=-56.0..-48.0, Z=59.0..66.0)
+        with Locations((0.0, -52.0, C.CHASSIS_SPLIT_Z - 7.0)):
+            Box(20.0, 8.0, 7.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
         add(
             _build_rear_dovetail_prism(C.CHASSIS_SPLIT_Z - 6.0, C.CHASSIS_SPLIT_Z + 1.0, clearance=C.SLA_SLIDE_CLEAR),
             mode=Mode.SUBTRACT,
@@ -285,28 +291,35 @@ def build_top_hood() -> Part:
     yc = C.CHASSIS_Y_CTR
     x_in = w / 2.0 - C.WALL  # 44.5 mm
 
+    # Add 2.0mm vertical perimeter skirt (Z=66.0..68.0) before beveling up to 72.5 -> ZERO 0.02mm knife edges!
     with BuildPart() as hood_bp:
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z)):
             with Locations((0, yc)):
                 RectangleRounded(w, l, radius=11.0)
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z + 2.0)):
+            with Locations((0, yc)):
+                RectangleRounded(w, l, radius=11.0)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP)):
-            with Locations((0, yc - 4.0)):
-                RectangleRounded(w - 10.0, l - 14.0, radius=10.0)
+            with Locations((0, yc - 3.5)):
+                RectangleRounded(w - 10.0, l - 13.0, radius=10.0)
         loft(ruled=True)
 
     with BuildPart() as hood:
         add(hood_bp.part)
 
-        # Match sloped front nose cleanly
-        with Locations(Location((0, 75.0, C.CHASSIS_SPLIT_Z + 2.0), (-32, 0, 0))):
-            Box(w + 10.0, 32.0, 22.0, mode=Mode.SUBTRACT)
+        # Match sloped front nose cleanly (leaves >=2.0mm solid vertical front skirt at Z=66..68!)
+        with Locations(Location((0, 77.5, C.CHASSIS_SPLIT_Z + 5.0), (-32, 0, 0))):
+            Box(w + 10.0, 30.0, 20.0, mode=Mode.SUBTRACT)
 
-        # Sleek Side Fender-Flare Eaves (|X|=46.5..49.8, Z=66.0..68.8) trapping B02/B03 vertical dovetails!
+        # Sleek Side Fender-Flare Eaves with 1.4mm vertical outer lip (ZERO 0.02mm knife edges!)
         for sgn in (-1.0, 1.0):
             with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z)):
                 with Locations((sgn * (w / 2.0 + 1.0), 0.0)):
                     RectangleRounded(5.4, 24.0, radius=2.2)
-            with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z + 2.8)):
+            with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z + 1.4)):
+                with Locations((sgn * (w / 2.0 + 1.0), 0.0)):
+                    RectangleRounded(5.4, 24.0, radius=2.2)
+            with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z + 3.2)):
                 with Locations((sgn * (w / 2.0 - 0.5), 0.0)):
                     RectangleRounded(3.0, 20.0, radius=1.2)
             loft(ruled=True)
@@ -314,43 +327,44 @@ def build_top_hood() -> Part:
         # Mid-Side Alignment Ribs (|X|=41.5..44.0, Y=-2.5..+11.5 -> 0.8mm clear of A01 rear stop at ΔY=-5mm!)
         for sgn in (-1.0, 1.0):
             with Locations((sgn * (x_in - 1.75), 4.5, C.CHASSIS_SPLIT_Z - 2.5)):
-                Box(2.5, 14.0, 2.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
+                Box(2.5, 14.0, 3.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
         # 4× Rigid Side Slide-Lock L-Hooks (generous 0.35mm side & Z clearance for effortless SLA assembly!)
         for sgn in (-1.0, 1.0):
             hx = sgn * (x_in - 2.45)
             for y_rail in SIDE_RAIL_YS:
                 with Locations((hx, y_rail - 6.10, C.CHASSIS_SPLIT_Z - 10.8)):
-                    Box(4.2, 3.4, 11.4, align=(Align.CENTER, Align.CENTER, Align.MIN))
+                    Box(4.2, 3.4, 12.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
                 with Locations((hx, y_rail - 3.70, C.CHASSIS_SPLIT_Z - 10.8)):
                     Box(4.2, 8.2, 3.9, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
         # 5th Point: Integral Front Nose Interlock L-Hook (locks 4mm deep under Y=49.5 front ledge!)
         with Locations((0, 42.75, C.CHASSIS_SPLIT_Z - 15.2)):
-            Box(22.0, 3.5, 15.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            Box(22.0, 3.5, 16.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
         with Locations((0, 47.25, C.CHASSIS_SPLIT_Z - 15.2)):
             Box(22.0, 12.5, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
-        # Raised Sporty Rear-Deck Fastback Cowl (houses A10 Dovetail Lock Key!) + Aero Shark-Fin
-        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 1.5)):
+        # Raised Sporty Rear-Deck Fastback Cowl (houses A10 Dovetail Lock Key!) + Clean Inset Aero Shark-Fin
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 2.0)):
             with Locations((0, -47.5)):
                 RectangleRounded(44.0, 18.0, radius=4.5)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 2.2)):
             with Locations((0, -48.5)):
                 RectangleRounded(34.0, 13.0, radius=3.5)
         loft(ruled=True)
-        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 1.5)):
-            with Locations((15.0, -45.0)):
-                RectangleRounded(5.0, 11.0, radius=2.0)
+        # Shark-fin seated cleanly INSIDE rear cowl top plateau (X=12.2..15.8, Y=-52..-45 -> clear of vents & cowl edge!)
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 1.2)):
+            with Locations((14.0, -48.5)):
+                RectangleRounded(3.6, 7.0, radius=1.2)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 12.5)):
-            with Locations((15.0, -48.5)):
-                RectangleRounded(3.2, 5.5, radius=1.2)
+            with Locations((14.0, -49.5)):
+                RectangleRounded(2.6, 4.6, radius=1.0)
         loft(ruled=True)
 
-        # Spacious Underside Headroom Recess (Y=-48..+35mm, ceiling Z=70.0mm -> clears Dual-18650 & PCA9685A DuPonts!)
+        # Spacious Underside Headroom Recess (Y=-46.5..+20.0 -> clears Dual-18650 & PCA9685A while leaving solid 6.5mm roof under B01 wing slots!)
         with BuildSketch(Plane.XY.offset(C.CHASSIS_SPLIT_Z - 0.5)):
-            with Locations((0, -6.5)):
-                RectangleRounded(w - 16.0, 83.0, radius=6.0)
+            with Locations((0, -13.25)):
+                RectangleRounded(w - 18.0, 66.5, radius=7.0)
         extrude(amount=4.5, mode=Mode.SUBTRACT)
 
         # Rear Tapered Dovetail Keyway through A02 rear cowl (coaxial with A01 mortise -> locks ΔY=0!)
@@ -359,36 +373,40 @@ def build_top_hood() -> Part:
             mode=Mode.SUBTRACT,
         )
 
-        # Twin Rear Convection Vents (flanking A10 lock key)
-        for vx in (-11.5, 11.5):
+        # Twin Rear Convection Vents (flanking A10 lock key, cleanly clear of shark-fin!)
+        for vx in (-9.6, 9.6):
             with Locations((vx, -44.5, C.CHASSIS_Z_TOP - 2.0)):
-                Box(2.8, 7.0, 10.0, mode=Mode.SUBTRACT)
+                Box(2.6, 6.6, 10.0, mode=Mode.SUBTRACT)
 
-        # Dual-Tier Sculpted Neck Turret:
-        # 1) Slim Lower Pedestal Stalk (36×22mm -> huge clearance for helmet rim at -20°..+22°!)
-        neck_top_z = C.HEAD_PIVOT_Z + 6.5
+        # Dual-Tier Sculpted Neck Turret with 45° Chamfered Transition & Solid 2.0mm Servo Floor!
+        neck_top_z = C.HEAD_PIVOT_Z + 6.5  # 99.0 mm
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 2.0)):
             with Locations((0, -5.0)):
                 RectangleRounded(36.0, 22.0, radius=5.0)
-        extrude(amount=16.0)
-        # 2) Upper MG90S Servo Yoke (48×36.2mm -> neatly inside helmet cavity!)
-        with BuildSketch(Plane.XY.offset(C.HEAD_PIVOT_Z - 7.0)):
+        with BuildSketch(Plane.XY.offset(C.HEAD_PIVOT_Z - 12.5)):  # Z = 80.0
+            with Locations((0, -5.0)):
+                RectangleRounded(36.0, 22.0, radius=5.0)
+        with BuildSketch(Plane.XY.offset(C.HEAD_PIVOT_Z - 8.5)):   # Z = 84.0 (2.0mm solid floor under servo!)
             with Locations((0, C.NECK_Y_CTR)):
                 RectangleRounded(C.NECK_W, C.NECK_D, radius=5.0)
-        extrude(amount=13.5)
+        with BuildSketch(Plane.XY.offset(neck_top_z)):             # Z = 99.0
+            with Locations((0, C.NECK_Y_CTR)):
+                RectangleRounded(C.NECK_W, C.NECK_D, radius=5.0)
+        loft(ruled=True)
 
-        # Widened Right-Side 7-Wire Neck DuPont Ribbon Tunnel (X=+2.5..+14.5 -> effortless plug-through!)
-        with Locations((8.5, -5.0, C.CHASSIS_SPLIT_Z - 1.0)):
-            Box(12.0, 16.0, (neck_top_z - C.CHASSIS_SPLIT_Z) + 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+        # Widened Right-Side 7-Wire Neck DuPont Ribbon Tunnel (X=+1.5..+12.5 -> 2.5mm solid wall to M3 pivot!)
+        with Locations((7.0, -5.0, C.CHASSIS_SPLIT_Z - 1.0)):
+            Box(11.0, 16.0, (neck_top_z - C.CHASSIS_SPLIT_Z) + 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
-        # Top-Open Drop-In MG90S Servo Pocket (+0.45mm generous tolerance!)
-        servo_z_bot = C.HEAD_PIVOT_Z - C.MG90S_W / 2.0 - 0.45
+        # Top-Open Drop-In MG90S Servo Pocket (+0.45mm generous tolerance, solid 2.0mm floor at Z=84.0..86.0!)
+        servo_z_bot = C.HEAD_PIVOT_Z - C.MG90S_W / 2.0 - 0.45  # 86.0 mm
         with Locations((-11.5, -7.9, servo_z_bot)):
             Box(23.5, 23.6, 15.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
         with Locations((-19.0, -7.9, servo_z_bot)):
             Box(3.6, 33.6, 15.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-        with Locations((-24.0, -2.0, servo_z_bot + 0.2)):
-            Box(5.2, 12.8, 15.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+        # Clean flush left gear-dome exit slot (exact same Z=servo_z_bot -> ZERO 0.2mm micro-step!)
+        with Locations((-24.0, -2.0, servo_z_bot)):
+            Box(5.6, 12.8, 15.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
 
         # Right Coaxial Head Pivot: Unified M3 Clear Bore + Top-Drop Captive M3 Hex Nut Slot!
         with Locations((20.5, C.HEAD_PIVOT_Y, C.HEAD_PIVOT_Z)):
@@ -417,16 +435,19 @@ def build_top_hood() -> Part:
 def build_hood_lock_key() -> Part:
     z_top = C.CHASSIS_Z_TOP + 2.2  # 74.7 mm
     with BuildPart() as key:
-        add(_build_rear_dovetail_prism(C.CHASSIS_SPLIT_Z - 5.7, z_top + 0.3, clearance=0.0))
+        add(_build_rear_dovetail_prism(C.CHASSIS_SPLIT_Z - 5.7, z_top + 0.6, clearance=0.0))
         with BuildSketch(Plane.XY.offset(z_top + 0.25)):
             with Locations((0.0, -51.6)):
                 RectangleRounded(16.0, 7.6, radius=2.2)
-        with BuildSketch(Plane.XY.offset(z_top + 2.8)):
+        with BuildSketch(Plane.XY.offset(z_top + 1.55)):
+            with Locations((0.0, -51.6)):
+                RectangleRounded(16.0, 7.6, radius=2.2)
+        with BuildSketch(Plane.XY.offset(z_top + 3.0)):
             with Locations((0.0, -51.6)):
                 RectangleRounded(14.0, 6.0, radius=1.8)
         loft(ruled=True)
-        with Locations((0.0, -55.1, z_top + 0.8)):
-            Box(12.0, 2.2, 1.4, mode=Mode.SUBTRACT)
+        with Locations((0.0, -55.3, z_top + 0.85)):
+            Box(12.0, 2.0, 1.3, mode=Mode.SUBTRACT)
     return _tag(key.part, "A10_Hood_Lock_Key", "charcoal")
 
 
@@ -436,10 +457,14 @@ def build_hood_lock_key() -> Part:
 def build_hood_wing(side: str = "L") -> Part:
     sgn = -1.0 if side == "L" else 1.0
     with BuildPart() as wing:
+        # 1.2mm straight vertical perimeter edge before top bevel -> ZERO 0.02mm knife edges!
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 0.25)):
             with Locations((sgn * 25.0, 29.5)):
                 RectangleRounded(15.5, 28.0, radius=4.5)
-        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 2.7)):
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 1.45)):
+            with Locations((sgn * 25.0, 29.5)):
+                RectangleRounded(15.5, 28.0, radius=4.5)
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 3.0)):
             with Locations((sgn * 24.5, 28.5)):
                 RectangleRounded(12.0, 23.0, radius=3.5)
         loft(ruled=True)
@@ -447,7 +472,7 @@ def build_hood_wing(side: str = "L") -> Part:
         with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP - 1.9)):
             with Locations((sgn * 25.0, 33.5)):
                 Rectangle(6.0, 7.0)
-        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 0.4)):
+        with BuildSketch(Plane.XY.offset(C.CHASSIS_Z_TOP + 0.6)):
             with Locations((sgn * 25.0, 33.5)):
                 Rectangle(4.4, 7.0)
         loft(ruled=True)
@@ -460,10 +485,10 @@ def build_hood_wing(side: str = "L") -> Part:
 def build_side_fairing(side: str = "L") -> Part:
     """
     Sturdy 4.25mm-thick white side armor seated 0.28mm outside A01's flat |X|=47.0 wall.
+    Uses a 1.6mm flat perimeter skirt before chamfering outward -> ZERO 0.02mm knife edges!
       - B02 (Left) : Full vertical sliding dovetail (Z=38..63).
-      - B03 (Right): Upper vertical sliding dovetail (Z=50..63) + clean bottom-open tactical
-                     power console arch (Y=-18.5..+16.5, Z<47.5) giving direct tool-free access
-                     to the Dual-18650 Type-C port, ON/OFF slide switch, and 4× battery LEDs!
+      - B03 (Right): Upper vertical sliding dovetail (Z=50..63) + sturdy power console arch
+                     (Y=-17.5..+15.5, Z<47.5) exposing Type-C, ON/OFF switch & 4× battery LEDs!
     """
     sgn = -1.0 if side == "L" else 1.0
     x_in = sgn * (C.CHASSIS_W / 2.0 + 0.28)  # |X| = 47.28mm
@@ -471,15 +496,18 @@ def build_side_fairing(side: str = "L") -> Part:
         with BuildSketch(Plane.YZ.offset(x_in)):
             with Locations((0.0, 51.0)):
                 RectangleRounded(48.0, 29.0, radius=5.0)  # Z = 36.5..65.5 (0.5mm clear under A02 eave at 66.0!)
+        with BuildSketch(Plane.YZ.offset(x_in + sgn * 1.6)):
+            with Locations((0.0, 51.0)):
+                RectangleRounded(48.0, 29.0, radius=5.0)
         with BuildSketch(Plane.YZ.offset(x_in + sgn * 4.25)):
             with Locations((0.0, 51.3)):
-                RectangleRounded(40.0, 23.0, radius=4.0)
+                RectangleRounded(41.0, 23.0, radius=4.0)
         loft(ruled=True)
 
-        # Crisp wheel-arch clearance cutouts for Ø43mm tires
+        # Crisp wheel-arch clearance cutouts for Ø43mm tires (R=23.5mm -> 2.0mm radial tire clearance + sturdy pillars!)
         for y_ax in (C.Y_AXLE_F, C.Y_AXLE_R):
             with Locations((x_in + sgn * 2.0, y_ax, C.Z_AXLE)):
-                Cylinder(radius=C.WHEEL_R + 2.6, height=14.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+                Cylinder(radius=C.WHEEL_R + 2.0, height=14.0, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
 
         if side == "L":
             # Full vertical sliding dovetail mortise (0.30mm clearance on all faces!)
@@ -493,7 +521,7 @@ def build_side_fairing(side: str = "L") -> Part:
         else:
             # Right waist tactical power console arch (exposes Type-C, ON/OFF switch, 4× battery LEDs!)
             with Locations((x_in + sgn * 2.0, -1.0, 41.25)):
-                Box(14.0, 35.0, 12.5, mode=Mode.SUBTRACT)  # Z = 35.0..47.5, Y = -18.5..+16.5
+                Box(14.0, 33.0, 12.5, mode=Mode.SUBTRACT)  # Z = 35.0..47.5, Y = -17.5..+15.5
             # Upper vertical sliding dovetail mortise opening cleanly into arch at Z=47.5 (slides down onto Z=50..63!)
             with BuildSketch(Plane.YZ.offset(x_in - sgn * 0.48)):
                 with Locations((0.0, 55.5)):

@@ -435,10 +435,10 @@ def build_inmp441_mic() -> Compound:
 def build_wiring_harness() -> Compound:
     cables = []
 
-    # 1. OV3660 Short ~20mm FPC Ribbon -> Vertical SF-ESP32-S3-CAM Center 24P Socket (13.9mm straight shot!)
+    # 1. OV3660 Short ~20mm FPC Ribbon -> Vertical SF-ESP32-S3-CAM Center 24P Socket
     ov_pts = [
         (0.5, C.S3_Y_PCB + 3.2, C.S3_Z_CTR + 3.0),
-        (0.2, 20.5, 134.5),
+        (0.2, 20.0, 134.0),
         (0.0, C.CAM_Y_PCB + 0.5, C.CAM_Z_CTR - 3.5),
     ]
     cables.append(_make_flat_ribbon(ov_pts, 6.5, 0.35, "Cable_OV3660_Short_FPC", "fpc_copper"))
@@ -456,9 +456,9 @@ def build_wiring_harness() -> Compound:
     for cname, ckey, dx in neck_specs:
         pts = [
             (dx * 2.5, -18.0, 50.0),
-            (8.5 + dx * 0.7, -5.0, 68.0),
-            (8.5 + dx * 0.7, -5.0, 92.0),
-            (5.0 + dx * 1.2, -3.0, 108.0),
+            (7.0 + dx * 0.7, -5.0, 68.0),
+            (7.0 + dx * 0.7, -5.0, 92.0),
+            (4.5 + dx * 1.2, -3.5, 106.0),
             (dx * 3.0, C.S3_Y_PCB - 6.0, C.S3_Z_CTR - 12.7),
         ]
         cables.append(_make_cable(pts, 0.45, f"Cable_{cname}", ckey))
@@ -476,7 +476,7 @@ def build_wiring_harness() -> Compound:
     for cname, ckey, dz in (("LCD_SCL", "wire_yellow", -2.5), ("LCD_SDA", "wire_blue", 0.0), ("LCD_DC", "wire_green", 2.5)):
         pts = [
             (18.0, C.S3_Y_PCB - 6.0, C.S3_Z_CTR - 12.7 + dz * 0.4),
-            (25.0, 12.0, 114.0 + dz),
+            (25.0, 11.0, 114.0 + dz),
             (C.LCD_PCB_W / 2.0 - 3.5, C.LCD_Y_PCB - 4.5, C.LCD_Z_CTR + dz * 1.6),
         ]
         cables.append(_make_cable(pts, 0.42, f"Cable_{cname}", ckey))

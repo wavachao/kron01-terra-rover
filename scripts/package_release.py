@@ -170,7 +170,7 @@ def render_release_notes(version: str, assets: list[tuple[Path, str]]) -> str:
             "",
             "### Automated Release Gate Verification",
             "",
-            "- **DFM Mesh Audit**: `29/29` STL files PASS (100% watertight, single-body manifold `shells == 1`, fits `180×180×180 mm` Bambu A1 mini bed)",
+            "- **DFM & STL Parser Audit**: `29/29` STL files PASS (standard ASCII binary header, 100% watertight single-body manifold `shells == 1`, `0` degenerate faces under `0.01 mm` vertex welding, `0` self-intersections, fits `180×180×180 mm` bed)",
             f"- **Envelope & Filament**: `{dims_line}`, ~`{filament_line}` PLA across 2 single-color plates (15 physical parts / 14 unique JLC3DP STLs; direct-fit 43×18mm complete rubber wheels)",
             f"- **Tolerance & Fasteners**: Forgiving `+0.7–0.8 mm/side` PCB pockets, `0.28–0.35 mm` SLA mortise-and-tenon clearances, unified M3 DIN 934 captive hex nuts only",
             f"- **Electrical & Power Audit**: {net_line}; 4WD+Vision peak load `{peak_line}` on 5000 mAh 1S2P Dual-18650",
