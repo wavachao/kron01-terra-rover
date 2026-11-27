@@ -19,16 +19,16 @@ import json
 import math
 from pathlib import Path
 
-# Strictly reserved on ESP32-S3-CAM N16R8 (Camera DVP + Octal PSRAM + Native USB-CDC + Strapping)
+# Strictly reserved on SF-ESP32-S3-CAM WROOM V1.0.0 (Camera DVP + Octal PSRAM + USB-CDC + CH343 RX + Strapping)
 RESERVED_S3_CAM_GPIOS = {
     0,                          # BOOT button
     4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18,  # Onboard OV3660 DVP + SCCB
     19, 20,                     # Native USB-CDC / JTAG (flashing & console!)
     33, 34, 35, 36, 37,         # Internal Octal PSRAM (R8)
+    44,                         # UART0 RX driven by onboard CH343 TXD — keep free!
     45, 46,                     # Boot strapping pins
-    48,                         # Onboard WS2812 RGB LED
 }
-VALID_S3_FREE_GPIOS = {1, 2, 3, 14, 21, 38, 39, 40, 41, 42, 43, 44, 47}
+VALID_S3_FREE_GPIOS = {1, 2, 3, 14, 21, 38, 39, 40, 41, 42, 43, 47, 48}
 
 NETLIST = [
     # --- 1. Power Distribution (Dual-18650 1S2P Type-C Power Board -> 1-to-1 DuPont Headers!) ---
@@ -49,7 +49,7 @@ NETLIST = [
     {"id": "W13", "bus": "I2C_NECK",   "from": "S3CAM.GPIO1",           "to": "PCA9685A.SDA",          "signal": "I2C_SDA",       "volt": "3.3V", "color": "蓝 (穿颈6)", "gpio": 1},
     {"id": "W14", "bus": "I2C_NECK",   "from": "S3CAM.GPIO2",           "to": "PCA9685A.SCL",          "signal": "I2C_SCL",       "volt": "3.3V", "color": "绿 (穿颈7)", "gpio": 2},
 
-    # --- 3. Onboard OV3660 Short-Ribbon Camera (Head Internal FPC, 0 External Wires!) ---
+    # --- 3. Onboard OV3660 Short-Ribbon Camera (Head Internal FPC, 13.9mm straight shot!) ---
     {"id": "W15", "bus": "CAM_FPC",    "from": "S3CAM.FPC_24P",         "to": "OV3660_CAM.FPC",        "signal": "OV3660_DVP_8B", "volt": "2.8V", "color": "铜色短排线"},
 
     # --- 4. GMT020-02 2.0" IPS SPI Display (Head Internal, 1-to-1 DuPont!) ---
@@ -61,18 +61,18 @@ NETLIST = [
     {"id": "W21", "bus": "SPI_LCD",    "from": "S3CAM.GPIO41",          "to": "GMT020_LCD.DC",         "signal": "LCD_DC",        "volt": "3.3V", "color": "橙", "gpio": 41},
     {"id": "W22", "bus": "SPI_LCD",    "from": "S3CAM.GPIO42",          "to": "GMT020_LCD.CS",         "signal": "LCD_CS",        "volt": "3.3V", "color": "白", "gpio": 42},
 
-    # --- 5. Dedicated I2S1 Mic (INMP441, Head Internal, 1-to-1 DuPont!) ---
+    # --- 5. Dedicated I2S1 Mic (INMP441, Head Internal, 1-to-1 DuPont; leave TF1 empty!) ---
     {"id": "W23", "bus": "I2S1_MIC",   "from": "S3CAM.3V3_2",           "to": "INMP441.VDD",           "signal": "MIC_3V3",       "volt": "3.3V", "color": "红"},
     {"id": "W24", "bus": "I2S1_MIC",   "from": "S3CAM.GND_3",           "to": "INMP441.GND",           "signal": "MIC_GND",       "volt": "0V",   "color": "黑"},
     {"id": "W25", "bus": "I2S1_MIC",   "from": "S3CAM.GPIO39",          "to": "INMP441.SCK",           "signal": "I2S1_SCK",      "volt": "3.3V", "color": "白", "gpio": 39},
     {"id": "W26", "bus": "I2S1_MIC",   "from": "S3CAM.GPIO40",          "to": "INMP441.WS",            "signal": "I2S1_WS",       "volt": "3.3V", "color": "紫", "gpio": 40},
     {"id": "W27", "bus": "I2S1_MIC",   "from": "S3CAM.GPIO38",          "to": "INMP441.SD",            "signal": "I2S1_SD_IN",    "volt": "3.3V", "color": "青", "gpio": 38},
 
-    # --- 6. Dedicated I2S0 Speaker Amp (MAX98357A + 3020 Speaker, Head Internal, 1-to-1!) ---
+    # --- 6. Dedicated I2S0 Speaker Amp (MAX98357A + 3020 Speaker, avoids CH343 RX pin!) ---
     {"id": "W28", "bus": "I2S0_AMP",   "from": "S3CAM.GND_4",           "to": "MAX98357A.GND",         "signal": "AMP_GND",       "volt": "0V",   "color": "黑"},
     {"id": "W29", "bus": "I2S0_AMP",   "from": "S3CAM.GPIO3",           "to": "MAX98357A.BCLK",        "signal": "I2S0_BCLK",     "volt": "3.3V", "color": "蓝", "gpio": 3},
-    {"id": "W30", "bus": "I2S0_AMP",   "from": "S3CAM.GPIO43",          "to": "MAX98357A.LRC",         "signal": "I2S0_LRC",      "volt": "3.3V", "color": "绿", "gpio": 43},
-    {"id": "W31", "bus": "I2S0_AMP",   "from": "S3CAM.GPIO44",          "to": "MAX98357A.DIN",         "signal": "I2S0_DOUT",     "volt": "3.3V", "color": "黄", "gpio": 44},
+    {"id": "W30", "bus": "I2S0_AMP",   "from": "S3CAM.TX(GPIO43)",      "to": "MAX98357A.LRC",         "signal": "I2S0_LRC",      "volt": "3.3V", "color": "绿", "gpio": 43},
+    {"id": "W31", "bus": "I2S0_AMP",   "from": "S3CAM.GPIO48",          "to": "MAX98357A.DIN",         "signal": "I2S0_DOUT",     "volt": "3.3V", "color": "黄", "gpio": 48},
     {"id": "W32", "bus": "I2S0_AMP",   "from": "MAX98357A.SPK+",        "to": "SPEAKER_3020.+",        "signal": "SPK_BTL+",      "volt": "BTL",  "color": "红 (螺丝端子)"},
     {"id": "W33", "bus": "I2S0_AMP",   "from": "MAX98357A.SPK-",        "to": "SPEAKER_3020.-",        "signal": "SPK_BTL-",      "volt": "BTL",  "color": "黑 (螺丝端子)"},
 

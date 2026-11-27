@@ -17,8 +17,8 @@
       "GPIO41": "LCD_DC",
       "GPIO42": "LCD_CS",
       "GPIO43": "I2S0_LRC",
-      "GPIO44": "I2S0_DOUT",
-      "GPIO47": "SPI_MOSI"
+      "GPIO47": "SPI_MOSI",
+      "GPIO48": "I2S0_DOUT"
     },
     "errors": [],
     "status": "PASS"
@@ -299,7 +299,7 @@
     {
       "id": "W30",
       "bus": "I2S0_AMP",
-      "from": "S3CAM.GPIO43",
+      "from": "S3CAM.TX(GPIO43)",
       "to": "MAX98357A.LRC",
       "signal": "I2S0_LRC",
       "volt": "3.3V",
@@ -309,12 +309,12 @@
     {
       "id": "W31",
       "bus": "I2S0_AMP",
-      "from": "S3CAM.GPIO44",
+      "from": "S3CAM.GPIO48",
       "to": "MAX98357A.DIN",
       "signal": "I2S0_DOUT",
       "volt": "3.3V",
       "color": "黄",
-      "gpio": 44
+      "gpio": 48
     },
     {
       "id": "W32",

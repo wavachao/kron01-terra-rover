@@ -147,16 +147,17 @@ CAM_LENS_DIA = 7.4
 CAM_Y_PCB = 26.8             # Rear of OV3660 module at 26.8 -> front glass at 32.8 (flush w/ visor!)
 CAM_Z_CTR = 138.25           # Z: 134.0..142.5 -> 2.5mm clear above LCD PCB (131.5)!
 
-# 7. ESP32-S3-CAM N16R8 Main Controller (58.0 × 27.94 mm PCB + 6.04 mm antenna = 64.04 mm total)
-#    Mounted horizontally behind LCD/Camera in forgiving 66.0 × 29.4 mm U-cradle (pins pointing DOWN!)
+# 7. SF-ESP32-S3-CAM WROOM V1.0.0 (58.0×27.94mm PCB + 6.04mm antenna + 1.80mm protruding Type-C = 65.84mm!)
+#    Mounted VERTICALLY facing +Y (front camera FPC faces OV3660 just 13.9mm away; 2×22P pins face -Y!)
 S3_PCB_L = 58.0
 S3_ANT_L = 6.04
-S3_TOTAL_L = S3_PCB_L + S3_ANT_L  # 64.04 mm along X
-S3_PCB_W = 27.94             # Along Y
+S3_USBC_PROTRUDE = 1.80
+S3_TOTAL_L = S3_PCB_L + S3_ANT_L + S3_USBC_PROTRUDE  # 65.84 mm true end-to-end length!
+S3_PCB_W = 27.94             # Vertical height (along Z: 112.5 .. 140.44 mm)
 S3_PCB_T = 1.6
-S3_X_CTR = 0.0               # X = -32.02 .. +32.02 (fits inside 69.6mm core cavity w/ +2mm/side!)
-S3_Y_CTR = 0.0               # Y = -13.97 .. +13.97 (1.03mm clear behind LCD pins 15.0 & 15.2mm to OV3660!)
-S3_Z_PCB = 128.5             # Downward pins to 120.0 (DuPont to 112.0 > 99.0 neck); top shield 134.0 (< 141.0 spk)!
+S3_X_CTR = 0.0               # X = -32.92 .. +32.92 (inside 69.6mm open bay -> +1.88mm/side clearance!)
+S3_Y_PCB = 10.0              # PCB Y: 10.0..11.6, front shield/USB-C to 14.8 (< LCD pins 15.0!), pins back to 1.5!
+S3_Z_CTR = 126.5             # Z: 112.5..140.5 (13.5mm above neck 99.0; clears 3020 speaker Y=-23..-3!)
 
 # 8. 3020 Cavity Speaker (30.0 × 20.0 × 7.0 mm, 8Ω 2W) — Rear Crown under A07 Grille
 SPK_L = 30.0                 # Along X

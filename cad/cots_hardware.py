@@ -125,55 +125,58 @@ def build_hex_nut(across_flats: float = 5.5, thickness: float = 2.4, bore_dia: f
 
 
 # ---------------------------------------------------------------------------
-# 1. ESP32-S3-CAM N16R8 (58.0 × 27.94 mm PCB + 6.04 mm Antenna = 64.04 mm)
+# 1. SF-ESP32-S3-CAM WROOM V1.0.0 (58×27.94mm PCB + 6.04mm Ant + 1.8mm Type-C = 65.84mm)
 # ---------------------------------------------------------------------------
 def build_esp32_s3_cam() -> Compound:
     """
-    ESP32-S3-CAM N16R8 mounted horizontally inside head core (pins pointing DOWN):
-      - Main PCB: 58.0(X) × 27.94(Y) × 1.6(Z) mm, offset so total 64.04mm centers at X=0
-      - Protruding PCB Wi-Fi Antenna on +X end: 6.04 × 18.0 × 1.2 mm
-      - ESP32-S3-WROOM-1 metallic RF shield on top (+Z)
-      - Dual USB Type-C ports on -X short edge
-      - 24-pin OV3660 FPC camera connector along front (+Y) top edge
-      - Pre-soldered 2×22P 2.54mm headers pointing DOWN (-Z) for 1-to-1 DuPont plugs!
+    Exact SF-ESP32-S3-CAM WROOM V1.0.0 mounted VERTICALLY facing +Y (from user photo):
+      - Main PCB: 58.0(X) × 1.6(Y) × 27.94(Z) mm
+      - Protruding PCB Wi-Fi Antenna on +X end (+6.04mm)
+      - Dual protruding Type-C ports (COM & USB) on -X end (+1.80mm overhang past PCB!)
+      - ESP32-S3-WROOM-1 RF shield & center 24-pin OV3660 FPC socket on front (+Y) face!
+      - TF card slot + pre-soldered 2×22P headers pointing BACKWARD (-Y) for easy plug-in!
     """
     parts = []
-    # Main PCB X: -32.02 .. +25.98 (center at -3.02), Antenna X: +25.98 .. +32.02
-    x_pcb_ctr = -C.S3_ANT_L / 2.0
-    pcb = Location((x_pcb_ctr, 0, 0)) * Box(C.S3_PCB_L, C.S3_PCB_W, C.S3_PCB_T, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    # Total X span = 65.84mm (-32.92..+32.92): Type-C overhang -32.92..-31.12, PCB -31.12..+26.88, Ant +26.88..+32.92
+    x_pcb_ctr = (C.S3_USBC_PROTRUDE - C.S3_ANT_L) / 2.0  # -2.12 mm
+    pcb = Location((x_pcb_ctr, 0, 0)) * Box(C.S3_PCB_L, C.S3_PCB_T, C.S3_PCB_W, align=(Align.CENTER, Align.MIN, Align.CENTER))
     parts.append(_tag(pcb, "S3CAM_PCB", "pcb_dark"))
 
-    ant = Location((C.S3_TOTAL_L / 2.0 - C.S3_ANT_L / 2.0, 0, 0.2)) * Box(
-        C.S3_ANT_L, 18.0, 1.2, align=(Align.CENTER, Align.CENTER, Align.MIN)
+    ant = Location((C.S3_TOTAL_L / 2.0 - C.S3_ANT_L / 2.0, 0.2, 0)) * Box(
+        C.S3_ANT_L, 1.2, 18.0, align=(Align.CENTER, Align.MIN, Align.CENTER)
     )
     parts.append(_tag(ant, "S3CAM_WiFi_Antenna", "pcb_dark"))
 
-    # ESP32-S3-WROOM-1 RF Metal Shield (18 × 18 × 3.2 mm)
-    shield = Location((16.5, 0, C.S3_PCB_T)) * Box(18.0, 18.0, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    # ESP32-S3-WROOM-1 RF Metal Shield on +X/+Y front face (18 × 3.2 × 18 mm)
+    shield = Location((17.0, C.S3_PCB_T, 0)) * Box(18.0, 3.2, 18.0, align=(Align.CENTER, Align.MIN, Align.CENTER))
     parts.append(_tag(shield, "S3CAM_WROOM_Shield", "metal_silver"))
 
-    # Dual Type-C ports on -X short edge (spaced ±5.3mm in Y)
-    for sy, pname in ((-5.3, "USB"), (5.3, "COM")):
-        usbc = Location((-C.S3_TOTAL_L / 2.0 + 3.5, sy, C.S3_PCB_T)) * Box(
-            7.2, 8.9, 3.2, align=(Align.CENTER, Align.CENTER, Align.MIN)
+    # Dual protruding Type-C ports on -X end (overhang 1.8mm past PCB edge!)
+    for sz, pname in ((-5.3, "USB"), (5.3, "COM")):
+        usbc = Location((-C.S3_TOTAL_L / 2.0 + 3.6, C.S3_PCB_T, sz)) * Box(
+            7.2, 3.2, 8.9, align=(Align.CENTER, Align.MIN, Align.CENTER)
         )
         parts.append(_tag(usbc, f"S3CAM_TypeC_{pname}", "metal_silver"))
 
-    # 24-Pin Camera FPC Socket on front (+Y) edge
-    fpc_sock = Location((-4.0, C.S3_PCB_W / 2.0 - 3.2, C.S3_PCB_T)) * Box(
-        13.5, 5.0, 2.2, align=(Align.CENTER, Align.CENTER, Align.MIN)
+    # Center 24-Pin OV3660 FPC Socket on front (+Y) face — directly faces OV3660 lens just 13.9mm away!
+    fpc_sock = Location((0.5, C.S3_PCB_T, 0.0)) * Box(
+        5.2, 2.2, 17.5, align=(Align.CENTER, Align.MIN, Align.CENTER)
     )
     parts.append(_tag(fpc_sock, "S3CAM_FPC24_Socket", "white"))
 
-    # Pre-soldered 2×22P headers pointing DOWN (-Z) at Y = ±12.7mm (25.4mm pitch!)
-    for sy in (-12.7, 12.7):
-        base = Location((x_pcb_ctr, sy, -2.5)) * Box(55.88, 2.54, 2.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        pins = Location((x_pcb_ctr, sy, -8.5)) * Box(54.5, 0.7, 6.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    # Rear TF Card Slot on -Y back face (behind WROOM shield)
+    tf = Location((17.0, -2.0, 0.0)) * Box(14.5, 2.0, 15.0, align=(Align.CENTER, Align.MIN, Align.CENTER))
+    parts.append(_tag(tf, "S3CAM_TF_Slot", "metal_silver"))
+
+    # Pre-soldered 2×22P headers pointing BACKWARD (-Y) at Z = ±12.7mm (25.4mm pitch!)
+    for sz in (-12.7, 12.7):
+        base = Location((x_pcb_ctr, -2.5, sz)) * Box(55.88, 2.5, 2.54, align=(Align.CENTER, Align.MIN, Align.CENTER))
+        pins = Location((x_pcb_ctr, -8.5, sz)) * Box(54.5, 6.0, 0.7, align=(Align.CENTER, Align.MIN, Align.CENTER))
         parts.append(_tag(base, "S3CAM_Hdr_Base", "black_oxide"))
         parts.append(_tag(pins, "S3CAM_Hdr_Pins", "gold"))
 
     comp = Compound(label="COTS_ESP32_S3_CAM_N16R8", children=parts)
-    return comp.move(Location((C.S3_X_CTR, C.S3_Y_CTR, C.S3_Z_PCB)))
+    return comp.move(Location((C.S3_X_CTR, C.S3_Y_PCB, C.S3_Z_CTR)))
 
 
 # ---------------------------------------------------------------------------
@@ -432,15 +435,15 @@ def build_inmp441_mic() -> Compound:
 def build_wiring_harness() -> Compound:
     cables = []
 
-    # 1. OV3660 Short ~20mm FPC Ribbon -> ESP32-S3-CAM Front 24P Socket
+    # 1. OV3660 Short ~20mm FPC Ribbon -> Vertical SF-ESP32-S3-CAM Center 24P Socket (13.9mm straight shot!)
     ov_pts = [
-        (-4.0, C.S3_Y_CTR + C.S3_PCB_W / 2.0 - 2.0, C.S3_Z_PCB + 2.5),
-        (-2.0, 21.0, 134.0),
+        (0.5, C.S3_Y_PCB + 3.2, C.S3_Z_CTR + 3.0),
+        (0.2, 20.5, 134.5),
         (0.0, C.CAM_Y_PCB + 0.5, C.CAM_Z_CTR - 3.5),
     ]
     cables.append(_make_flat_ribbon(ov_pts, 6.5, 0.35, "Cable_OV3660_Short_FPC", "fpc_copper"))
 
-    # 2. 7-Wire Flexible Neck DuPont Ribbon (5V_S3, 5V_AMP, 3V3_LCD, GND_S3, GND_MIC, I2C_SDA, I2C_SCL)
+    # 2. 7-Wire Flexible Neck DuPont Ribbon -> Vertical SF-ESP32-S3-CAM Rear-Facing 2×22P Pins!
     neck_specs = [
         ("Neck_5V_S3",  "wire_red",    -2.4),
         ("Neck_5V_AMP", "wire_orange", -1.6),
@@ -455,8 +458,8 @@ def build_wiring_harness() -> Compound:
             (dx * 2.5, -18.0, 50.0),
             (8.5 + dx * 0.7, -5.0, 68.0),
             (8.5 + dx * 0.7, -5.0, 92.0),
-            (5.0 + dx * 1.2, -3.0, 112.0),
-            (dx * 3.0, C.S3_Y_CTR - 6.0, C.S3_Z_PCB - 6.0),
+            (5.0 + dx * 1.2, -3.0, 108.0),
+            (dx * 3.0, C.S3_Y_PCB - 6.0, C.S3_Z_CTR - 12.7),
         ]
         cables.append(_make_cable(pts, 0.45, f"Cable_{cname}", ckey))
 
@@ -464,16 +467,16 @@ def build_wiring_harness() -> Compound:
     for cname, ckey, dx in (("SPK_POS", "wire_red", -1.5), ("SPK_NEG", "wire_black", 1.5)):
         pts = [
             (dx, C.AMP_Y + 5.5, C.AMP_Z + 6.5),
-            (dx, -17.0, 130.0),
+            (dx, -17.0, 133.0),
             (dx * 2.0, C.SPK_Y - 2.0, C.SPK_Z_TOP - C.SPK_H),
         ]
         cables.append(_make_cable(pts, 0.50, f"Cable_{cname}", ckey))
 
-    # 4. Internal Head LCD SPI Ribbon (S3-CAM -> GMT020-02)
+    # 4. Internal Head LCD SPI Ribbon (S3-CAM Rear Pins -> GMT020-02)
     for cname, ckey, dz in (("LCD_SCL", "wire_yellow", -2.5), ("LCD_SDA", "wire_blue", 0.0), ("LCD_DC", "wire_green", 2.5)):
         pts = [
-            (18.0, C.S3_Y_CTR + 12.0, C.S3_Z_PCB - 6.5),
-            (25.0, 14.0, 116.0 + dz),
+            (18.0, C.S3_Y_PCB - 6.0, C.S3_Z_CTR - 12.7 + dz * 0.4),
+            (25.0, 12.0, 114.0 + dz),
             (C.LCD_PCB_W / 2.0 - 3.5, C.LCD_Y_PCB - 4.5, C.LCD_Z_CTR + dz * 1.6),
         ]
         cables.append(_make_cable(pts, 0.42, f"Cable_{cname}", ckey))

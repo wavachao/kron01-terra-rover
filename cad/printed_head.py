@@ -142,19 +142,19 @@ def build_head_core() -> Part:
             with Locations((sgn * 28.9, C.LCD_Y_PCB + 0.8, C.LCD_Z_CTR - C.LCD_PCB_H / 2.0 - 1.7)):
                 Box(13.8, 4.0, 2.0)
 
-        # 6. Forgiving Horizontal ESP32-S3-CAM N16R8 Dual-Ledge Cradle (65.6 × 29.4 mm, clears 2×22P headers!)
-        #    Two side shelves sit strictly between the two pin rows (Y=-9..+9) under the flat PCB belly!
+        # 6. Forgiving VERTICAL SF-ESP32-S3-CAM Cradle (69.6mm open X width clears 65.84mm Type-C+antenna by +1.88mm/side!)
+        #    Two bottom corner ledges + front/rear PCB guide cheeks hold S3-CAM cleanly at Y=10.0..11.6, Z=112.5..140.5!
         for sgn in (-1.0, 1.0):
-            # Support shelf fused solidly into side wall (|X|=27.5..36.2, Z=126.1..128.2 -> 0.3mm under PCB!)
-            with Locations((sgn * 31.85, C.S3_Y_CTR, C.S3_Z_PCB - 2.4)):
-                Box(8.7, 18.0, 2.1, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            # Gentle upper side-wall guide stops (|X|=32.8..36.2 -> 65.6mm clear length for 64.04mm S3-CAM!)
-            with Locations((sgn * 34.5, C.S3_Y_CTR, C.S3_Z_PCB - 0.3)):
-                Box(3.4, 22.0, 4.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            # Front/rear forgiving Y-stop tabs fused into side wall (|X|=29.0..36.2 -> 29.4mm clear width!)
-            for sy in (-1.0, 1.0):
-                with Locations((sgn * 32.6, C.S3_Y_CTR + sy * (C.S3_PCB_W / 2.0 + 1.65), C.S3_Z_PCB - 0.3)):
-                    Box(7.2, 1.8, 3.8, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            # Bottom support ledge under PCB bottom edge (Z=109.5..111.7 -> 0.8mm clear under Z=112.5 PCB!)
+            with Locations((sgn * 31.8, C.S3_Y_PCB + 0.8, C.S3_Z_CTR - C.S3_PCB_W / 2.0 - 1.9)):
+                Box(8.6, 5.4, 2.2)
+            # Front retaining cheek (Y=12.3..14.1 -> +0.7mm PCB thickness margin!)
+            for sz in (-1.0, 1.0):
+                with Locations((sgn * 33.0, C.S3_Y_PCB + 3.2, C.S3_Z_CTR + sz * 11.8)):
+                    Box(6.4, 1.8, 3.6)
+            # Rear retaining stop cheek (Y=7.9..9.5, clear of rear pins & TF slot -> only touches outer X=±31..36!)
+            with Locations((sgn * 33.8, C.S3_Y_PCB - 1.3, C.S3_Z_CTR)):
+                Box(4.8, 1.6, 18.0)
 
         # 7. Rear-Crown 3020 Cavity Speaker Forgiving Pocket (31.4 × 21.4 mm = +0.7mm/side!)
         spk_bot = C.SPK_Z_TOP - C.SPK_H  # 141.0 mm

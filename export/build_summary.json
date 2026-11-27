@@ -9,8 +9,8 @@
   "plates": {
     "plate_A_charcoal": {
       "count": 10,
-      "vol_cm3": 248.0,
-      "est_mass_g": 190.6
+      "vol_cm3": 247.4,
+      "est_mass_g": 190.2
     },
     "plate_B_white": {
       "count": 5,
@@ -20,8 +20,8 @@
   },
   "jlc3dp_unique_stls": 14,
   "jlc3dp_physical_parts": 15,
-  "jlc3dp_total_vol_cm3": 343.7,
-  "total_filament_g": 264.7,
+  "jlc3dp_total_vol_cm3": 343.1,
+  "total_filament_g": 264.3,
   "all_cots_clear": true,
   "clearances": [
     {
@@ -101,32 +101,32 @@
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_gmt020_lcd",
-      "min_gap_mm": 1.03,
+      "min_gap_mm": 0.2,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_ov3660_cam",
-      "min_gap_mm": 12.85,
+      "min_gap_mm": 12.0,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_speaker_3020",
-      "min_gap_mm": 7.7,
+      "min_gap_mm": 4.53,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_max98357a",
-      "min_gap_mm": 1.43,
+      "min_gap_mm": 16.9,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_inmp441_mic",
-      "min_gap_mm": 28.4,
+      "min_gap_mm": 20.93,
       "status": "PASS"
     },
     {
       "pair": "cots_esp32_s3_cam <-> cots_mg90s_servo",
-      "min_gap_mm": 21.45,
+      "min_gap_mm": 13.98,
       "status": "PASS"
     },
     {
@@ -263,8 +263,8 @@
         53.1,
         59.0
       ],
-      "vol_cm3": 40.69,
-      "est_mass_g": 31.3
+      "vol_cm3": 40.13,
+      "est_mass_g": 30.9
     },
     {
       "name": "A07_top_grille",

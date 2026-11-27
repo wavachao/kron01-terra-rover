@@ -101,8 +101,8 @@
 | **穿颈 7 线排线** | `5V / GND / 5V / 3V3 / GND / SDA / SCL` | `双18650电源板` & `PCA9685A` ↔ 头部 | 从 40P 20cm 杜邦排线撕下 7 根穿颈 |
 | **PCA9685A（I2C）** | `SDA` / `SCL` / `VCC` / `V+` / `GND` | `S3 GPIO1` / `S3 GPIO2` / `电源板 3V3` / `电源板 5V` / `电源板 GND` | 仅 2 根信号线控 4 电机+舵机，余 7 路 |
 | **GMT020-02 彩屏** | `SCL` / `SDA` / `RES` / `DC` / `CS` / `VCC` / `GND` / `BLK` | `GPIO21` / `GPIO47` / `GPIO14` / `GPIO41` / `GPIO42` / `S3 3V3` / `S3 GND` / `穿颈 3V3` | 头内短线直插（10cm 杜邦） |
-| **INMP441 麦克风** | `SCK` / `WS` / `SD` / `VDD` / `GND` / `L/R` | `GPIO39` / `GPIO40` / `GPIO38` / `S3 3V3` / `S3 GND` / `穿颈 GND` | 独立硬件 I2S1，左声道接地 |
-| **MAX98357A 功放** | `BCLK` / `LRC` / `DIN` / `VIN` / `GND` / `SPK±` | `GPIO3` / `GPIO43` / `GPIO44` / `穿颈 5V` / `S3 GND` / `3020 喇叭螺丝端子` | 独立硬件 I2S0，喇叭线仅 2cm |
+| **INMP441 麦克风** | `SCK` / `WS` / `SD` / `VDD` / `GND` / `L/R` | `GPIO39` / `GPIO40` / `GPIO38` / `S3 3V3` / `S3 GND` / `穿颈 GND` | 独立硬件 I2S1，左声道接地（背面 TF1 卡槽留空） |
+| **MAX98357A 功放** | `BCLK` / `LRC` / `DIN` / `VIN` / `GND` / `SPK±` | `GPIO3` / `TX(GPIO43)` / `GPIO48` / `穿颈 5V` / `S3 GND` / `3020 喇叭螺丝端子` | 独立硬件 I2S0，彻底避开 CH343 RX，喇叭线仅 2cm |
 | **MG90S 舵机** | `3P 原装母头` | `PCA9685A CH0` | 原装 3P 杜邦直插 |
 | **DRV8833 #1（前驱）** | `IN1~IN4` / `VCC,GND` / `OUT1~4` | `PCA9685A CH1~CH4` / `电源板 5V,GND` / `FL,FR 电机原装 2P` | 若板卡 `EEP/SLP` 未上拉，接 `3V3` |
 | **DRV8833 #2（后驱）** | `IN1~IN4` / `VCC,GND` / `OUT1~4` | `PCA9685A CH5~CH8` / `电源板 5V,GND` / `RL,RR 电机原装 2P` | 4 路 N20 原装 2P 直插，免并线 |
